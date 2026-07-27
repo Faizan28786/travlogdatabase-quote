@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>TravLog CRM</title>
+
+<link rel="stylesheet" href="assets/css/dashboard.css">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="sidebar">
+
+    <div class="logo">
+
+        <div class="logo-icon">
+            <i class="fa-solid fa-earth-asia"></i>
+        </div>
+
+        <div class="logo-text">
+            <h1>TravLog</h1>
+            <span>Travel CRM</span>
+        </div>
+
+    </div>
+
+
+    <div class="menu-title">
+        MAIN MENU
+    </div>
+
+    <ul>
+
+        <li class="active">
+            <i class="fa-solid fa-house"></i>
+            <span>Dashboard</span>
+        </li>
+
+        <li onclick="window.location='create-quote.html'">
+            <i class="fa-solid fa-file-circle-plus"></i>
+            <span>New Quote</span>
+        </li>
+
+        <li onclick="window.location='quotes.html'">
+            <i class="fa-solid fa-file-lines"></i>
+            <span>Quotes</span>
+        </li>
+
+        <li>
+<li onclick="window.location='hotels.html'">
+    <i class="fa-solid fa-hotel"></i>
+    <span>Hotels</span>
+</li>
+
+<li onclick="window.location='destinations.html'">
+    <i class="fa-solid fa-earth-asia"></i>
+    <span>Destinations</span>
+</li>
+
+<li onclick="window.location='transfers.html'">
+    <i class="fa-solid fa-van-shuttle"></i>
+    <span>Transfers</span>
+</li>
+
+        <li id="staffMenu">
+            <i class="fa-solid fa-users"></i>
+            <span>Staff</span>
+        </li>
+
+    </ul>
+
+
+    <div class="sidebar-footer">
+
+        <button id="logoutBtn">
+
+            <i class="fa-solid fa-right-from-bracket"></i>
+
+            Logout
+
+        </button>
+
+    </div>
+
+</div>
+
+<div class="main">
+<div class="header">
+
+    <div class="header-left">
+
+        <div>
+
+            <h2>
+                Dashboard
+            </h2>
+
+            <p id="todayDate"></p>
+
+        </div>
+
+    </div>
+
+
+    <div class="header-right">
+
+        <div class="search-box">
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input
+                type="text"
+                placeholder="Search Quotes..." />
+
+        </div>
+
+
+        <div class="notification">
+
+            <i class="fa-solid fa-bell"></i>
+
+            <span class="notify-dot"></span>
+
+        </div>
+
+
+        <div class="profile">
+
+            <div class="avatar" id="avatar">
+
+                T
+
+            </div>
+
+            <div class="profile-info">
+
+                <h4 id="userName"></h4>
+
+                <small id="userRole"></small>
+
+            </div>
+
+            <i class="fa-solid fa-chevron-down"></i>
+
+        </div>
+
+    </div>
+
+</div>
+<div class="welcome-card">
+
+    <div>
+
+        <h2>
+
+            Welcome back,
+
+            <span id="welcomeName">
+            </span>
+
+        </h2>
+
+        <p>
+
+            Manage quotations, hotels, destinations and staff from one dashboard.
+
+        </p>
+
+    </div>
+
+    <div class="welcome-icon">
+
+        <i class="fa-solid fa-earth-asia"></i>
+
+    </div>
+
+</div>
+
+<div class="cards">
+
+<div class="card blue">
+
+<h2 id="hotelCount">0</h2>
+
+<p>Total Hotels</p>
+
+</div>
+
+<div class="card green">
+
+<h2 id="quoteCount">0</h2>
+
+<p>Total Quotes</p>
+
+</div>
+
+<div class="card orange">
+
+<h2 id="staffCount">0</h2>
+
+<p>Total Staff</p>
+
+</div>
+
+<div class="card purple">
+
+<h2 id="revenue">$0</h2>
+
+<p>Total Revenue</p>
+
+</div>
+
+</div>
+
+<div class="content">
+
+<div class="recentQuotes">
+
+<h3>Recent Quotations</h3>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Quote No</th>
+
+<th>Client</th>
+
+<th>Destination</th>
+
+<th>Total</th>
+
+<th>Status</th>
+
+</tr>
+
+</thead>
+
+<tbody id="quoteTable">
+
+<tr>
+
+<td colspan="5">
+
+No Quotations Yet
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<div class="quick">
+
+<h3>Today's Activity</h3>
+
+<div class="activity">
+
+<div class="activity-item">
+<div class="icon blue">
+<i class="fa-solid fa-file-circle-plus"></i>
+</div>
+<div>
+<h4>Quote Created</h4>
+<p>No quotations created today</p>
+</div>
+</div>
+
+<div class="activity-item">
+<div class="icon green">
+<i class="fa-solid fa-file-pdf"></i>
+</div>
+<div>
+<h4>PDF Generated</h4>
+<p>No PDFs generated</p>
+</div>
+</div>
+
+<div class="activity-item">
+<div class="icon orange">
+<i class="fa-brands fa-whatsapp"></i>
+</div>
+<div>
+<h4>WhatsApp Sent</h4>
+<p>No messages sent</p>
+</div>
+</div>
+
+<div class="activity-item">
+<div class="icon purple">
+<i class="fa-solid fa-user-clock"></i>
+</div>
+<div>
+<h4>Last Login</h4>
+<p id="lastLogin">Today</p>
+</div>
+</div>
+
+</div>
+
+<hr style="margin:25px 0;">
+
+<div class="workflow">
+
+<div>🌍 Country</div>
+
+<i class="fa-solid fa-arrow-right"></i>
+
+<div>📝 Quote</div>
+
+<i class="fa-solid fa-arrow-right"></i>
+
+<div>👨 Passenger</div>
+
+<i class="fa-solid fa-arrow-right"></i>
+
+<div>🏨 Hotel</div>
+
+<i class="fa-solid fa-arrow-right"></i>
+
+<div>💰 Pricing</div>
+
+<i class="fa-solid fa-arrow-right"></i>
+
+<div>📄 PDF</div>
+
+<i class="fa-solid fa-arrow-right"></i>
+
+<div>📲 WhatsApp</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="assets/js/dashboard.js"></script>
+
+</body>
+
+</html>
+

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quotes | TravLog CRM</title>
+
+  <link rel="stylesheet" href="assets/css/quotes.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+
+  <div class="page">
+    <div class="topbar">
+      <div>
+        <h1>Saved Quotes</h1>
+        <p>All generated travel quotations in one place</p>
+      </div>
+
+      <div class="top-actions">
+        <a href="dashboard.html" class="ghostBtn">
+          <i class="fa-solid fa-house"></i> Dashboard
+        </a>
+
+        <a href="create-quote.html" class="primaryBtn">
+          <i class="fa-solid fa-plus"></i> New Quote
+        </a>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat-card">
+        <span>Total Quotes</span>
+        <h2 id="totalQuotes">0</h2>
+      </div>
+
+      <div class="stat-card">
+        <span>Total Revenue</span>
+        <h2 id="totalRevenue">₹0</h2>
+      </div>
+
+      <div class="stat-card">
+        <span>Last Quote</span>
+        <h2 id="lastQuoteNo">-</h2>
+      </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="filterBar">
+      <div class="searchBox">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="Search by Quote No / Country / Hotel">
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="tableWrap">
+      <table>
+<thead>
+  <tr>
+    <th>Quote No</th>
+    <th>Country</th>
+    <th>City</th>
+    <th>Travel Date</th>
+    <th>Pax</th>
+    <th>Rooms</th>
+    <th>Meal Plan</th>
+    <th>Hotel</th>
+    <th>Total</th>
+    <th>Created</th>
+    <th>Actions</th>
+  </tr>
+</thead>
+        <tbody id="quotesTableBody">
+          <tr>
+            <td colspan="9" class="emptyRow">Loading quotes...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="assets/js/quotes.js"></script>
+</body>
+</html>

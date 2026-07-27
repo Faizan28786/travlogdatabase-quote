@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create New Quote</title>
+  <link rel="stylesheet" href="./assets/css/create-quote.css" />
+  <link rel="stylesheet" href="./assets/css/land-package.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet" />
+</head>
+
+<body>
+  <div class="quote-page">
+    <!-- TOP BAR -->
+    <div class="quote-topbar">
+      <div class="title-wrap">
+        <div class="title-icon">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+          <h1>Create New Quote</h1>
+          <p>Build travel quotation with hotels, transfers and pricing summary.</p>
+        </div>
+      </div>
+
+      <div class="quote-no-card">
+        <span>Quote Number</span>
+        <h2 id="quoteNo">TLN00000</h2>
+      </div>
+    </div>
+
+    <div class="quote-grid">
+      <!-- LEFT COLUMN -->
+      <div class="left-column">
+
+        <!-- PASSENGER DETAILS -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-icon green">
+              <i class="fas fa-users"></i>
+            </div>
+            <div>
+              <h3>Passenger Details</h3>
+              <p>Enter total passengers and room occupancy details.</p>
+            </div>
+          </div>
+
+          <div class="form-grid passenger-grid">
+            <!-- Adults -->
+            <div class="field">
+              <label>Adults</label>
+              <div class="input-wrap">
+                <i class="fas fa-user"></i>
+                <input type="number" id="adults" min="0" value="2" />
+              </div>
+            </div>
+            <div class="field">
+
+              <label>Rooms</label>
+
+              <div class="input-wrap">
+
+                <i class="fa-solid fa-bed"></i>
+
+                <input type="number" id="rooms" min="1" value="1" />
+
+              </div>
+
+            </div>
+            <!-- Extra-person -->
+            <div class="field">
+              <label for="childWithBed">Extra person</label>
+              <div class="input-wrap">
+                <i class="fas fa-child"></i>
+                <input type="number" id="childWithBed" min="0" value="0" readonly />
+              </div>
+              <small class="auto-note">
+                Automatically calculated based on Adults & Rooms
+              </small>
+            </div>
+            <!-- Child Without Bed -->
+            <div class="field">
+              <label for="childWithoutBed">Child Without Bed</label>
+              <div class="input-wrap">
+                <i class="fas fa-baby"></i>
+                <input type="number" id="childWithoutBed" min="0" value="0" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="childWithoutBedAge">CNB Age</label>
+              <div class="input-wrap">
+                <i class="fas fa-cake-candles"></i>
+                <select id="childWithoutBedAge">
+                  <option value="4-10">4-6 Years</option>
+                  <option value="0-3">0-3 Years</option>
+                  <option value="11-17">7-9 Years</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Total Pax 
+            <div class="field">
+              <label>Total Pax</label>
+              <div class="input-wrap">
+                <i class="fas fa-users"></i>
+                <input type="text" id="totalPax" readonly value="2" />
+              </div>
+            </div>
+          -->
+          </div>
+        </div>
+
+        <!-- TRAVEL + COUNTRY SIDE BY SIDE -->
+        <div class="form-grid travel-country-grid">
+          <!-- TRAVEL DATE -->
+          <div class="card compact-card">
+            <div class="card-header">
+              <div class="card-header-icon blue">
+                <i class="fa-solid fa-calendar-days"></i>
+              </div>
+              <div>
+                <h3>Arrival Date</h3>
+                <p>Select the main travel start date for this quote.</p>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="travelDate">Arrival Date</label>
+              <div class="input-wrap">
+                <i class="fa-solid fa-calendar-days"></i>
+                <input type="date" id="travelDate" />
+              </div>
+            </div>
+          </div>
+
+          <!-- COUNTRY -->
+          <div class="card compact-card">
+            <div class="card-header">
+              <div class="card-header-icon blue">
+                <i class="fa-solid fa-earth-asia"></i>
+              </div>
+              <div>
+                <h3>Country</h3>
+                <p>Select quote destination country.</p>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="country">Country</label>
+              <div class="input-wrap">
+                <i class="fa-solid fa-globe"></i>
+                <select id="country">
+                  <option value="Vietnam" selected>Vietnam</option>
+                  <option value="Thailand">Thailand</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CITY STAY SEGMENTS -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-icon purple">
+              <i class="fa-solid fa-route"></i>
+            </div>
+            <div>
+              <h3>City Stay Segments</h3>
+              <p>Add one or multiple cities for the same quote. Example: 3N Halong Bay + 3N Sapa.</p>
+            </div>
+          </div>
+
+          <div id="segmentsContainer"></div>
+
+          <div class="segment-actions">
+            <button type="button" class="btn btn-outline" id="addSegmentBtn">
+              <i class="fa-solid fa-plus"></i> Add City Segment
+            </button>
+          </div>
+        </div>
+
+        <!-- TRANSFER DETAILS
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-icon blue">
+              <i class="fa-solid fa-car-side"></i>
+            </div>
+            <div>
+              <h3>Transfer Details</h3>
+              <p>Choose pickup and drop vehicle type for the full quote.</p>
+            </div>
+          </div>
+
+          <div class="form-grid lower-grid">
+            <div class="field">
+              <label for="pickupVehicle">Pickup Vehicle</label>
+              <div class="input-wrap">
+                <i class="fa-solid fa-van-shuttle"></i>
+                <select id="pickupVehicle">
+                  <option value="">Select Pickup Vehicle</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="dropVehicle">Drop Vehicle</label>
+              <div class="input-wrap">
+                <i class="fa-solid fa-car"></i>
+                <select id="dropVehicle">
+                  <option value="">Select Drop Vehicle</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div> -->
+        <div class="quote-options-toolbar">
+
+          <div id="optionTabs" class="option-tabs">
+            <button class="option-tab active" data-option="0">
+              Option 1
+            </button>
+          </div>
+
+          <button id="addOptionBtn" class="btn btn-outline">
+            <i class="fa-solid fa-plus"></i>
+            Add Option
+          </button>
+
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="action-row">
+          <button class="btn btn-secondary" id="resetBtn">
+            <i class="fa-solid fa-rotate-left"></i> Reset
+          </button>
+
+          <button class="btn btn-outline" id="previewBtn">
+            <i class="fa-solid fa-eye"></i> Preview
+          </button>
+
+          <button class="btn btn-success" id="saveQuoteBtn">
+            <i class="fa-solid fa-floppy-disk"></i> Save Quote
+          </button>
+
+          <button class="btn btn-land" id="addLandPartBtn" type="button">
+            <i class="fa-solid fa-map-location-dot"></i> Add Land Part
+          </button>
+        </div>
+        <!-- LAND PACKAGE -->
+        <div id="landPartContainer" style="display:none;margin-top:20px;"></div>
+      </div>
+
+
+      <!-- RIGHT COLUMN -->
+      <div class="right-column">
+        <!-- PRICING SUMMARY -->
+        <div class="card sticky-card">
+          <div class="card-header">
+            <div class="card-header-icon green">
+              <i class="fa-solid fa-money-bill-wave"></i>
+            </div>
+            <div>
+              <h3>Pricing Summary</h3>
+              <p>Live quote costing based on all city segments and transfers.</p>
+            </div>
+          </div>
+
+          <div class="summary-list">
+            <!-- <div class="summary-item">
+              <span>Total Pax</span>
+              <strong id="summaryTotalPax">2</strong>
+            </div> -->
+
+            <div class="summary-item">
+              <span>Total Segment Nights</span>
+              <strong id="summaryTotalNights">0</strong>
+            </div>
+
+            <div class="summary-item">
+              <span>Total Rooms</span>
+              <strong id="summaryTotalRooms">0</strong>
+            </div>
+
+            <div class="summary-item">
+              <span>Hotel Cost</span>
+              <strong id="hotelCost">$0</strong>
+            </div>
+
+            <!-- <div class="summary-item">
+              <span>Transfer Cost</span>
+              <strong id="transferCost">$0</strong>
+            </div> -->
+          </div>
+
+          <div class="grand-total-box">
+            <div>
+              <p>Grand Total</p>
+              <small>Auto calculated from all city segments</small>
+            </div>
+            <h2 id="grandTotal">$0</h2>
+          </div>
+        </div>
+
+        <!-- QUOTE PREVIEW -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-icon purple">
+              <i class="fa-solid fa-file-lines"></i>
+            </div>
+
+            <div>
+              <h3>Quote Preview</h3>
+              <p>Quick overview of what will be saved.</p>
+            </div>
+          </div>
+
+          <div class="preview-box" id="previewBox">
+            Quote details preview yahan show hoga...
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUOTE ACTION POPUP -->
+  <div id="quoteActionModal" class="quote-modal-overlay">
+    <div class="quote-modal">
+      <div class="quote-modal-header">
+        <div>
+          <h3 id="quoteModalTitle">Quote Action</h3>
+          <p id="quoteModalSubtext">Preview and confirm your action.</p>
+        </div>
+        <button class="quote-modal-close" id="closeQuoteModal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="quote-modal-body">
+        <div id="quoteModalPreview" class="quote-modal-preview">
+          Quote preview will appear here...
+        </div>
+        <div class="preview-actions">
+
+          <button id="previewPrintBtn" class="preview-action-btn preview-print">
+
+            <i class="fa-solid fa-print"></i>
+
+            Print
+
+          </button>
+
+          <button id="previewPdfBtn" class="preview-action-btn preview-pdf">
+
+            <i class="fa-solid fa-file-pdf"></i>
+
+            PDF
+
+          </button>
+
+          <button id="previewWordBtn" class="preview-action-btn preview-word">
+
+            <i class="fa-solid fa-file-word"></i>
+
+            Word
+
+          </button>
+
+          <button id="previewWhatsappBtn" class="preview-action-btn preview-whatsapp">
+
+            <i class="fa-brands fa-whatsapp"></i>
+
+            WhatsApp
+
+          </button>
+
+          <button id="previewEmailBtn" class="preview-action-btn preview-email">
+
+            <i class="fa-solid fa-envelope"></i>
+
+            Email
+
+          </button>
+
+        </div>
+      </div>
+
+      <div class="quote-modal-footer">
+        <button class="btn btn-outline" id="cancelQuoteAction">Cancel</button>
+        <button class="btn btn-primary" id="confirmQuoteAction">Continue</button>
+      </div>
+    </div>
+  </div>
+  <script src="assets/js/config.js"></script>
+  <script src="./assets/js/create-quote.js"></script>
+</body>
+
+</html>
