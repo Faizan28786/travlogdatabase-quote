@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Quote = require("../models/Quote");
+const Quote = require("../models/quote");
 
 /* =========================================================
    TEST ROUTE
