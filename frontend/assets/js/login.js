@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
     message.style.color = "red";
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
+      const res = await fetch(CONFIG.API_BASE + "/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
