@@ -39,7 +39,11 @@ app.use(
 
 app.use(cookieParser());
 
-app.use(express.static(path.join(__dirname, "../frontend")));
+app.use(
+  express.static(path.join(__dirname, "../frontend"), {
+    index: false,
+  })
+);
 app.use("/assets", express.static(path.join(__dirname, "../frontend/assets")));
 app.use("/api/land-services", landServiceRoutes);
 
