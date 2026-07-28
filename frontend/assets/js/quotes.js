@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:5000/api/quote-data";
+const API = CONFIG.API_BASE + "/quote-data";
 
 let allQuotes = [];
 
@@ -105,7 +105,7 @@ async function loadQuotes() {
       </tr>
     `;
 
-    const res = await fetch(`${API_BASE}/all`);
+    const res = await fetch(`${API}/all`)
     const data = await res.json();
 
     if (!res.ok || !data.success) {
@@ -220,7 +220,7 @@ function attachDeleteEvents() {
         btn.disabled = true;
         btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Deleting...`;
 
-        const res = await fetch(`${API_BASE}/delete-quote/${quoteId}`, {
+        const res = await fetch(`${API}/delete-quote/${quoteId}`, {
           method: "DELETE"
         });
 
