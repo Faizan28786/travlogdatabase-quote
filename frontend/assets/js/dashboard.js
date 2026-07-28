@@ -1,27 +1,32 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const DASHBOARD_API = "http://localhost:5000/api/quote-data";
+
+  const DASHBOARD_API = CONFIG.API_BASE + "/quote-data";
+
+  const token = localStorage.getItem("token");
 
   let user = null;
-  let token = localStorage.getItem("token");
 
   try {
-    const rawUser = localStorage.getItem("user");
-    user = rawUser ? JSON.parse(rawUser) : null;
+    user = JSON.parse(localStorage.getItem("user"));
   } catch (err) {
-    console.error("User JSON parse error:", err);
-    user = null;
+    console.error("User JSON Parse Error:", err);
   }
 
-  console.log("DASHBOARD TOKEN:", token);
-  console.log("DASHBOARD USER:", user);
-
+  // Authentication Check
   if (!token || !user) {
-    console.warn("No token/user found. Redirecting to login.");
+    console.warn("Session Expired. Redirecting to Login...");
+
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    window.location.href = "./login.html";
+
+    window.location.href = "login.html";
     return;
   }
+
+  console.log("✅ Logged In User:", user);
+  console.log("🔑 Token Found:", token);
+
+  // ===== Remaining Dashboard Code Starts Here =====
 
   // USER INFO
   const userNameEl = document.getElementById("userName");
@@ -29,9 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const avatarEl = document.getElementById("avatar");
   const welcomeName = document.getElementById("welcomeName");
 
-if (welcomeName) {
+  if (welcomeName) {
     welcomeName.textContent = user.name || "TravLog Admin";
-}
+  }
 
   if (userNameEl) userNameEl.innerHTML = user.name || "User";
   if (userRoleEl) userRoleEl.innerHTML = (user.role || "staff").toUpperCase();
@@ -84,13 +89,15 @@ if (welcomeName) {
 
   async function loadHotels() {
     try {
-      const res = await fetch("http://localhost:5000/api/hotels");
+      const res = await fetch(CONFIG.HOTEL_API);
       const hotels = await res.json();
 
       const hotelCountEl = document.getElementById("hotelCount");
+
       if (hotelCountEl) {
         hotelCountEl.innerHTML = Array.isArray(hotels) ? hotels.length : 0;
       }
+
     } catch (err) {
       console.error("LOAD HOTELS ERROR:", err);
     }
@@ -157,43 +164,43 @@ if (welcomeName) {
     const today = new Date().toLocaleDateString("en-IN");
 
     const savedToday = JSON.parse(localStorage.getItem("todayActivity")) || {
-        date: today,
-        quotes: 0,
-        pdf: 0,
-        whatsapp: 0
+      date: today,
+      quotes: 0,
+      pdf: 0,
+      whatsapp: 0
     };
 
     if (savedToday.date !== today) {
-        savedToday.date = today;
-        savedToday.quotes = 0;
-        savedToday.pdf = 0;
-        savedToday.whatsapp = 0;
+      savedToday.date = today;
+      savedToday.quotes = 0;
+      savedToday.pdf = 0;
+      savedToday.whatsapp = 0;
 
-        localStorage.setItem(
-            "todayActivity",
-            JSON.stringify(savedToday)
-        );
+      localStorage.setItem(
+        "todayActivity",
+        JSON.stringify(savedToday)
+      );
     }
 
     if (quoteCreated) {
-        quoteCreated.textContent =
-            savedToday.quotes + " quotations created today";
+      quoteCreated.textContent =
+        savedToday.quotes + " quotations created today";
     }
 
     if (pdfGenerated) {
-        pdfGenerated.textContent =
-            savedToday.pdf + " PDFs generated";
+      pdfGenerated.textContent =
+        savedToday.pdf + " PDFs generated";
     }
 
     if (whatsappSent) {
-        whatsappSent.textContent =
-            savedToday.whatsapp + " WhatsApp sent";
+      whatsappSent.textContent =
+        savedToday.whatsapp + " WhatsApp sent";
     }
 
     if (lastLogin) {
-        lastLogin.textContent =
-            new Date().toLocaleString("en-IN");
+      lastLogin.textContent =
+        new Date().toLocaleString("en-IN");
     }
 
-}
+  }
 });

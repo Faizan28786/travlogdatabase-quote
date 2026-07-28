@@ -47,7 +47,7 @@ app.use("/api/land-services", landServiceRoutes);
    ROOT
 ========================================================= */
 app.get("/", (req, res) => {
-  res.send("TravLog Backend Running ✅");
+  res.sendFile(path.join(__dirname, "../frontend/login.html"));
 });
 
 /* =========================================================
