@@ -8,7 +8,7 @@ require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
 const hotelRoutes = require("./routes/hotelRoutes");
-const quoteDataRoutes = require("./routes/quotedata");
+const quoteDataRoutes = require("./routes/quoteData");
 const quoteExportRoutes = require("./routes/quoteExportRoutes");
 const emailRoutes = require("./routes/emailRoutes");
 
