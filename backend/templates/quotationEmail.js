@@ -60,9 +60,6 @@ table{
 
 <div class="header">
 
-<img src="https://travlog.live/assets/images/travlog-logo.png"
-class="logo">
-
 </div>
 
 <div class="content">
