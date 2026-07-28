@@ -3,24 +3,24 @@ const {
     quotationEmailTemplate
 } = require("../templates/quotationEmail");
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  requireTLS: true,
-  family: 4,
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    requireTLS: true,
+    family: 4,
 
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    },
 
-  connectionTimeout: 30000,
-  greetingTimeout: 30000,
-  socketTimeout: 30000,
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
 
-  tls: {
-    rejectUnauthorized: false
-  }
+    tls: {
+        rejectUnauthorized: false
+    }
 });
 transporter.verify(function (err, success) {
     if (err) {
@@ -29,7 +29,15 @@ transporter.verify(function (err, success) {
         console.log("SMTP READY");
     }
 });
+console.log("EMAIL USER:", process.env.EMAIL_USER);
+console.log("EMAIL PASS EXISTS:", !!process.env.EMAIL_PASS);
 
+try {
+    await transporter.verify();
+    console.log("SMTP VERIFIED");
+} catch (err) {
+    console.log("SMTP VERIFY ERROR:", err);
+}
 exports.sendQuoteEmail = async (req, res) => {
     try {
 
@@ -68,3 +76,11 @@ exports.sendQuoteEmail = async (req, res) => {
 
     }
 };
+const info = await transporter.sendMail({
+    from: `"TravLog" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    html: quotationEmailTemplate(html)
+});
+
+console.log("MAIL SENT:", info);
