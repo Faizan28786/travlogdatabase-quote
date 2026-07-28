@@ -8,7 +8,7 @@ const Quote = require("../models/quote");
 router.get("/test", (req, res) => {
   return res.json({
     success: true,
-    message: "quoteData route working"
+    message: "quotedata route working"
   });
 });
 
