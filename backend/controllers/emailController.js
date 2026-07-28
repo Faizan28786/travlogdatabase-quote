@@ -1,59 +1,54 @@
 const nodemailer = require("nodemailer");
-const {
-    quotationEmailTemplate
-} = require("../templates/quotationEmail");
+const { quotationEmailTemplate } = require("../templates/quotationEmail");
+
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  requireTLS: true,
-  family: 4,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false
-  }
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    requireTLS: true,
+
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    },
+
+    tls: {
+        rejectUnauthorized: false
+    }
 });
 
-transporter.verify(function (err, success) {
-  if (err) {
-    console.log("SMTP ERROR:", err);
-  } else {
-    console.log("SMTP READY");
-  }
+// Verify SMTP
+transporter.verify(function (error, success) {
+    if (error) {
+        console.log("SMTP ERROR:", error);
+    } else {
+        console.log("SMTP READY");
+    }
 });
+
 console.log("EMAIL USER:", process.env.EMAIL_USER);
 console.log("EMAIL PASS EXISTS:", !!process.env.EMAIL_PASS);
 
-try {
-    await transporter.verify();
-    console.log("SMTP VERIFIED");
-} catch (err) {
-    console.log("SMTP VERIFY ERROR:", err);
-}
 exports.sendQuoteEmail = async (req, res) => {
     try {
 
-        const {
-            to,
-            subject,
-            html
-        } = req.body;
+        const { to, subject, html } = req.body;
 
-        if (!to)
+        if (!to) {
             return res.status(400).json({
                 success: false,
                 message: "Recipient Email Missing"
             });
+        }
 
-        await transporter.sendMail({
+        const info = await transporter.sendMail({
             from: `"TravLog" <${process.env.EMAIL_USER}>`,
             to,
             subject,
             html: quotationEmailTemplate(html)
         });
+
+        console.log("MAIL SENT:", info.response);
 
         res.json({
             success: true,
@@ -62,7 +57,7 @@ exports.sendQuoteEmail = async (req, res) => {
 
     } catch (err) {
 
-        console.log(err);
+        console.log("MAIL ERROR:", err);
 
         res.status(500).json({
             success: false,
@@ -71,11 +66,3 @@ exports.sendQuoteEmail = async (req, res) => {
 
     }
 };
-const info = await transporter.sendMail({
-    from: `"TravLog" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    html: quotationEmailTemplate(html)
-});
-
-console.log("MAIL SENT:", info);
