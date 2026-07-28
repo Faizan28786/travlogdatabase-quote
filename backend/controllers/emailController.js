@@ -3,31 +3,26 @@ const {
     quotationEmailTemplate
 } = require("../templates/quotationEmail");
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    requireTLS: true,
-    family: 4,
-
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
-
-    tls: {
-        rejectUnauthorized: false
-    }
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  requireTLS: true,
+  family: 4,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  },
+  tls: {
+    rejectUnauthorized: false
+  }
 });
+
 transporter.verify(function (err, success) {
-    if (err) {
-        console.log("SMTP ERROR:", err);
-    } else {
-        console.log("SMTP READY");
-    }
+  if (err) {
+    console.log("SMTP ERROR:", err);
+  } else {
+    console.log("SMTP READY");
+  }
 });
 console.log("EMAIL USER:", process.env.EMAIL_USER);
 console.log("EMAIL PASS EXISTS:", !!process.env.EMAIL_PASS);
