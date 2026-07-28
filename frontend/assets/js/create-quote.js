@@ -1988,7 +1988,7 @@ async function handleEmailClick() {
 
   try {
 
-    const response = await fetch("http://localhost:5000/api/email/send", {
+    const response = await fetch(`${CONFIG.API_BASE}/email/send`, {
 
       method: "POST",
 
