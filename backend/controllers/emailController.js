@@ -2,27 +2,10 @@ const nodemailer = require("nodemailer");
 const { quotationEmailTemplate } = require("../templates/quotationEmail");
 
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    requireTLS: true,
-
+    service: "gmail",
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-    },
-
-    tls: {
-        rejectUnauthorized: false
-    }
-});
-
-// Verify SMTP
-transporter.verify(function (error, success) {
-    if (error) {
-        console.log("SMTP ERROR:", error);
-    } else {
-        console.log("SMTP READY");
     }
 });
 
@@ -41,6 +24,8 @@ exports.sendQuoteEmail = async (req, res) => {
             });
         }
 
+        console.log("Sending mail to:", to);
+
         const info = await transporter.sendMail({
             from: `"TravLog" <${process.env.EMAIL_USER}>`,
             to,
@@ -48,7 +33,8 @@ exports.sendQuoteEmail = async (req, res) => {
             html: quotationEmailTemplate(html)
         });
 
-        console.log("MAIL SENT:", info.response);
+        console.log("MAIL SENT SUCCESS");
+        console.log(info.response);
 
         res.json({
             success: true,
@@ -57,7 +43,7 @@ exports.sendQuoteEmail = async (req, res) => {
 
     } catch (err) {
 
-        console.log("MAIL ERROR:", err);
+        console.error("MAIL ERROR FULL:", err);
 
         res.status(500).json({
             success: false,
