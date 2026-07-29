@@ -3,18 +3,19 @@ const {
     quotationEmailTemplate
 } = require("../templates/quotationEmail");
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    service: "gmail",
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000
-});
 
+    family: 4,
+
+    tls: {
+        rejectUnauthorized: false
+    }
+});
+console.log("Sending mail to:", to);
 exports.sendQuoteEmail = async (req, res) => {
     try {
 
@@ -42,14 +43,22 @@ exports.sendQuoteEmail = async (req, res) => {
             message: "Email Sent Successfully"
         });
 
-    } catch (err) {
+    } catch(err){
 
-        console.log(err);
+    console.error(err);
 
-        res.status(500).json({
-            success: false,
-            message: err.message
-        });
+    res.status(500).json({
+        success:false,
+        message:err.message
+    });
 
-    }
+}
 };
+const info = await transporter.sendMail({
+    from: `"TravLog" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    html: quotationEmailTemplate(html)
+});
+
+console.log(info);
