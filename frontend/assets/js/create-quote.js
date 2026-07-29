@@ -1939,53 +1939,102 @@ function getPopupPreviewHtml() {
 
 async function handlePreviewPdfClick() {
 
-  const element = document.getElementById("quoteModalPreview");
+  const printWindow = window.open("", "_blank");
 
-  const options = {
+  printWindow.document.write(`
+        <html>
+        <head>
 
-    margin: 0.2,
+            <title>${quoteNoEl?.textContent || "Quotation"}</title>
 
-    filename: `${quoteNoEl?.textContent || "Quotation"}.pdf`,
+            <link rel="stylesheet" href="assets/css/create-quote.css">
+            <link rel="stylesheet" href="assets/css/land-package.css">
 
-    image: {
-      type: "jpeg",
-      quality: 1
-    },
+            <style>
 
-    html2canvas: {
-      scale: 3,
-      useCORS: true,
-      scrollY: 0
-    },
+                body{
+                    margin:0;
+                    padding:20px;
+                    background:#fff;
+                }
 
-    jsPDF: {
-      unit: "mm",
-      format: "a4",
-      orientation: "portrait"
-    }
+                .preview-actions{
+                    display:none !important;
+                }
 
-  };
+                @page{
+                    size:A4;
+                    margin:10mm;
+                }
 
-  await html2pdf().set(options).from(element).save();
+            </style>
+
+        </head>
+
+        <body>
+
+            ${quoteModalPreviewEl.innerHTML}
+
+        </body>
+
+        </html>
+    `);
+
+  printWindow.document.close();
+
+  printWindow.focus();
+
+  setTimeout(() => {
+
+    printWindow.print();
+
+    printWindow.close();
+
+  }, 500);
 
 }
 
-function handleWordClick() {
-  if (!lastSavedQuote) {
-    alert("Please save quote first.");
-    return;
-  }
+async function handleWordClick() {
 
-  openQuoteModal({
-    title: "Generate Word Quote",
-    subtext: "Your quotation is ready to be exported as Word file.",
-    previewHtml: getQuotationHTML(false),
-    confirmText: "Download Word",
-    onConfirm: () => {
-      alert("Word export API connect karna hai next step me.");
-      closeQuoteModal();
-    }
-  });
+    const content = `
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body{
+                font-family: Arial, sans-serif;
+                margin:20px;
+            }
+
+            .preview-actions{
+                display:none !important;
+            }
+        </style>
+    </head>
+
+    <body>
+
+        ${quoteModalPreviewEl.innerHTML}
+
+    </body>
+
+    </html>
+    `;
+
+    const converted = window.htmlDocx.asBlob(content);
+
+    const url = URL.createObjectURL(converted);
+
+    const a = document.createElement("a");
+
+    a.href = url;
+
+    a.download = `${quoteNoEl?.textContent || "Quotation"}.docx`;
+
+    a.click();
+
+    URL.revokeObjectURL(url);
+
 }
 
 function handleWhatsappClick() {
@@ -2091,32 +2140,32 @@ function getPreviewEmailText() {
 ========================================================= */
 function buildWhatsappMessage() {
 
-    let finalMessage = "";
+  let finalMessage = "";
 
-    const activeOption = currentOption;
+  const activeOption = currentOption;
 
-    for (let i = 0; i < quoteOptions.length; i++) {
+  for (let i = 0; i < quoteOptions.length; i++) {
 
-        currentOption = i;
+    currentOption = i;
 
-        if (!quoteOptions[i].data) continue;
+    if (!quoteOptions[i].data) continue;
 
-        restoreQuoteData(quoteOptions[i].data);
+    restoreQuoteData(quoteOptions[i].data);
 
-        buildPreview();
-
-        finalMessage += window.latestWhatsappText;
-
-        if (i < quoteOptions.length - 1) {
-            finalMessage += "\n\n--------------------------------\n\n";
-        }
-    }
-
-    currentOption = activeOption;
-    restoreQuoteData(quoteOptions[activeOption].data);
     buildPreview();
 
-    return finalMessage;
+    finalMessage += window.latestWhatsappText;
+
+    if (i < quoteOptions.length - 1) {
+      finalMessage += "\n\n--------------------------------\n\n";
+    }
+  }
+
+  currentOption = activeOption;
+  restoreQuoteData(quoteOptions[activeOption].data);
+  buildPreview();
+
+  return finalMessage;
 
 }
 

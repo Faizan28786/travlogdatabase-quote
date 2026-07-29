@@ -6,19 +6,19 @@
 // };
 
 const isLocal =
-  location.hostname === "localhost" ||
-  location.hostname === "127.0.0.1";
+    location.hostname === "localhost" ||
+    location.hostname === "127.0.0.1";
 
 const CONFIG = {
-  API_BASE: isLocal
-    ? "http://localhost:5000/api"
-    : "https://travlogdatabase-quote.onrender.com/api",
+    API_BASE: isLocal
+        ? "http://localhost:5000/api"
+        : "https://travlogdatabase-quote.onrender.com/api",
 
-  HOTEL_API: isLocal
-    ? "http://localhost:5000/api/hotels"
-    : "https://travlogdatabase-quote.onrender.com/api/hotels",
+    HOTEL_API: isLocal
+        ? "http://localhost:5000/api/hotels"
+        : "https://travlogdatabase-quote.onrender.com/api/hotels",
 
-  EXPORT_API: isLocal
-    ? "http://localhost:5000/api/quote-export"
-    : "https://travlogdatabase-quote.onrender.com/api/quote-export"
+    EXPORT_API: isLocal
+        ? "http://localhost:5000/api/quote-export"
+        : "https://travlogdatabase-quote.onrender.com/api/quote-export"
 };
