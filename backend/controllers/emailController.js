@@ -15,50 +15,36 @@ const transporter = nodemailer.createTransport({
         rejectUnauthorized: false
     }
 });
-console.log("Sending mail to:", to);
 exports.sendQuoteEmail = async (req, res) => {
+
     try {
 
-        const {
-            to,
-            subject,
-            html
-        } = req.body;
+        const { to, subject, html } = req.body;
 
-        if (!to)
-            return res.status(400).json({
-                success: false,
-                message: "Recipient Email Missing"
-            });
+        console.log("Sending mail to:", to);
 
-        await transporter.sendMail({
+        const info = await transporter.sendMail({
             from: `"TravLog" <${process.env.EMAIL_USER}>`,
             to,
             subject,
             html: quotationEmailTemplate(html)
         });
 
+        console.log("MAIL SENT:", info);
+
         res.json({
-            success: true,
-            message: "Email Sent Successfully"
+            success: true
         });
 
-    } catch(err){
+    } catch (err) {
 
-    console.error(err);
+        console.error("MAIL ERROR:", err);
 
-    res.status(500).json({
-        success:false,
-        message:err.message
-    });
+        res.status(500).json({
+            success: false,
+            message: err.message
+        });
 
-}
+    }
+
 };
-const info = await transporter.sendMail({
-    from: `"TravLog" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    html: quotationEmailTemplate(html)
-});
-
-console.log(info);
