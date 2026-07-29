@@ -1976,6 +1976,7 @@ function handleWhatsappClick() {
 }
 
 async function handleEmailClick() {
+  console.log("EMAIL BUTTON CLICKED");
 
   if (!lastSavedQuote) {
     alert("Please save quote first.");
@@ -1983,51 +1984,43 @@ async function handleEmailClick() {
   }
 
   const to = prompt("Enter Recipient Email");
-
   if (!to) return;
 
   try {
 
+    console.log("Before Fetch");
+    console.log(CONFIG.API_BASE);
+
     const response = await fetch(`${CONFIG.API_BASE}/email/send`, {
-
       method: "POST",
-
       headers: {
         "Content-Type": "application/json"
       },
-
       body: JSON.stringify({
-
         to,
-
         subject: `Travel Quote - ${quoteNoEl?.textContent || ""}`,
-
         html: getQuotationHTML(false)
-
       })
-
     });
+
+    console.log("After Fetch");
+    console.log(response);
 
     const data = await response.json();
 
+    console.log(data);
+
     if (data.success) {
-
       alert("✅ Quote Email Sent Successfully.");
-
     } else {
-
       alert(data.message || "Email Sending Failed");
-
     }
 
   } catch (err) {
-
+    console.error("FETCH ERROR");
     console.error(err);
-
-    alert("Server Connection Failed.");
-
+    alert(err.message);
   }
-
 }
 function getPreviewEmailText() {
 

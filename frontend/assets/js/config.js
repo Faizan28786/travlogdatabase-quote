@@ -6,7 +6,7 @@
 // };
 
 const CONFIG = {
-    API_BASE: "https://travlogdatabase-quote.onrender.com/api",
-    HOTEL_API: "https://travlogdatabase-quote.onrender.com/api/hotels",
-    EXPORT_API: "https://travlogdatabase-quote.onrender.com/api/quote-export"
+  API_BASE: "http://localhost:5000/api",
+  HOTEL_API: "http://localhost:5000/api/hotels",
+  EXPORT_API: "http://localhost:5000/api/quote-export"
 };

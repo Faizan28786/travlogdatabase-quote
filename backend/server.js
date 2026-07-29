@@ -1,5 +1,4 @@
-const dns = require("dns");
-dns.setDefaultResultOrder("ipv4first");
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
@@ -13,7 +12,6 @@ const hotelRoutes = require("./routes/hotelRoutes");
 const quoteDataRoutes = require("./routes/quotedata");
 const quoteExportRoutes = require("./routes/quoteExportRoutes");
 const emailRoutes = require("./routes/emailRoutes");
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
