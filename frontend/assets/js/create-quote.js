@@ -1996,7 +1996,7 @@ async function handlePreviewPdfClick() {
 
 async function handleWordClick() {
 
-    const content = `
+  const content = `
     <html>
     <head>
         <meta charset="utf-8">
@@ -2021,19 +2021,19 @@ async function handleWordClick() {
     </html>
     `;
 
-    const converted = window.htmlDocx.asBlob(content);
+  const converted = window.htmlDocx.asBlob(content);
 
-    const url = URL.createObjectURL(converted);
+  const url = URL.createObjectURL(converted);
 
-    const a = document.createElement("a");
+  const a = document.createElement("a");
 
-    a.href = url;
+  a.href = url;
 
-    a.download = `${quoteNoEl?.textContent || "Quotation"}.docx`;
+  a.download = `${quoteNoEl?.textContent || "Quotation"}.docx`;
 
-    a.click();
+  a.click();
 
-    URL.revokeObjectURL(url);
+  URL.revokeObjectURL(url);
 
 }
 
@@ -2479,7 +2479,7 @@ async function fetchLandServices(city) {
   try {
 
     const res = await fetch(
-      `http://localhost:5000/api/land-services?city=${encodeURIComponent(city)}`
+      `${CONFIG.API_BASE}/land-services?city=${encodeURIComponent(city)}`
     );
 
     const data = await res.json();
