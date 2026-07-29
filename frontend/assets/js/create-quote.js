@@ -1465,6 +1465,59 @@ function buildPreview() {
 </div>
 
 `;
+  const whatsappText = [];
+
+  whatsappText.push(optionTitle.toUpperCase());
+  whatsappText.push("");
+  whatsappText.push("ACCOMMODATION");
+
+  segments.forEach((seg, index) => {
+
+    const checkIn = checkInInputs[index]?.value || "";
+    const checkOut = checkOutInputs[index]?.value || "";
+
+    let dateLine = "";
+
+    if (checkIn && checkOut) {
+      dateLine = `(${formatDate(checkIn)}-${formatDate(checkOut)}) `;
+    }
+
+    let line = `${seg.nights}nt ${dateLine}${seg.city} - ${seg.hotelName}`;
+
+    if (seg.hotelCategory) {
+      line += ` (${seg.hotelCategory})`;
+    }
+
+    if (seg.roomType) {
+      line += ` / ${seg.roomType}`;
+    }
+
+    whatsappText.push(line);
+
+  });
+
+  whatsappText.push("");
+  whatsappText.push("PACKAGE COST");
+
+  whatsappText.push(
+    `Price Per Person: ${formatCurrency(totalPerPerson)} Per Pax`
+  );
+
+  whatsappText.push(
+    `Extra Person: ${childWithBed > 0
+      ? formatCurrency(totalExtraPerson / childWithBed)
+      : "N/A"
+    } Per Person`
+  );
+
+  whatsappText.push(
+    `Child No Bed (1m - 1m40) (${cnbAge}): ${formatCurrency(totalChildNoBed)} Per Person`
+  );
+
+  whatsappText.push("Compulsory Tip: USD 3 Per Person / Day");
+  whatsappText.push("E-Visa: ₹2,850 Per Person");
+
+  window.latestWhatsappText = whatsappText.join("\n");
 
   previewBox.innerHTML = previewHtml;
   if (quoteOptions[currentOption]) {
@@ -1886,54 +1939,34 @@ function getPopupPreviewHtml() {
 
 async function handlePreviewPdfClick() {
 
-  const win = window.open("", "_blank");
+  const element = document.getElementById("quoteModalPreview");
 
-  win.document.write(`
-        <html>
+  const options = {
 
-        <head>
+    margin: 0.2,
 
-            <title>Quotation</title>
+    filename: `${quoteNoEl?.textContent || "Quotation"}.pdf`,
 
-            <link rel="stylesheet"
-            href="assets/css/create-quote.css">
+    image: {
+      type: "jpeg",
+      quality: 1
+    },
 
-            <style>
+    html2canvas: {
+      scale: 3,
+      useCORS: true,
+      scrollY: 0
+    },
 
-                .preview-actions{
-                    display:none !important;
-                }
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait"
+    }
 
-                @media print{
+  };
 
-                    .preview-actions{
-                        display:none !important;
-                    }
-
-                }
-
-            </style>
-
-        </head>
-
-        <body>
-
-            ${getQuotationHTML(false)}
-
-        </body>
-
-        </html>
-    `);
-
-  win.document.close();
-
-  win.focus();
-
-  setTimeout(() => {
-
-    win.print();
-
-  }, 300);
+  await html2pdf().set(options).from(element).save();
 
 }
 
@@ -1956,26 +1989,26 @@ function handleWordClick() {
 }
 
 function handleWhatsappClick() {
+
   if (!lastSavedQuote) {
     alert("Please save quote first.");
     return;
   }
 
-  openQuoteModal({
-    title: "Share Quote on WhatsApp",
-    subtext: "Quote summary will be opened in WhatsApp.",
-    previewHtml: getQuotationHTML(false),
-    confirmText: "Open WhatsApp",
-    onConfirm: () => {
-      const text = buildWhatsappMessage();
-      const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-      window.open(url, "_blank");
-      closeQuoteModal();
-    }
-  });
+  const phone = prompt("Enter WhatsApp Number with Country Code");
+
+  if (!phone) return;
+
+  const text = buildWhatsappMessage();
+
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+
+  window.location.href = url;
+
 }
 
 async function handleEmailClick() {
+
   console.log("EMAIL BUTTON CLICKED");
 
   if (!lastSavedQuote) {
@@ -1984,6 +2017,7 @@ async function handleEmailClick() {
   }
 
   const to = prompt("Enter Recipient Email");
+
   if (!to) return;
 
   try {
@@ -2006,9 +2040,11 @@ async function handleEmailClick() {
     console.log("After Fetch");
     console.log(response);
 
+    console.log("STATUS:", response.status);
+
     const data = await response.json();
 
-    console.log(data);
+    console.log("SERVER RESPONSE:", data);
 
     if (data.success) {
       alert("✅ Quote Email Sent Successfully.");
@@ -2017,10 +2053,11 @@ async function handleEmailClick() {
     }
 
   } catch (err) {
-    console.error("FETCH ERROR");
-    console.error(err);
-    alert(err.message);
+
+    console.error("FETCH ERROR:", err);
+
   }
+
 }
 function getPreviewEmailText() {
 
@@ -2053,38 +2090,34 @@ function getPreviewEmailText() {
    MESSAGE BUILDERS
 ========================================================= */
 function buildWhatsappMessage() {
-  const segments = getAllSegmentsData();
 
-  const segmentText = segments.map(seg => {
-    return `Segment ${seg.segmentNo}: ${seg.city}
-Hotel: ${seg.hotelName}
-Room: ${seg.roomType}
-Meal: ${seg.mealPlan}
-Nights: ${seg.nights}
-Total: ${seg.rateUnavailable ? "Rate N/A" : formatCurrency(seg.total)}`;
-  }).join("\n\n");
+    let finalMessage = "";
 
-  return `
-TravLog Travel Quote
-Quote No: ${quoteNoEl?.textContent || "-"}
+    const activeOption = currentOption;
 
-Country: ${countryEl?.value || "-"}
-Travel Date: ${travelDateEl?.value || "-"}
+    for (let i = 0; i < quoteOptions.length; i++) {
 
-Passengers:
-Adults: ${adultsEl?.value || 0}
-Child With Bed: ${childWithBedEl?.value || 0} (${childWithBedAgeEl?.value || "-"})
-Child Without Bed: ${childWithoutBedEl?.value || 0} (${childWithoutBedAgeEl?.value || "-"})
+        currentOption = i;
 
-${segmentText}
+        if (!quoteOptions[i].data) continue;
 
-Hotel Cost: ${formatCurrency(currentHotelCost)}
-Transfer Cost: ${formatCurrency(currentTransferCost)}
-Grand Total: ${formatCurrency(currentGrandTotal)}
+        restoreQuoteData(quoteOptions[i].data);
 
-Thank you,
-TravLog
-  `.trim();
+        buildPreview();
+
+        finalMessage += window.latestWhatsappText;
+
+        if (i < quoteOptions.length - 1) {
+            finalMessage += "\n\n--------------------------------\n\n";
+        }
+    }
+
+    currentOption = activeOption;
+    restoreQuoteData(quoteOptions[activeOption].data);
+    buildPreview();
+
+    return finalMessage;
+
 }
 
 function buildEmailMessage() {

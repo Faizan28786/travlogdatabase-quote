@@ -2,48 +2,41 @@ const nodemailer = require("nodemailer");
 const { quotationEmailTemplate } = require("../templates/quotationEmail");
 
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-
+    service: "gmail",
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     }
 });
 
+transporter.verify((err, success) => {
+    if (err) {
+        console.log("SMTP ERROR:", err);
+    } else {
+        console.log("SMTP READY");
+    }
+});
+
 exports.sendQuoteEmail = async (req, res) => {
-    console.log("EMAIL API HIT");
+
+    console.log("=========== EMAIL API HIT ===========");
+    console.log(req.body);
 
     try {
 
         const { to, subject, html } = req.body;
 
-        if (!to) {
-            return res.status(400).json({
-                success: false,
-                message: "Recipient Email Missing"
-            });
-        }
-
-        console.log("Checking SMTP...");
-
-        await transporter.verify();
-
-        console.log("SMTP Connected");
+        console.log("TO:", to);
+        console.log("SUBJECT:", subject);
 
         const info = await transporter.sendMail({
-
             from: `"TravLog" <${process.env.EMAIL_USER}>`,
-
             to,
-
             subject,
-
             html: quotationEmailTemplate(html)
-
         });
 
+        console.log("MAIL SENT SUCCESS");
         console.log(info);
 
         return res.json({
@@ -53,7 +46,8 @@ exports.sendQuoteEmail = async (req, res) => {
 
     } catch (err) {
 
-        console.error(err);
+        console.log("=========== FULL ERROR ===========");
+        console.log(err);
 
         return res.status(500).json({
             success: false,
