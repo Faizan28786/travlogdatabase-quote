@@ -1,0 +1,764 @@
+/* ============================
+   RESET
+============================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+
+    font-family: 'Poppins', sans-serif;
+
+    background: #edf2fb;
+
+    overflow: hidden;
+
+}
+
+/* ============================
+   MAIN
+============================ */
+
+.masterContainer {
+
+    display: grid;
+
+    grid-template-columns: 340px 1fr;
+
+    height: 100vh;
+
+}
+
+/* ============================
+   LEFT PANEL
+============================ */
+
+.leftPanel {
+
+    background: #ffffff;
+    border-right: 1px solid #e8edf7;
+
+    display: flex;
+    flex-direction: column;
+
+    height: 100vh;
+    overflow: hidden;
+
+}
+
+/* ============================
+   HEADER
+============================ */
+
+.panelTop {
+
+    padding: 28px;
+
+}
+
+.panelTop h2 {
+
+    font-size: 30px;
+
+    font-weight: 700;
+
+    color: #1d3f91;
+
+    line-height: 38px;
+
+}
+
+.panelTop p {
+
+    margin-top: 8px;
+
+    color: #6b7280;
+
+    font-size: 14px;
+
+}
+
+/* ============================
+   SEARCH
+============================ */
+
+.searchBox {
+
+    padding: 0 25px 20px;
+
+    position: relative;
+
+}
+
+.searchBox i {
+
+    position: absolute;
+
+    top: 14px;
+
+    left: 40px;
+
+    color: #8b95a7;
+
+}
+
+.searchBox input {
+
+    width: 100%;
+
+    height: 48px;
+
+    padding-left: 45px;
+
+    border-radius: 12px;
+
+    border: 1px solid #d9e1ef;
+
+    outline: none;
+
+    font-size: 14px;
+
+    transition: .3s;
+
+}
+
+.searchBox input:focus {
+
+    border-color: #2348a6;
+
+}
+
+/* ============================
+   TABS
+============================ */
+
+.tabBar {
+
+    display: flex;
+
+    gap: 12px;
+
+    padding: 0 25px 20px;
+
+}
+
+.tab {
+
+    flex: 1;
+
+    height: 45px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    background: #eef3fb;
+
+    color: #5b6475;
+
+    transition: .25s;
+
+}
+
+.tab.active {
+
+    background: #2348a6;
+
+    color: #ffffff;
+
+}
+
+/* ============================
+   TREE
+============================ */
+
+.treeContainer {
+
+    flex: 1;
+    height: 0;
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding: 10px 20px 30px;
+
+}
+
+.treeContainer::-webkit-scrollbar {
+
+    width: 7px;
+
+}
+
+.treeContainer::-webkit-scrollbar-thumb {
+
+    background: #d6dceb;
+
+    border-radius: 20px;
+
+}
+
+/* ============================
+   LOADING
+============================ */
+
+.loading {
+
+    text-align: center;
+
+    margin-top: 40px;
+
+    color: #6b7280;
+
+    font-size: 15px;
+
+}
+
+.loading i {
+
+    margin-right: 8px;
+
+}
+
+/* ============================
+   RIGHT PANEL
+============================ */
+
+.rightPanel {
+
+    padding: 30px;
+
+    overflow: hidden;
+
+    display: flex;
+
+    flex-direction: column;
+
+}
+
+/* ============================
+   TOP HEADER
+============================ */
+
+.rightHeader {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 20px;
+
+}
+
+.rightHeader h1 {
+
+    font-size: 34px;
+
+    font-weight: 700;
+
+    color: #1f2f5d;
+
+}
+
+.rightHeader p {
+
+    margin-top: 5px;
+
+    color: #6b7280;
+
+}
+
+.headerButtons {
+
+    display: flex;
+
+    gap: 12px;
+
+}
+
+.blueBtn {
+
+    background: #2348a6;
+
+    color: #fff;
+
+    border: none;
+
+    height: 46px;
+
+    padding: 0 22px;
+
+    border-radius: 12px;
+
+    cursor: pointer;
+
+    font-weight: 600;
+
+}
+
+.greenBtn {
+
+    background: #14b86d;
+
+    color: #fff;
+
+    border: none;
+
+    height: 46px;
+
+    padding: 0 22px;
+
+    border-radius: 12px;
+
+    cursor: pointer;
+
+    font-weight: 600;
+
+}
+
+/* ======================================
+SUMMARY CARD
+====================================== */
+
+.summaryCard {
+
+    background: #ffffff;
+
+    border-radius: 18px;
+
+    padding: 25px;
+
+    margin-bottom: 20px;
+
+    box-shadow: 0 8px 25px rgba(25, 42, 89, .06);
+
+    border: 1px solid #edf2fb;
+
+    min-height: 150px;
+
+}
+
+.emptySummary {
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    height: 100%;
+
+    color: #8b95a7;
+
+}
+
+.emptySummary i {
+
+    font-size: 48px;
+
+    color: #2348a6;
+
+    margin-bottom: 15px;
+
+}
+
+.emptySummary h3 {
+
+    color: #25375d;
+
+    margin-bottom: 8px;
+
+}
+
+/* ======================================
+TABLE
+====================================== */
+
+.tableWrapper {
+
+    background: #ffffff;
+
+    border-radius: 18px;
+
+    overflow: hidden;
+
+    box-shadow: 0 8px 25px rgba(25, 42, 89, .06);
+
+    border: 1px solid #edf2fb;
+
+    flex: 1;
+
+    overflow: auto;
+
+}
+
+.roomTable {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+}
+
+.roomTable thead {
+
+    background: #2348a6;
+
+    color: #ffffff;
+
+}
+
+.roomTable th {
+
+    padding: 16px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    text-align: left;
+
+}
+
+.roomTable td {
+
+    padding: 14px 16px;
+
+    border-bottom: 1px solid #eef2f8;
+
+    font-size: 14px;
+
+}
+
+.roomTable tbody tr:hover {
+
+    background: #f6f9ff;
+
+}
+
+/* ======================================
+TREE
+====================================== */
+
+.destination {
+
+    margin-bottom: 15px;
+
+}
+
+.destinationHeader {
+
+    background: #2348a6;
+
+    color: #ffffff;
+
+    padding: 13px 15px;
+
+    border-radius: 12px;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    font-weight: 600;
+
+}
+
+.regionHeader {
+
+    background: #eef3fb;
+
+    margin-top: 10px;
+
+    padding: 12px 15px;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    font-weight: 600;
+
+    color: #2b3d67;
+
+    margin-left: 15px;
+
+}
+
+.cityHeader {
+
+    margin-left: 35px;
+
+    margin-top: 8px;
+
+    padding: 10px;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    font-weight: 500;
+
+    color: #555;
+
+}
+
+.hotelItem {
+
+    margin-left: 85px;
+    margin-top: 6px;
+    background: #f7f9fd;
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    border: 1px solid #dce6f7;
+    color: #2b3d67;
+
+}
+
+.hotelItem:hover {
+
+    background: #edf4ff;
+
+    border-color: #d7e5ff;
+
+}
+
+.hotelItem.active {
+
+    background: #2348a6;
+
+    color: #ffffff;
+
+}
+
+.hotelName {
+
+    font-weight: 600;
+
+}
+
+.hotelCategory {
+
+    font-size: 12px;
+
+    color: #7d8796;
+
+}
+
+.hotelItem.active .hotelCategory {
+
+    color: #ffffff;
+
+}
+
+/* ======================================
+ACCORDION
+====================================== */
+
+.treeBody {
+
+    display: none;
+
+}
+
+.treeBody.open {
+
+    display: block;
+
+}
+
+.arrow {
+
+    transition: .3s;
+
+}
+
+.arrow.rotate {
+
+    transform: rotate(90deg);
+
+}
+
+/* ======================================
+RESPONSIVE
+====================================== */
+
+@media(max-width:1200px) {
+
+    .masterContainer {
+
+        grid-template-columns: 300px 1fr;
+
+    }
+
+}
+
+@media(max-width:992px) {
+
+    .masterContainer {
+
+        grid-template-columns: 1fr;
+
+    }
+
+    .leftPanel {
+
+        height: 350px;
+
+    }
+
+    .rightPanel {
+
+        padding: 15px;
+
+    }
+
+}
+
+.categoryHeader {
+
+    margin-left: 55px;
+    margin-top: 6px;
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: #2348a6;
+
+}
+
+.treeContainer::-webkit-scrollbar {
+    width: 8px;
+}
+
+.treeContainer::-webkit-scrollbar-track {
+    background: #eef3fb;
+}
+
+.treeContainer::-webkit-scrollbar-thumb {
+    background: #c2cde5;
+    border-radius: 20px;
+}
+
+.treeContainer::-webkit-scrollbar-thumb:hover {
+    background: #9eb0d9;
+}
+
+.summaryGrid {
+
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr);
+
+    gap: 18px;
+
+}
+
+.summaryItem {
+
+    background: #f7f9fd;
+
+    padding: 14px;
+
+    border-radius: 12px;
+
+    border: 1px solid #e8edf7;
+
+    display: flex;
+
+    flex-direction: column;
+
+}
+
+.summaryItem label {
+
+    font-size: 12px;
+
+    color: #7b8797;
+
+    margin-bottom: 6px;
+
+}
+
+.summaryItem span {
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    color: #243b6b;
+
+}
+
+.summaryItem.full {
+
+    grid-column: 1/-1;
+
+}
+
+.editBtn {
+
+    background: #1d4ed8;
+
+    color: white;
+
+    border: none;
+
+    padding: 7px 10px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    margin-right: 5px;
+
+}
+
+.deleteBtn {
+
+    background: #dc2626;
+
+    color: white;
+
+    border: none;
+
+    padding: 7px 10px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+}

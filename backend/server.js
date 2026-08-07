@@ -1,95 +1,107 @@
-
 const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const path = require("path");
-const landServiceRoutes = require("./routes/landServiceRoutes");
-require("dotenv").config();
+
+// =============================
+// LOAD ENV
+// =============================
+require("dotenv").config({
+  path: path.join(__dirname, ".env")
+});
+
+console.log("================================");
+console.log("ENV FILE PATH :", path.join(__dirname, ".env"));
+console.log("PORT :", process.env.PORT);
+console.log("MONGODB_URI :", process.env.MONGODB_URI);
+console.log("================================");
 
 const authRoutes = require("./routes/authRoutes");
 const hotelRoutes = require("./routes/hotelRoutes");
+const landServiceRoutes = require("./routes/landServiceRoutes");
 const quoteDataRoutes = require("./routes/quotedata");
 const quoteExportRoutes = require("./routes/quoteExportRoutes");
 const emailRoutes = require("./routes/emailRoutes");
+const masterDataRoutes = require("./routes/masterDataRoutes");
+
 const app = express();
+
 const PORT = process.env.PORT || 5000;
 
-/* =========================================================
-   MIDDLEWARE
-========================================================= */
-/* =========================================================
-   MIDDLEWARE
-========================================================= */
-
-app.use(express.json({ limit: "10mb" }));
+// =============================
+// MIDDLEWARE
+// =============================
+app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use(
-  cors({
-    origin: [
-      "http://127.0.0.1:5500",
-      "http://localhost:5500",
-      "http://127.0.0.1:5501",
-      "http://localhost:5501"
-    ],
-    credentials: true
-  })
-);
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 
 app.use(cookieParser());
 
-app.use(
-  express.static(path.join(__dirname, "../frontend"), {
-    index: false,
-  })
-);
+// =============================
+// STATIC FRONTEND
+// =============================
+app.use(express.static(path.join(__dirname, "../frontend")));
 app.use("/assets", express.static(path.join(__dirname, "../frontend/assets")));
-app.use("/api/land-services", landServiceRoutes);
 
-/* =========================================================
-   ROOT
-========================================================= */
+// =============================
+// ROOT
+// =============================
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/login.html"));
 });
 
-/* =========================================================
-   ROUTES
-========================================================= */
+// =============================
+// ROUTES
+// =============================
 app.use("/api/auth", authRoutes);
 app.use("/api/hotels", hotelRoutes);
+app.use("/api/land-services", landServiceRoutes);
 app.use("/api/quote-data", quoteDataRoutes);
 app.use("/api/quote-export", quoteExportRoutes);
 app.use("/api/email", emailRoutes);
+app.use("/api/master-data", masterDataRoutes);
 
-/* =========================================================
-   404
-========================================================= */
+// =============================
+// 404
+// =============================
 app.use((req, res) => {
-  return res.status(404).json({
+  res.status(404).json({
     success: false,
-    message: "Route not found"
+    message: "Route Not Found"
   });
 });
 
-/* =========================================================
-   SERVER START
-========================================================= */
+// =============================
+// START SERVER
+// =============================
 async function startServer() {
+
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 30000
-    });
+
+    await mongoose.connect(process.env.MONGODB_URI);
 
     console.log("✅ MongoDB Connected");
 
     app.listen(PORT, () => {
-      console.log(`🚀 Server Running on Port ${PORT}`);
+
+      console.log("================================");
+      console.log(`🚀 Server Running : http://localhost:${PORT}`);
+      console.log("================================");
+
     });
+
   } catch (err) {
-    console.error("❌ MongoDB Connection Error:", err.message);
+
+    console.error("❌ MongoDB ERROR");
+    console.error(err);
+
   }
+
 }
 
 startServer();

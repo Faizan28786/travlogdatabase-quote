@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 
 const hotelSchema = new mongoose.Schema(
   {
+    region: {
+      type: String,
+      default: ""
+    },
     destination: {
       type: String,
       required: true,
@@ -85,9 +89,9 @@ const hotelSchema = new mongoose.Schema(
       trim: true
     },
     isActive: {
-  type: Boolean,
-  default: true
-},
+      type: Boolean,
+      default: true
+    },
     // IMPORTANT:
     // "perRoom" = room based hotel
     // "perPerson" = cruise / per pax costing

@@ -88,19 +88,39 @@ document.addEventListener("DOMContentLoaded", () => {
   updateTodayActivity();
 
   async function loadHotels() {
+
     try {
-      const res = await fetch(CONFIG.HOTEL_API);
-      const hotels = await res.json();
 
-      const hotelCountEl = document.getElementById("hotelCount");
+      const hotelRes = await fetch(`${CONFIG.API_BASE}/hotels?destination=Vietnam`);
+      const landRes = await fetch(`${CONFIG.API_BASE}/master-data/land-services`);
 
-      if (hotelCountEl) {
-        hotelCountEl.innerHTML = Array.isArray(hotels) ? hotels.length : 0;
+      const hotelJson = await hotelRes.json();
+      const landJson = await landRes.json();
+
+      console.log(hotelJson);
+
+      let hotelCount = 0;
+
+      if (hotelJson.success && hotelJson.hotels) {
+        hotelCount = hotelJson.hotels.length;
       }
 
-    } catch (err) {
-      console.error("LOAD HOTELS ERROR:", err);
+      const landCount =
+        landJson.success && landJson.data
+          ? landJson.data.length
+          : 0;
+
+      document.getElementById("hotelCount").innerHTML =
+        hotelCount + landCount;
+
     }
+
+    catch (err) {
+
+      console.log(err);
+
+    }
+
   }
 
   async function loadRecentQuotes() {

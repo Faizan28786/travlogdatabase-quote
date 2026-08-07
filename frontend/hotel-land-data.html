@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TravLog | Hotel & Land Service Master</title>
+
+    <link rel="stylesheet" href="assets/css/hotel-land-data.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+    <div class="masterContainer">
+
+        <!-- ===========================
+            LEFT PANEL
+    ============================ -->
+
+        <aside class="leftPanel">
+
+            <div class="panelTop">
+
+                <h2>
+
+                    Hotel & Land Service
+
+                </h2>
+
+                <p>
+
+                    Manage Hotels & Land Services
+
+                </p>
+
+            </div>
+
+            <div class="searchBox">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input id="searchHotel" type="text" placeholder="Search Hotel / City / Region">
+
+            </div>
+
+            <div class="tabBar">
+
+                <button id="hotelTab" class="tab active">
+
+                    Hotels
+
+                </button>
+
+                <button id="landTab" class="tab">
+
+                    Land Services
+
+                </button>
+
+            </div>
+
+            <div id="hotelTree" class="treeContainer">
+
+                <div class="loading">
+
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+
+                    Loading Hotels...
+
+                </div>
+
+            </div>
+
+        </aside>
+
+
+
+        <!-- ===========================
+            RIGHT PANEL
+    ============================ -->
+
+        <section class="rightPanel">
+
+            <!-- HEADER -->
+
+            <div class="rightHeader">
+
+                <div>
+
+                    <h1 id="hotelTitle">
+
+                        Hotel Details
+
+                    </h1>
+
+                    <p id="hotelLocation">
+
+                        Select hotel from left panel
+
+                    </p>
+
+                </div>
+
+                <div class="headerButtons">
+
+                    <button id="btnAddHotel" class="blueBtn">
+
+                        <i class="fa-solid fa-plus"></i>
+
+                        Hotel
+
+                    </button>
+
+                    <button id="btnAddRoom" class="greenBtn">
+
+                        <i class="fa-solid fa-bed"></i>
+
+                        Room
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- HOTEL SUMMARY -->
+
+            <div id="hotelSummary" class="summaryCard">
+
+                <div class="emptySummary">
+
+                    <i class="fa-solid fa-hotel"></i>
+
+                    <h3>
+
+                        No Hotel Selected
+
+                    </h3>
+
+                    <p>
+
+                        Please select hotel from left panel.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- ROOM TABLE -->
+
+            <div class="tableWrapper">
+
+                <table id="roomTable" class="roomTable">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Room Type</th>
+
+                            <th>Meal</th>
+
+                            <th>2D1N</th>
+
+                            <th>3D2N</th>
+
+                            <th>Extra Bed</th>
+
+                            <th>CNB</th>
+
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="roomTableBody">
+
+                        <tr>
+
+                            <td colspan="7">
+
+                                Select hotel to view rooms.
+
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </div>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/hotel-land-data.js"></script>
+
+</body>
+
+</html>

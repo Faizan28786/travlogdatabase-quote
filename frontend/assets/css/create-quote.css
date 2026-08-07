@@ -239,7 +239,19 @@ body {
 }
 
 .passenger-grid {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 10px;
+}
+
+s .passenger-grid .field {
+  min-width: 0;
+}
+
+.land-child-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .travel-country-grid {
@@ -1346,4 +1358,74 @@ body {
   margin-top: 4px;
   color: #888;
   font-size: 12px;
+}
+
+/* =========================
+   MOBILE RESPONSIVE
+========================= */
+
+@media screen and (max-width:768px) {
+
+  .quote-page {
+    padding: 12px;
+  }
+
+  .quote-grid {
+    display: block;
+  }
+
+  .left-column,
+  .right-column {
+    width: 100%;
+  }
+
+  .card {
+    padding: 14px;
+  }
+
+}
+
+/* ===========================
+   Child Age Modal
+=========================== */
+
+#childAgeList {
+
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+
+}
+
+.child-age-row {
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+
+}
+
+.child-age-row label {
+
+  font-weight: 600;
+  min-width: 90px;
+
+}
+
+.child-age-row select {
+
+  flex: 1;
+  height: 45px;
+  border: 1px solid #dbe5ff;
+  border-radius: 10px;
+  padding: 0 12px;
+
+}
+.quotation-notes{
+    white-space: pre-wrap;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0;
 }

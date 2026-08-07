@@ -35,7 +35,24 @@ function normalizeRoomType(roomType) {
 function normalizeCategory(category) {
   return toText(category).replace(/\s+/g, " ").trim();
 }
+function getRegion(city) {
 
+  const map = {
+
+    "Hanoi": "North Vietnam",
+    "Halong Bay": "North Vietnam",
+    "Sapa": "North Vietnam",
+
+    "Danang": "Central Vietnam",
+    "Hoi An": "Central Vietnam",
+
+    "Ho Chi Minh City": "South Vietnam",
+    "Phu Quoc": "South Vietnam"
+
+  };
+
+  return map[city] || "";
+}
 function makeHotel({
   city,
   hotelName,
@@ -50,6 +67,7 @@ function makeHotel({
 }) {
   return {
     destination: DESTINATION,
+    region: getRegion(city),   // <-- NEW
     city: toText(city),
     hotelName: normalizeHotelName(hotelName),
     category: normalizeCategory(category),
@@ -379,7 +397,7 @@ async function seedHotels() {
     console.error("❌ Seed error:", error);
     try {
       await mongoose.connection.close();
-    } catch (_) {}
+    } catch (_) { }
     process.exit(1);
   }
 }

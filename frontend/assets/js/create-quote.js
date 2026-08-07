@@ -18,7 +18,8 @@ const childWithoutBedEl = document.getElementById("childWithoutBed");
 const childWithBedAgeEl = document.getElementById("childWithBedAge");
 const childWithoutBedAgeEl = document.getElementById("childWithoutBedAge");
 const roomsEl = document.getElementById("rooms");
-
+const landChildEl = document.getElementById("landChild");
+const landChildAgeEl = document.getElementById("landChildAge");
 
 const pickupVehicleEl = document.getElementById("pickupVehicle");
 const dropVehicleEl = document.getElementById("dropVehicle");
@@ -37,10 +38,18 @@ const summaryTotalPaxEl = document.getElementById("summaryTotalPax");
 const summaryTotalNightsEl = document.getElementById("summaryTotalNights");
 const summaryTotalRoomsEl = document.getElementById("summaryTotalRooms");
 const hotelCostEl = document.getElementById("hotelCost");
+const landCostEl = document.getElementById("landCost");
+const landChildCostEl =
+  document.getElementById("landChildCost");
+const landChildBreakdownEl =
+  document.getElementById("landChildBreakdown");
 const transferCostEl = document.getElementById("transferCost");
 const grandTotalEl = document.getElementById("grandTotal");
 
+
 const previewBox = document.getElementById("previewBox");
+
+let landChildAge = "";
 /* ======================================
    MULTI OPTION SYSTEM
 ====================================== */
@@ -58,6 +67,7 @@ function getCurrentQuoteData() {
 
     adults: adultsEl.value,
     rooms: roomsEl.value,
+
     childWithBed: childWithBedEl.value,
     childWithoutBed: childWithoutBedEl.value,
     childWithoutBedAge: childWithoutBedAgeEl.value,
@@ -65,22 +75,18 @@ function getCurrentQuoteData() {
     travelDate: travelDateEl.value,
     country: countryEl.value,
 
+    // ===== LAND SERVICES SAVE =====
+    landServices: getLandServicesData(),
+
     segments: [...segmentsContainer.querySelectorAll(".city-segment")].map(seg => ({
 
       city: seg.querySelector(".segment-city")?.value || "",
-
       mealPlan: seg.querySelector(".segment-meal-plan")?.value || "",
-
       hotel: seg.querySelector(".segment-hotel")?.value || "",
-
       roomType: seg.querySelector(".segment-room-type")?.value || "",
-
       checkIn: seg.querySelector(".segment-checkin")?.value || "",
-
       checkOut: seg.querySelector(".segment-checkout")?.value || "",
-
-      nights: seg.querySelector(".segment-nights")?.value || "1",
-
+      nights: seg.querySelector(".segment-nights")?.value || "1"
 
     }))
 
@@ -90,17 +96,19 @@ function getCurrentQuoteData() {
 function restoreQuoteData(data) {
 
   if (!data) return;
-  segmentCounter = 0;   // <<<<< YE ADD KARO
 
-  adultsEl.value = data.adults;
-  roomsEl.value = data.rooms;
-  childWithBedEl.value = data.childWithBed;
-  childWithoutBedEl.value = data.childWithoutBed;
-  childWithoutBedAgeEl.value = data.childWithoutBedAge;
-
-  travelDateEl.value = data.travelDate;
-  countryEl.value = data.country;
   segmentCounter = 0;
+
+  adultsEl.value = data.adults || 0;
+  roomsEl.value = data.rooms || 1;
+
+  childWithBedEl.value = data.childWithBed || 0;
+  childWithoutBedEl.value = data.childWithoutBed || 0;
+  childWithoutBedAgeEl.value = data.childWithoutBedAge || "";
+
+  travelDateEl.value = data.travelDate || "";
+  countryEl.value = data.country || "";
+
   segmentsContainer.innerHTML = "";
 
   data.segments.forEach(seg => {
@@ -109,8 +117,11 @@ function restoreQuoteData(data) {
 
   });
 
+  // Restore saved land services
+  window.restoredLandServices = data.landServices || [];
+
   calculateQuote();
-  renderLandDays();
+
 }
 function saveCurrentOption() {
 
@@ -272,20 +283,52 @@ let currentHotelCost = 0;
 let currentTransferCost = 0;
 let currentGrandTotal = 0;
 let lastSavedQuote = null;
+let currentLandCost = 0;
+/* ===========================
+   CHILD AGE HISTORY
+=========================== */
+
+let cnbAgeHistory = [];
+let cwbAgeHistory = [];
 
 let segmentCounter = 0;
 let currentModalAction = null;
 
+function updateChildHistory(history, count, age) {
+
+  // Child increase
+  if (count > history.length) {
+
+    history.push(age);
+
+  }
+
+  // Child decrease
+  else if (count < history.length) {
+
+    history.splice(count);
+
+  }
+
+}
 /* =========================================================
    CHILD AGE / CHARGE RULES
 ========================================================= */
 function getChildChargeConfig() {
+
+  const cwb = Number(childWithBedEl?.value || 0);
+  const lca = Number(landChildEl?.value || 0);
+
   return {
     cwbAge: childWithBedAgeEl?.value || "4-10",
     cnbAge: childWithoutBedAgeEl?.value || "4-10",
-    cwbCount: Number(childWithBedEl?.value || 0),
+
+    // Child With Bed + Land Child
+    cwbCount: cwb + lca,
+
     cnbCount: Number(childWithoutBedEl?.value || 0)
   };
+
 }
 
 /* =========================================================
@@ -341,9 +384,87 @@ function bindTopLevelEvents() {
 
   adultsEl?.addEventListener("input", calculateQuote);
   childWithBedEl?.addEventListener("input", calculateQuote);
-  childWithoutBedEl?.addEventListener("input", calculateQuote);
-  childWithBedAgeEl?.addEventListener("change", calculateQuote);
+  childWithoutBedEl?.addEventListener("input", () => {
+
+    const count = Number(childWithoutBedEl.value || 0);
+
+    updateChildHistory(
+      cnbAgeHistory,
+      count,
+      childWithoutBedAgeEl.value
+    );
+
+    // Naya child add hua to age dobara select karni padegi
+    if (count > cnbAgeHistory.length - 1) {
+      childWithoutBedAgeEl.value = "";
+    }
+
+    calculateQuote();
+
+  });
+  childWithoutBedAgeEl?.addEventListener("change", () => {
+
+    if (cnbAgeHistory.length > 0) {
+
+      cnbAgeHistory[cnbAgeHistory.length - 1] =
+        childWithoutBedAgeEl.value;
+
+    }
+
+    console.log("CNB History :", cnbAgeHistory);
+
+    calculateQuote();
+
+  });
   childWithoutBedAgeEl?.addEventListener("change", calculateQuote);
+
+  landChildEl?.addEventListener("input", () => {
+
+    const count = Number(landChildEl.value || 0);
+
+    updateChildHistory(
+      cwbAgeHistory,
+      count,
+      landChildAgeEl.value
+    );
+
+    // New child add hua to age dobara select karni padegi
+    if (count > cwbAgeHistory.length - 1) {
+
+      landChildAgeEl.value = "";
+
+    }
+
+    calculateQuote();
+    buildPreview();   // <-- add this
+
+  });
+
+  landChildAgeEl?.addEventListener("change", () => {
+
+    if (cwbAgeHistory.length > 0) {
+
+      cwbAgeHistory[cwbAgeHistory.length - 1] =
+        landChildAgeEl.value;
+
+    }
+
+    console.log("LCA History :", cwbAgeHistory);
+
+    document.querySelectorAll(".land-service").forEach(select => {
+
+      if (select.value) {
+
+        select.dispatchEvent(new Event("change"));
+
+      }
+
+    });
+
+    calculateQuote();
+    buildPreview();
+
+  });
 
   travelDateEl?.addEventListener("change", buildPreview);
 
@@ -652,44 +773,6 @@ function createSegment(segmentData = null) {
   }
   hydrateSegment(segment);
   // Restore previous values if data exists
-  if (segmentData) {
-
-    segment.querySelector(".segment-city").value =
-      segmentData.city || "";
-
-    segment.querySelector(".segment-meal-plan").value =
-      segmentData.mealPlan || "CP";
-
-    segment.querySelector(".segment-checkin").value =
-      segmentData.checkIn || "";
-
-    segment.querySelector(".segment-checkout").value =
-      segmentData.checkOut || "";
-
-    segment.querySelector(".segment-nights").value =
-      segmentData.nights || 1;
-
-
-    // Hotel & Room load hone ke baad set karenge
-    setTimeout(() => {
-
-      segment.querySelector(".segment-hotel").value =
-        segmentData.hotel || "";
-
-      // room list reload
-      segment.querySelector(".segment-hotel")
-        .dispatchEvent(new Event("change"));
-
-      setTimeout(() => {
-
-        segment.querySelector(".segment-room-type").value =
-          segmentData.roomType || "";
-
-      }, 150);
-
-    }, 150);
-
-  }
 
   const removeBtn = segment.querySelector(".segment-remove-btn");
   removeBtn?.addEventListener("click", () => {
@@ -1038,6 +1121,9 @@ function calculateSegmentCost(segmentEl) {
   let childWithoutBedCharges = 0;
   let rateUnavailable = false;
 
+  let landChildNoBedRate = 0;
+  let landChildWithBedRate = 0;
+
   if (selectedHotel) {
     const perNight = getPerNightRate(selectedHotel);
 
@@ -1056,6 +1142,38 @@ function calculateSegmentCost(segmentEl) {
     const childConfig = getChildChargeConfig();
     const extraBedRate = getHotelExtraBedRate(selectedHotel);
     const childNoBedRate = getHotelChildNoBedRate(selectedHotel);
+    // Land service ka total per person
+    const landPerPerson = calculateLandCost();
+
+    // Child Without Bed (Land)
+    landChildNoBedRate = 0;
+
+    cnbAgeHistory.forEach(age => {
+
+      if (age === "0-3") return;
+
+      let percent = 1;
+
+      if (age === "4-6") percent = 0.5;
+      else if (age === "7-9") percent = 0.8;
+
+      landChildNoBedRate += landPerPerson * percent;
+
+    });
+
+    // Child With Bed LCA (Land)
+    landChildWithBedRate = 0;
+
+    cwbAgeHistory.forEach(age => {
+
+      let percent = 1;
+
+      if (age === "4-6") percent = 0.5;
+      else if (age === "7-9") percent = 0.8;
+
+      landChildWithBedRate += landPerPerson * percent;
+
+    });
 
     // Child With Bed
     if (childConfig.cwbCount > 0) {
@@ -1108,11 +1226,37 @@ function calculateSegmentCost(segmentEl) {
     childWithBedCharges,
     childWithoutBedCharges,
     childCharges,
+    landChildNoBedRate,
+    landChildWithBedRate,
     total: segmentTotal,
     rateUnavailable
   };
 }
+/* ===========================
+   CHILD AGE HISTORY HELPERS
+=========================== */
 
+function updateAgeHistory(history, count, currentAge) {
+
+  // Child badh gaya
+  if (count > history.length) {
+
+    history.push(currentAge || "");
+
+  }
+
+  // Child kam hua
+  else if (count < history.length) {
+
+    history.splice(count);
+
+  }
+
+}
+function resetAgeDropdown(select) {
+
+  select.value = "";
+}
 /* =========================================================
    CALCULATE QUOTE
 ========================================================= */
@@ -1120,7 +1264,12 @@ function calculateQuote() {
   const adults = Number(adultsEl?.value || 0);
   const childWithBed = Number(childWithBedEl?.value || 0);
   const childWithoutBed = Number(childWithoutBedEl?.value || 0);
-  const totalPax = adults + childWithBed + childWithoutBed;
+  const landChild = Number(landChildEl?.value || 0);
+
+  const totalPax =
+    adults +
+    childWithoutBed +
+    landChild;
 
   if (totalPaxInputEl) totalPaxInputEl.value = totalPax;
   if (summaryTotalPaxEl) summaryTotalPaxEl.textContent = totalPax;
@@ -1144,6 +1293,8 @@ function calculateQuote() {
   });
 
   let transferCost = 0;
+  let landCost = 0;
+  let landChildCost = 0;
   if (masterData?.vehicles?.length) {
     if (pickupVehicleEl?.value) {
       const pickupVehicle = masterData.vehicles.find(v => String(v.id) === String(pickupVehicleEl.value));
@@ -1155,12 +1306,21 @@ function calculateQuote() {
       if (dropVehicle) transferCost += Number(dropVehicle.price || 0);
     }
   }
+  // Land Cost
+  if (typeof calculateLandCost === "function") {
 
-  const grandTotal = totalHotelCost + transferCost;
+    landCost = calculateLandCost();
+
+  }
+  const landChildData = calculateLandChildCost();
+
+  landChildCost = landChildData.total;
+  const grandTotal = totalHotelCost + transferCost + landCost + landChildCost;
 
   currentHotelCost = totalHotelCost;
   currentTransferCost = transferCost;
   currentGrandTotal = grandTotal;
+  currentLandCost = landCost;
 
   if (summaryTotalNightsEl) summaryTotalNightsEl.textContent = totalSegmentNights;
   if (summaryTotalRoomsEl) summaryTotalRoomsEl.textContent = totalRooms;
@@ -1174,8 +1334,26 @@ function calculateQuote() {
     quoteOptions[currentOption].data = getCurrentQuoteData();
 
   }
+  if (landCostEl) {
+    landCostEl.textContent = formatCurrency(currentLandCost);
+  }
+  if (landChildCostEl) {
+
+    landChildCostEl.textContent =
+      formatCurrency(landChildData.total);
+
+  }
+
+  if (landChildBreakdownEl) {
+
+    landChildBreakdownEl.textContent =
+      landChildData.breakdown.join(" + ") +
+      " = " +
+      formatCurrency(landChildData.total);
+
+  }
   buildPreview();
-  renderLandDays();
+  // renderLandDays();
 }
 
 
@@ -1258,7 +1436,9 @@ function getAllSegmentsData() {
    BUILD PREVIEW
 ========================================================= */
 function buildPreview() {
+
   if (!previewBox) return;
+
 
   const quoteNo = quoteNoEl?.textContent || "-";
   const country = countryEl?.value || "-";
@@ -1267,10 +1447,19 @@ function buildPreview() {
   const adults = Number(adultsEl?.value || 0);
   const childWithBed = Number(childWithBedEl?.value || 0);
   const childWithoutBed = Number(childWithoutBedEl?.value || 0);
+  const landChild = Number(landChildEl?.value || 0);
+
+  console.log("childWithBed =", childWithBed);
+  console.log("landChild =", landChild);
   const totalPax = adults + childWithBed + childWithoutBed;
 
   const cwbAge = childWithBedAgeEl?.value || "-";
-  const cnbAge = childWithoutBedAgeEl?.value || "-";
+  const cnbAge =
+    cnbAgeHistory.length
+      ? cnbAgeHistory
+        .map((age, index) => `Child ${index + 1}: ${age}`)
+        .join(", ")
+      : "-";
 
   const pickupText =
     pickupVehicleEl?.selectedOptions?.[0]?.textContent ||
@@ -1285,6 +1474,9 @@ function buildPreview() {
   let totalPerPerson = 0;
   let totalExtraPerson = 0;
   let totalChildNoBed = 0;
+  let totalLandExtraPerson = 0;
+  let totalLandChildNoBed = 0;
+  let whatsappNotes = "";
 
   segments.forEach(seg => {
 
@@ -1295,6 +1487,20 @@ function buildPreview() {
     totalChildNoBed += Number(seg.childWithoutBedCharges || 0);
 
   });
+  const landChildData = calculateLandChildCost();
+
+  totalLandExtraPerson = landChildData.cwbTotal;
+
+  totalLandChildNoBed = landChildData.cnbTotal;
+  const hotelExtraRate =
+    childWithBed > 0
+      ? totalExtraPerson / childWithBed
+      : 0;
+
+  const landExtraRate =
+    landChild > 0
+      ? totalLandExtraPerson / landChild
+      : 0;
   /* ===========================
      ACCOMMODATION
   ============================ */
@@ -1382,6 +1588,80 @@ function buildPreview() {
 `;
 
   });
+  let itineraryHtml = "";
+
+  const landServices = getLandServicesData();
+
+  if (landServices.length > 0) {
+
+    itineraryHtml = `
+
+<div class="quotation-section-title">
+    <strong>DAY WISE BRIEF ITINERARY</strong>
+</div>
+
+<div class="quotation-package">
+
+`;
+
+    const groupedDays = {};
+
+    landServices.forEach(service => {
+
+      if (!groupedDays[service.day]) {
+        groupedDays[service.day] = [];
+      }
+
+      groupedDays[service.day].push(service.service);
+
+    });
+
+    const firstDate =
+      document.querySelector(".segment-checkin")?.value;
+
+    Object.keys(groupedDays).forEach(day => {
+
+      let currentDate = "";
+
+      if (firstDate) {
+
+        const d = new Date(firstDate);
+
+        d.setDate(d.getDate() + (Number(day) - 1));
+
+        const dd = String(d.getDate()).padStart(2, "0");
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const yyyy = d.getFullYear();
+
+        currentDate = `${dd}-${mm}-${yyyy}`;
+
+      }
+
+      itineraryHtml += `
+
+<div class="package-row">
+
+    <span>
+        <strong>DAY ${day} (${currentDate}):</strong>
+    </span>
+
+    <span class="package-value">
+        ${groupedDays[day].join(" + ")}
+    </span>
+
+</div>
+
+`;
+
+    });
+
+    itineraryHtml += `
+
+</div>
+
+`;
+
+  }
   const optionTitle = quoteOptions[currentOption]?.title || "Option 1";
   const previewHtml = `
 
@@ -1425,8 +1705,10 @@ function buildPreview() {
 
         <span class="package-value">
             <strong>
-                ${childWithBed > 0
-      ? `${formatCurrency(totalExtraPerson / childWithBed)} Per Person`
+${(childWithBed > 0 || landChild > 0)
+      ? `${formatCurrency(hotelExtraRate)}
+ + ${formatCurrency(landExtraRate)}
+ = ${formatCurrency(hotelExtraRate + landExtraRate)} Per Person`
       : "N/A"}
             </strong>
         </span>
@@ -1439,7 +1721,13 @@ function buildPreview() {
 
         <span class="package-value">
             <strong>
-                ${formatCurrency(totalChildNoBed)} Per Person
+                ${childWithoutBed > 0
+      ? `${formatCurrency(totalChildNoBed / childWithoutBed)}
+ + ${formatCurrency(totalLandChildNoBed / childWithoutBed)}
+ = ${formatCurrency(
+        (totalChildNoBed + totalLandChildNoBed) / childWithoutBed
+      )} Per Person`
+      : "N/A"}
             </strong>
         </span>
     </div>
@@ -1456,11 +1744,13 @@ function buildPreview() {
         <span>E-Visa:</span>
 
         <span class="package-value">
-            <strong>₹ 2,850 Per Person</strong>
+            <strong>₹ 2,900 Per Person(05-06 working days)</strong>
         </span>
     </div>
 
 </div>
+${itineraryHtml}
+
 
 </div>
 
@@ -1515,10 +1805,154 @@ function buildPreview() {
   );
 
   whatsappText.push("Compulsory Tip: USD 3 Per Person / Day");
-  whatsappText.push("E-Visa: ₹2,850 Per Person");
+  whatsappText.push("E-Visa: ₹2,900 Per Person");
+
+
+  // ==========================
+  // DAY WISE BRIEF ITINERARY
+  // ==========================
+  const selectedCountry = (countryEl?.value || "").toLowerCase();
+
+  if (selectedCountry === "vietnam") {
+
+    whatsappNotes = `
+Notes:
+
+- BANA HILLS : Wax Museum entrance fee (USD 5/pax),  Wine Cellar entrance fee (USD 5/pax for Silver ticket, including 1 glass of wine, or cocktail, or fruit juice), coin games at Fantasy Park are not included in the entrance ticket, joining them will be at your own accounT""
+- Meals as indicated in Brief itinerary only: B = Breakfast ; L = Lunch ; D = Dinner
+- Indian Dinner are served at Indian restaurant only (Outside Hotel)
+- SIC Tour Stand Local Food Only
+-Note: SIC sightseeing have, fix Pickup points, Guest need to reach at the given point on time by their own.
+
+SERVICES INCLUDED
+● A/C airport transfer on Pvt Suv 7s & Tours as mentioned in Itinerary
+● Accommodation double/ twin sharing room
+● English speaking local tour guides
+● Meals without drinks as indicated: B = Breakfast ; L = Lunch ; D = Dinner (Indian Dinner served at Indian restaurant / Not at the hotel guest staying)
+● All sightseeing fees as program
+● 02 Water bottles on each day at the hotel.
+
+PAYMENT TERM:
+· A 50% deposit is required upon confirmation of the booking.
+·100% pre-payment must be made 7 days prior arrival.
+------------------------------------------------------
+● Fast Track Immigration(Arrivals)
+(Rates subject to change by Immigration authorities)
+✈️ Da Nang (DAD): $19 per person
+✈️ Tan Son Nhat – Ho Chi Minh City (SGN):
+• Line 2,3 – $25 per person
+• Line 1 – $45 per person
+
+✈️ Noi Bai – Hanoi (HAN): $20 per person
+✈️ Phu Quoc (PQC): $19 per person
+------------------------------------------------------
+SERVICES EXCLUDED
+● Visa approval and visa stamp fee
+● International air ticket and domestic flights.
+● Late check-out fee and early check in
+● Other meals not mentioned in programs
+● Drinks, personal expenses and others…
+● Bank Fees: 40$ Per transaction  / any mode of payment
+● 3$ Per Person per day Compulsory Tips for tour guide and driver""
+
+IMP Notes :
+- Local restaurants and Indian restaurants in Vietnam are very basic. Some restaurants might not have air conditioner
+- Language is a big Hurdle, Driver will not understand english, Few Guides May have issues with fluent English
+
+Luggage:
+- Taxi/CAB in Vietnam has no Top luggage carrier / Hence luggage need to be Less as per Vehicle
+- If luggage are more and unable to fit in a given Vehicle, Surcharge will be applicable for Separate Vehicle Or Need to upgrade vehicle with additional cost.
+
+Suggested Apps:
+- Grab App for : Food, Taxi
+- Google Translator
+
+Cruise Notes:
+*Halong Bay Cruise* has limited water. They generally give 1 Glass of water during lunch and dinner. For other times you will require to buy from them which will cost around USD 2 per Bottle (Approx).
+Halong Bay Cruise doesn't have Indian food onboard.
+
+Points to be Noted:
+- Please keep the soft copy and hard copy of the tour documents with you.
+- Please carry light clothes, Sun glasses, Rain coats, Ponchos, and umbrellas.
+- For NRI Pax need to carry OCI or multiple visa Copy with you.
+- Travel Insurance is recommended.
+- Carry Universal Adapter.
+- Always keep the Business card of the Hotel with you.
+- Please don’t carry any valuable ornaments with you.
+- Tap water is not safe in Vietnam.
+- In Vietnam at the airport you can do Money Exchange & buy a SIM Card.
+- Mini Bar is not included in the tour cost.
+- Check-in time is at 2 PM & Check-out time is at 12 PM.
+-Timing is very important as the sightseeing is time based.
+- Coach is not on Disposal & will be from a point to point basis. Deviation is not possible and we will stick to the itinerary and inclusions mentioned in the package.
+- No Alcohol / Food consumption is allowed in the Vehicle/bus"
+`;
+
+  }
+
+  let whatsappItinerary = "";
+  if (landServices.length > 0) {
+
+    whatsappText.push("");
+    whatsappText.push("DAY WISE BRIEF ITINERARY");
+
+    const groupedDays = {};
+
+    landServices.forEach(service => {
+
+      if (!groupedDays[service.day]) {
+        groupedDays[service.day] = [];
+      }
+
+      groupedDays[service.day].push(service.service);
+
+    });
+
+    const firstDate =
+      document.querySelector(".segment-checkin")?.value;
+
+    Object.keys(groupedDays).forEach(day => {
+
+      let currentDate = "";
+
+      if (firstDate) {
+
+        const d = new Date(firstDate);
+
+        d.setDate(d.getDate() + (Number(day) - 1));
+
+        const dd = String(d.getDate()).padStart(2, "0");
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const yyyy = d.getFullYear();
+
+        currentDate = `${dd}-${mm}-${yyyy}`;
+
+      }
+
+      whatsappItinerary += `DAY ${day} (${currentDate}) : ${groupedDays[day].join(" + ")}\n`;
+
+    });
+
+  }
+  if (
+    currentOption === Object.keys(quoteOptions).length - 1 &&
+    whatsappItinerary
+  ) {
+
+    whatsappText.push("");
+    whatsappText.push("DAY WISE BRIEF ITINERARY");
+    whatsappText.push(whatsappItinerary.trim());
+
+  }
+  if (
+    currentOption === Object.keys(quoteOptions).length - 1 &&
+    whatsappNotes
+  ) {
+    whatsappText.push("");
+    whatsappText.push(whatsappNotes.trim());
+  }
 
   window.latestWhatsappText = whatsappText.join("\n");
-
   previewBox.innerHTML = previewHtml;
   if (quoteOptions[currentOption]) {
 
@@ -1528,62 +1962,407 @@ function buildPreview() {
 
   /* Save same HTML globally */
   window.latestPreviewHtml = previewHtml;
-  // function getQuotationHTML(includeButtons = true) {
 
-  //   const quotation = previewBox.innerHTML;
+}
+function buildPreviewFinal(data = null) {
 
-  //   if (!includeButtons) {
-  //     return quotation;
-  //   }
+  if (!previewBox) return;
+  if (data) {
+    restoreQuoteData(data);
+  }
 
-  //   return `
-  //       ${quotation}
+  const segments = getAllSegmentsData();
 
-  //       <div class="preview-actions no-print">
+  let totalPerPerson = 0;
+  let totalExtraPerson = 0;
+  let totalChildNoBed = 0;
+  let totalLandExtraPerson = 0;
+  let totalLandChildNoBed = 0;
 
-  //           <button id="previewPrintBtn"
-  //           class="preview-action-btn preview-print">
+  segments.forEach(seg => {
+    totalPerPerson += Number(seg.baseHotelCost || 0);
+    totalExtraPerson += Number(seg.childWithBedCharges || 0);
+    totalChildNoBed += Number(seg.childWithoutBedCharges || 0);
+    totalLandExtraPerson += Number(seg.landChildWithBedRate || 0);
+    totalLandChildNoBed += Number(seg.landChildNoBedRate || 0);
+  });
 
-  //               <i class="fa-solid fa-print"></i>
-  //               Print
+  const childWithBed = Number(childWithBedEl?.value || 0);
+  const childWithoutBed = Number(childWithoutBedEl?.value || 0);
+  const landChild = Number(landChildEl?.value || 0);
 
-  //           </button>
+  const hotelExtraRate =
+    childWithBed > 0
+      ? totalExtraPerson / childWithBed
+      : 0;
 
-  //           <button id="previewPdfBtn"
-  //           class="preview-action-btn preview-pdf">
+  const landExtraRate =
+    landChild > 0
+      ? totalLandExtraPerson / landChild
+      : 0;
+  const cnbAgeText =
+    cnbAgeHistory.length
+      ? cnbAgeHistory
+        .map((age, i) => `Child ${i + 1}: ${age}`)
+        .join(", ")
+      : "-";
 
-  //               <i class="fa-solid fa-file-pdf"></i>
-  //               PDF
+  const optionTitle =
+    quoteOptions[currentOption]?.title || "Option 1";
 
-  //           </button>
+  let quotationAccommodation = "";
 
-  //           <button id="previewWordBtn"
-  //           class="preview-action-btn preview-word">
+  segments.forEach(seg => {
 
-  //               <i class="fa-solid fa-file-word"></i>
-  //               Word
+    quotationAccommodation += `
 
-  //           </button>
+<div class="quotation-row">
+  <div class="quotation-city">
+    <strong>${seg.nights}nt</strong>
+    <strong>${seg.city}</strong>
+    -
+    <strong>
+      ${seg.hotelName}
+      ${seg.hotelCategory ? `(${seg.hotelCategory})` : ""}
+    </strong>
+    ${seg.roomType ? " / " + seg.roomType : ""}
+  </div>
+</div>
 
-  //           <button id="previewWhatsappBtn"
-  //           class="preview-action-btn preview-whatsapp">
+`;
 
-  //               <i class="fa-brands fa-whatsapp"></i>
-  //               WhatsApp
+  });
+  let itineraryHtml = "";
+  let notesHtml = "";
 
-  //           </button>
+  const landServices = data?.landServices || getLandServicesData();
+  let whatsappItinerary = "";
+  let whatsappNotes = "";
 
-  //           <button id="previewEmailBtn"
-  //           class="preview-action-btn preview-email">
+  if (landServices.length > 0) {
 
-  //               <i class="fa-solid fa-envelope"></i>
-  //               Email
+    itineraryHtml = `
 
-  //           </button>
+<div class="quotation-section-title">
+    <strong>DAY WISE BRIEF ITINERARY</strong>
+</div>
 
-  //       </div>
-  //   `;
-  // }
+<div class="quotation-package">
+
+`;
+
+    const groupedDays = {};
+
+    landServices.forEach(service => {
+
+      if (!groupedDays[service.day]) {
+        groupedDays[service.day] = [];
+      }
+
+      groupedDays[service.day].push(service.service);
+
+    });
+
+    const firstDate =
+      data?.segments?.[0]?.checkIn ||
+      document.querySelector(".segment-checkin")?.value;
+
+    Object.keys(groupedDays).forEach(day => {
+
+      let currentDate = "";
+
+      if (firstDate) {
+
+        const d = new Date(firstDate);
+
+        d.setDate(d.getDate() + (Number(day) - 1));
+
+        const dd = String(d.getDate()).padStart(2, "0");
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const yyyy = d.getFullYear();
+
+        currentDate = `${dd}-${mm}-${yyyy}`;
+
+      }
+
+      itineraryHtml += `
+      
+
+<div class="package-row">
+
+    <span>
+        <strong>DAY ${day} (${currentDate}):</strong>
+    </span>
+
+    <span class="package-value">
+        ${groupedDays[day].join(" + ")}
+    </span>
+
+</div>
+
+`;
+      whatsappItinerary += `DAY ${day} (${currentDate}) : ${groupedDays[day].join(" + ")}\n`;
+
+    });
+
+    itineraryHtml += `
+
+</div>
+
+`;
+
+  }
+  const selectedCountry = (countryEl?.value || "").toLowerCase();
+
+  if (selectedCountry === "vietnam") {
+
+    notesHtml = `
+    
+    
+    <div class="quotation-section-title">
+    <strong>NOTES</strong>
+</div>
+<pre class="quotation-notes">
+- BANA HILLS : Wax Museum entrance fee (USD 5/pax),  Wine Cellar entrance fee (USD 5/pax for Silver ticket, including 1 glass of wine, or cocktail, or fruit juice), coin games at Fantasy Park are not included in the entrance ticket, joining them will be at your own accounT""
+- Meals as indicated in Brief itinerary only: B = Breakfast ; L = Lunch ; D = Dinner
+- Indian Dinner are served at Indian restaurant only (Outside Hotel)
+- SIC Tour Stand Local Food Only
+-Note: SIC sightseeing have, fix Pickup points, Guest need to reach at the given point on time by their own.
+
+SERVICES INCLUDED
+● A/C airport transfer on Pvt Suv 7s & Tours as mentioned in Itinerary
+● Accommodation double/ twin sharing room
+● English speaking local tour guides
+● Meals without drinks as indicated: B = Breakfast ; L = Lunch ; D = Dinner (Indian Dinner served at Indian restaurant / Not at the hotel guest staying)
+● All sightseeing fees as program
+● 02 Water bottles on each day at the hotel.
+
+PAYMENT TERM:
+· A 50% deposit is required upon confirmation of the booking.
+·100% pre-payment must be made 7 days prior arrival.
+------------------------------------------------------
+● Fast Track Immigration(Arrivals)
+(Rates subject to change by Immigration authorities)
+✈️ Da Nang (DAD): $19 per person
+✈️ Tan Son Nhat – Ho Chi Minh City (SGN):
+• Line 2,3 – $25 per person
+• Line 1 – $45 per person
+
+✈️ Noi Bai – Hanoi (HAN): $20 per person
+✈️ Phu Quoc (PQC): $19 per person
+------------------------------------------------------
+SERVICES EXCLUDED
+● Visa approval and visa stamp fee
+● International air ticket and domestic flights.
+● Late check-out fee and early check in
+● Other meals not mentioned in programs
+● Drinks, personal expenses and others…
+● Bank Fees: 40$ Per transaction  / any mode of payment
+● 3$ Per Person per day Compulsory Tips for tour guide and driver""
+
+IMP Notes :
+- Local restaurants and Indian restaurants in Vietnam are very basic. Some restaurants might not have air conditioner
+- Language is a big Hurdle, Driver will not understand english, Few Guides May have issues with fluent English
+
+Luggage:
+- Taxi/CAB in Vietnam has no Top luggage carrier / Hence luggage need to be Less as per Vehicle
+- If luggage are more and unable to fit in a given Vehicle, Surcharge will be applicable for Separate Vehicle Or Need to upgrade vehicle with additional cost.
+
+Suggested Apps:
+- Grab App for : Food, Taxi
+- Google Translator
+
+Cruise Notes:
+*Halong Bay Cruise* has limited water. They generally give 1 Glass of water during lunch and dinner. For other times you will require to buy from them which will cost around USD 2 per Bottle (Approx).
+Halong Bay Cruise doesn't have Indian food onboard.
+
+Points to be Noted:
+- Please keep the soft copy and hard copy of the tour documents with you.
+- Please carry light clothes, Sun glasses, Rain coats, Ponchos, and umbrellas.
+- For NRI Pax need to carry OCI or multiple visa Copy with you.
+- Travel Insurance is recommended.
+- Carry Universal Adapter.
+- Always keep the Business card of the Hotel with you.
+- Please don’t carry any valuable ornaments with you.
+- Tap water is not safe in Vietnam.
+- In Vietnam at the airport you can do Money Exchange & buy a SIM Card.
+- Mini Bar is not included in the tour cost.
+- Check-in time is at 2 PM & Check-out time is at 12 PM.
+-Timing is very important as the sightseeing is time based.
+- Coach is not on Disposal & will be from a point to point basis. Deviation is not possible and we will stick to the itinerary and inclusions mentioned in the package.
+- No Alcohol / Food consumption is allowed in the Vehicle/bus"
+
+`;
+
+  }
+  if (selectedCountry === "vietnam") {
+
+    whatsappNotes = `
+
+Notes:
+
+- BANA HILLS : Wax Museum entrance fee (USD 5/pax),  Wine Cellar entrance fee (USD 5/pax for Silver ticket, including 1 glass of wine, or cocktail, or fruit juice), coin games at Fantasy Park are not included in the entrance ticket, joining them will be at your own accounT""
+- Meals as indicated in Brief itinerary only: B = Breakfast ; L = Lunch ; D = Dinner
+- Indian Dinner are served at Indian restaurant only (Outside Hotel)
+- SIC Tour Stand Local Food Only
+-Note: SIC sightseeing have, fix Pickup points, Guest need to reach at the given point on time by their own.
+
+SERVICES INCLUDED
+● A/C airport transfer on Pvt Suv 7s & Tours as mentioned in Itinerary
+● Accommodation double/ twin sharing room
+● English speaking local tour guides
+● Meals without drinks as indicated: B = Breakfast ; L = Lunch ; D = Dinner (Indian Dinner served at Indian restaurant / Not at the hotel guest staying)
+● All sightseeing fees as program
+● 02 Water bottles on each day at the hotel.
+
+PAYMENT TERM:
+· A 50% deposit is required upon confirmation of the booking.
+·100% pre-payment must be made 7 days prior arrival.
+------------------------------------------------------
+● Fast Track Immigration(Arrivals)
+(Rates subject to change by Immigration authorities)
+✈️ Da Nang (DAD): $19 per person
+✈️ Tan Son Nhat – Ho Chi Minh City (SGN):
+• Line 2,3 – $25 per person
+• Line 1 – $45 per person
+
+✈️ Noi Bai – Hanoi (HAN): $20 per person
+✈️ Phu Quoc (PQC): $19 per person
+------------------------------------------------------
+SERVICES EXCLUDED
+● Visa approval and visa stamp fee
+● International air ticket and domestic flights.
+● Late check-out fee and early check in
+● Other meals not mentioned in programs
+● Drinks, personal expenses and others…
+● Bank Fees: 40$ Per transaction  / any mode of payment
+● 3$ Per Person per day Compulsory Tips for tour guide and driver""
+
+IMP Notes :
+- Local restaurants and Indian restaurants in Vietnam are very basic. Some restaurants might not have air conditioner
+- Language is a big Hurdle, Driver will not understand english, Few Guides May have issues with fluent English
+
+Luggage:
+- Taxi/CAB in Vietnam has no Top luggage carrier / Hence luggage need to be Less as per Vehicle
+- If luggage are more and unable to fit in a given Vehicle, Surcharge will be applicable for Separate Vehicle Or Need to upgrade vehicle with additional cost.
+
+Suggested Apps:
+- Grab App for : Food, Taxi
+- Google Translator
+
+Cruise Notes:
+*Halong Bay Cruise* has limited water. They generally give 1 Glass of water during lunch and dinner. For other times you will require to buy from them which will cost around USD 2 per Bottle (Approx).
+Halong Bay Cruise doesn't have Indian food onboard.
+
+Points to be Noted:
+- Please keep the soft copy and hard copy of the tour documents with you.
+- Please carry light clothes, Sun glasses, Rain coats, Ponchos, and umbrellas.
+- For NRI Pax need to carry OCI or multiple visa Copy with you.
+- Travel Insurance is recommended.
+- Carry Universal Adapter.
+- Always keep the Business card of the Hotel with you.
+- Please don’t carry any valuable ornaments with you.
+- Tap water is not safe in Vietnam.
+- In Vietnam at the airport you can do Money Exchange & buy a SIM Card.
+- Mini Bar is not included in the tour cost.
+- Check-in time is at 2 PM & Check-out time is at 12 PM.
+-Timing is very important as the sightseeing is time based.
+- Coach is not on Disposal & will be from a point to point basis. Deviation is not possible and we will stick to the itinerary and inclusions mentioned in the package.
+- No Alcohol / Food consumption is allowed in the Vehicle/bus"
+
+`;
+
+  }
+
+  const finalHtml = `
+
+<div class="quotation-document">
+
+<div class="quotation-title">
+<h2>${optionTitle.toUpperCase()}</h2>
+</div>
+
+<div class="quotation-section-title">
+<strong>ACCOMMODATION</strong>
+</div>
+
+<div class="quotation-accommodation">
+${quotationAccommodation}
+</div>
+
+<div class="quotation-section-title">
+<strong>PACKAGE COST</strong>
+</div>
+
+<div class="quotation-package">
+
+<div class="package-row">
+<span>Price Per Person:</span>
+<span class="package-value">
+<strong>${formatCurrency(totalPerPerson)} Per Pax</strong>
+</span>
+</div>
+
+<div class="package-row">
+<span>Extra Person:</span>
+<span class="package-value">
+<strong>
+${(childWithBed > 0 || landChild > 0)
+      ? `${formatCurrency(hotelExtraRate + landExtraRate)} Per Person`
+      : "N/A"}
+</strong>
+</span>
+</div>
+
+<div class="package-row">
+<span>
+Child No Bed (${cnbAgeText}):
+</span>
+
+<span class="package-value">
+<strong>
+${childWithoutBed
+      ? formatCurrency(
+        (totalChildNoBed +
+          totalLandChildNoBed) /
+        childWithoutBed
+      ) + " Per Person"
+      : "N/A"
+    }
+</strong>
+</span>
+</div>
+
+<div class="package-row">
+<span>Compulsory Tip:</span>
+<span class="package-value">
+<strong>USD 3 Per Person / Day</strong>
+</span>
+</div>
+
+<div class="package-row">
+<span>E-Visa:</span>
+<span class="package-value">
+<strong>₹2,900 Per Person</strong>
+</span>
+</div>
+
+</div>
+
+
+</div>
+
+`;
+
+  let html = finalHtml;
+  if (currentOption === Object.keys(quoteOptions).length - 1) {
+    html += itineraryHtml;
+    html += notesHtml;
+  }
+
+  previewBox.innerHTML = html;
+  window.latestPreviewHtml = html;
+
 }
 function formatDate(dateStr) {
 
@@ -1600,173 +2379,50 @@ function formatDate(dateStr) {
 }
 function openPreviewModal() {
 
-  // Current option save
   saveCurrentOption();
 
-  // Remember current tab
   const activeOption = currentOption;
 
-  // Clear modal html
   let finalHtml = "";
 
-  // Build preview of every option
   for (let i = 0; i < quoteOptions.length; i++) {
+
+    const optionData = quoteOptions[i].data;
+
+    if (!optionData) continue;
 
     currentOption = i;
 
-    if (quoteOptions[i].data) {
+    // Only modal uses final preview
+    buildPreviewFinal(optionData);
 
-      restoreQuoteData(quoteOptions[i].data);
+    finalHtml += window.latestPreviewHtml;
 
-      buildPreview();
-
-      finalHtml += previewBox.innerHTML;
-
-      // Divider except last option
-      if (i < quoteOptions.length - 1) {
-        finalHtml += `
-          <div style="
-            margin:35px 0;
-            border-top:3px dashed #d8d8d8;
-          "></div>
-        `;
-      }
-
+    if (i < quoteOptions.length - 1) {
+      finalHtml += `
+      <div style="
+        margin:35px 0;
+        border-top:3px dashed #d8d8d8;
+      "></div>
+      `;
     }
 
   }
 
-  // Restore current editing option
   currentOption = activeOption;
 
-  restoreQuoteData(quoteOptions[activeOption].data);
-
-  buildPreview();
+  // Restore normal preview
+  buildPreview(quoteOptions[activeOption].data);
 
   quoteModalTitleEl.textContent = "Quotation Preview";
-
-  quoteModalSubtextEl.textContent =
-    "Review quotation before saving.";
-
+  quoteModalSubtextEl.textContent = "Review quotation before saving.";
   quoteModalPreviewEl.innerHTML = finalHtml;
 
   confirmQuoteActionBtn.style.display = "none";
-
   quoteActionModal.classList.add("active");
 
 }
-// function buildPreviewHTML() {
 
-//     const segments = [...document.querySelectorAll(".city-segment")];
-
-//     let html = "";
-
-//     html += `
-//         <div class="preview-header">
-
-//             <h2>TravLog</h2>
-
-//             <h3>Quotation</h3>
-
-//             <hr>
-
-//             <table class="preview-table">
-
-//                 <tr>
-//                     <td><strong>Quote No</strong></td>
-//                     <td>${quoteNoEl.textContent}</td>
-//                 </tr>
-
-//                 <tr>
-//                     <td><strong>Country</strong></td>
-//                     <td>${countryEl.value}</td>
-//                 </tr>
-
-//                 <tr>
-//                     <td><strong>Travel Date</strong></td>
-//                     <td>${travelDateEl.value || "-"}</td>
-//                 </tr>
-
-//                 <tr>
-//                     <td><strong>Total Pax</strong></td>
-//                     <td>${totalPaxInputEl.value}</td>
-//                 </tr>
-
-//             </table>
-
-//         </div>
-
-//         <br>
-
-//         <h3>Hotels</h3>
-//     `;
-
-//     segments.forEach((seg,index)=>{
-
-//         html += `
-
-//         <div class="preview-segment">
-
-//             <h4>City ${index+1}</h4>
-
-//             <table class="preview-table">
-
-//                 <tr>
-//                     <td>City</td>
-//                     <td>${seg.querySelector(".segment-city").value}</td>
-//                 </tr>
-
-//                 <tr>
-//                     <td>Hotel</td>
-//                     <td>${seg.querySelector(".segment-hotel").selectedOptions[0].text}</td>
-//                 </tr>
-
-//                 <tr>
-//                     <td>Room</td>
-//                     <td>${seg.querySelector(".segment-room-type").value}</td>
-//                 </tr>
-
-//                 <tr>
-//                     <td>Nights</td>
-//                     <td>${seg.querySelector(".segment-nights").value}</td>
-//                 </tr>
-
-//             </table>
-
-//         </div>
-
-//         `;
-//     });
-
-//     html += `
-
-//     <br>
-
-//     <h3>Pricing</h3>
-
-//     <table class="preview-table">
-
-//         <tr>
-//             <td>Hotel Cost</td>
-//             <td>${hotelCostEl.textContent}</td>
-//         </tr>
-
-//         <tr>
-//             <td>Transfer Cost</td>
-//             <td>${transferCostEl.textContent}</td>
-//         </tr>
-
-//         <tr class="grand-row">
-//             <td><strong>Grand Total</strong></td>
-//             <td><strong>${grandTotalEl.textContent}</strong></td>
-//         </tr>
-
-//     </table>
-//     `;
-
-//     return html;
-
-// }
 /* =========================================================
    SAVE QUOTE
 ========================================================= */
@@ -2385,89 +3041,7 @@ function getCurrentSegments() {
   return segments;
 
 }
-// function renderLandDays() {
 
-//   const container = document.getElementById("landDaysContainer");
-//   if (!container) return;
-
-//   const segments = getCurrentSegments();
-//   let html = "";
-//   let globalDay = 1;
-//   html += `<div class="land-grid">`;
-
-//   segments.forEach(segment => {
-
-//     const city = segment.city;
-
-//     const nights = segment.nights;
-
-//     html += `
-
-//         <div class="land-city-card">
-
-//             <div class="land-city-header">
-//                 <h4>${city}</h4>
-//                 <span>${nights} Night / ${nights + 1} Days</span>
-//             </div>
-
-//             <div class="land-city-body">
-
-//         `;
-
-//     for (let d = 1; d <= nights + 1; d++) {
-
-//       html += `
-
-//             <div class="land-day-box">
-
-//                 <div class="land-day-title">
-//                     Day ${globalDay}
-//                 </div>
-
-// <div class="field">
-//     <select class="land-service service-select">
-//         <option value="">Select Service</option>
-//     </select>
-// </div>
-
-// <div class="field">
-//     <input
-//         type="text"
-//         class="land-rate"
-//         placeholder="Rate"
-//         readonly>
-// </div>
-
-// <div class="field">
-//     <textarea
-//         class="land-description"
-//         placeholder="Selected Service"
-//         readonly></textarea>
-// </div>
-
-//             </div>
-
-//             `;
-
-//       globalDay++;
-
-//     }
-
-//     html += `
-
-//             </div>
-
-
-//         </div>
-
-//         `;
-
-//   });
-//   html += `</div>`;
-
-//   container.innerHTML = html;
-
-// }
 let landServicesCache = {};
 
 async function fetchLandServices(city) {
@@ -2517,6 +3091,30 @@ async function populateLandServices(card, city) {
     ...(data.localServices || []),
     ...(data.meals || [])
   ];
+  services.forEach(service => {
+
+    if (service.price && !service.rates) {
+
+      service.rates = {
+        1: service.price,
+        2: service.price,
+        3: service.price,
+        4: service.price,
+        5: service.price,
+        6: service.price,
+        7: service.price,
+        8: service.price,
+        9: service.price,
+        10: service.price,
+        11: service.price,
+        12: service.price,
+        13: service.price,
+        14: service.price
+      };
+
+    }
+
+  });
 
   selects.forEach(select => {
 
@@ -2537,9 +3135,62 @@ async function populateLandServices(card, city) {
     });
 
   });
+  // =========================
+  // Restore Selected Services
+  // =========================
+
+  const savedServices =
+    quoteOptions[currentOption]?.data?.landServices || [];
+
+  card.querySelectorAll(".land-day-box").forEach(dayBox => {
+
+    const day = Number(
+      dayBox.querySelector(".land-day-title")
+        ?.textContent
+        .replace("Day", "")
+        .trim()
+    );
+
+    const servicesOfDay =
+      savedServices.filter(x => x.day === day);
+
+    if (!servicesOfDay.length) return;
+
+    const list = dayBox.querySelector(".land-service-list");
+
+    list.innerHTML = "";
+
+    servicesOfDay.forEach(service => {
+
+      const row = document.createElement("div");
+
+      row.className = "selected-service";
+
+      row.innerHTML = `
+
+<div class="service-left">
+${service.service}
+</div>
+
+<div class="service-right">
+$${service.rate}
+</div>
+
+<button type="button" class="remove-service">
+<i class="fa-solid fa-trash"></i>
+</button>
+
+`;
+
+      list.appendChild(row);
+
+    });
+
+  });
 
 }
 function renderLandDays() {
+  console.trace("renderLandDays Called");
 
   const container = document.getElementById("landDaysContainer");
   if (!container) return;
@@ -2572,45 +3223,21 @@ function renderLandDays() {
       .trim();
 
     populateLandServices(card, city);
+    if (window.restoredLandServices?.length) {
+
+      setTimeout(() => {
+
+        restoreLandServices(window.restoredLandServices);
+
+        window.restoredLandServices = [];
+
+      }, 300);
+
+    }
 
   });
 
 }
-// function renderLandCities() {
-
-//   const container = document.getElementById("landDaysContainer");
-//   if (!container) return;
-
-//   const segments = getCurrentSegments();
-
-//   let html = `<div class="land-grid">`;
-
-//   let globalDay = 1;
-
-//   segments.forEach(segment => {
-
-//     html += createCityCard(segment, globalDay);
-
-//     globalDay += segment.nights + 1;
-
-//   });
-
-//   html += `</div>`;
-
-//   container.innerHTML = html;
-//   initializeLandEvents();
-//   document.querySelectorAll(".land-city-card").forEach(card => {
-
-//     const city = card.querySelector(".land-city-header h4")
-//       .childNodes[0]
-//       .textContent
-//       .trim();
-
-//     populateLandServices(card, city);
-
-//   });
-
-// }
 
 function createCityCard(segment, startDay) {
 
@@ -2635,7 +3262,7 @@ function createCityCard(segment, startDay) {
 
     html += `
 
-<div class="land-day-box">
+<div class="land-day-box" data-day="${day}">
 
     <div class="land-day-header">
 
@@ -2710,11 +3337,15 @@ function initializeLandEvents() {
   // Get current passenger count
   function getSelectedPax() {
 
-    // CHANGE THIS ID if your passenger field is different
-    const pax =
-      document.getElementById("adults")?.value || 2;
+    const adults = Number(adultsEl?.value || 0);
 
-    return String(pax);
+    const cnb = Number(childWithoutBedEl?.value || 0);
+
+    const landChild = Number(landChildEl?.value || 0);
+
+    const totalPax = adults + cnb + landChild;
+
+    return String(totalPax);
 
   }
 
@@ -2728,36 +3359,105 @@ function initializeLandEvents() {
 
       const option = this.options[this.selectedIndex];
 
-      if (!option.dataset.service) return;
+      if (!option.dataset.service) {
+
+        rateBox.value = 0;
+
+        currentLandCost = calculateLandCost();
+
+        const grandTotal =
+          currentHotelCost +
+          currentTransferCost +
+          currentLandCost;
+
+        if (landCostEl)
+          landCostEl.textContent = formatCurrency(currentLandCost);
+
+        if (grandTotalEl)
+          grandTotalEl.textContent = formatCurrency(grandTotal);
+
+        currentGrandTotal = grandTotal;
+
+        return;
+
+      }
 
       const service = JSON.parse(option.dataset.service);
+      console.log(service);
 
       const dayBox = this.closest(".land-day-box");
 
       const rateBox = dayBox.querySelector(".land-rate");
 
-      const pax = getSelectedPax();
+      const pax = Number(getSelectedPax());
 
       let rate = 0;
 
-      if (service.price) {
+      // New Format
+      if (service.adult !== undefined || service.child !== undefined) {
 
-        rate = service.price;
+        const adults = Number(adultsEl.value || 0);
+        const children =
+          Number(childWithBedEl.value || 0) +
+          Number(childWithoutBedEl.value || 0);
+        const landChildAge = landChildAgeEl?.value || "4-6";
+
+        let childMultiplier = 0.5;
+
+        if (landChildAge === "7-9") {
+
+          childMultiplier = 0.8;
+
+        }
+
+        if (landChildAge === "10+") {
+
+          childMultiplier = 1;
+
+        }
+
+        const adultRate = Number(service.adult || 0);
+
+        rate =
+          (adults * adultRate) +
+          (children * adultRate * childMultiplier);
+      }
+
+      // Old Format
+      else if (service.price !== undefined) {
+
+        rate = Number(service.price);
 
       }
 
       else if (service.rates) {
 
-        rate = service.rates[pax] || 0;
+        rate = Number(service.rates[pax] || 0);
 
       }
 
       rateBox.value = rate;
+      currentLandCost = calculateLandCost();
+
+      const grandTotal = currentHotelCost + currentTransferCost + currentLandCost;
+
+      if (landCostEl) {
+        landCostEl.textContent = formatCurrency(currentLandCost);
+      }
+
+      if (grandTotalEl) {
+        grandTotalEl.textContent = formatCurrency(grandTotal);
+      }
+
+      currentGrandTotal = grandTotal;
+      // calculateQuote();
+
+      // Sirf rate update hoga, preview nahi
+      currentLandCost = calculateLandCost();
 
     };
 
   });
-
   // ===========================
   // ADD BUTTON
   // ===========================
@@ -2830,6 +3530,8 @@ class="remove-service">
 `;
 
       list.appendChild(row);
+      // Preview update only after service is actually added
+      buildPreview();
 
       // REMOVE BUTTON
 
@@ -2859,6 +3561,10 @@ No Service Added
 
         }
         list.style.maxHeight = "";
+        currentLandCost = calculateLandCost();
+        calculateQuote();
+        // Refresh preview after deleting service
+        buildPreview();
 
       };
 
@@ -2875,10 +3581,222 @@ No Service Added
       });
 
       totalBox.innerHTML = "$" + grand;
+      currentLandCost = calculateLandCost();
+      calculateQuote();
 
     };
 
   });
 
 }
+function calculateLandCost() {
 
+  let total = 0;
+
+  document
+    .querySelectorAll(".selected-service .service-right")
+    .forEach(item => {
+
+      total += parseFloat(
+        item.textContent.replace("$", "")
+      ) || 0;
+
+    });
+
+  currentLandCost = total;
+
+  return total;
+
+}
+function calculateLandChildCost() {
+
+  const landCost = calculateLandCost();
+
+  let total = 0;
+  let cnbTotal = 0;
+  let cwbTotal = 0;
+  const breakdown = [];
+
+  // Child Without Bed
+  cnbAgeHistory.forEach(age => {
+
+    let percent = 1;
+
+    if (age === "0-3") {
+      percent = 0;
+    } else if (age === "4-6") {
+      percent = 0.5;
+    } else if (age === "7-9") {
+      percent = 0.8;
+    }
+
+    const value = landCost * percent;
+
+    breakdown.push(formatCurrency(value));
+
+    total += value;
+    cnbTotal += value;
+
+  });
+
+  // Child With Bed (LCA)
+  cwbAgeHistory.forEach(age => {
+
+    let percent = 1;
+
+    if (age === "4-6") {
+      percent = 0.5;
+    } else if (age === "7-9") {
+      percent = 0.8;
+    } else if (age === "10+") {
+      percent = 1;
+    }
+
+    const value = landCost * percent;
+
+    breakdown.push(formatCurrency(value));
+
+    total += value;
+    cwbTotal += value;
+
+
+  });
+
+  return {
+    total,
+    cnbTotal,
+    cwbTotal,
+    breakdown
+  };
+
+}
+function getLandServicesData() {
+
+  const services = [];
+
+  document.querySelectorAll(".land-day-box").forEach(dayBox => {
+
+    const dayTitle = dayBox.querySelector(".land-day-title");
+
+    const day = Number(
+      dayTitle?.textContent.replace("Day", "").trim()
+    ) || 0;
+
+    // NEW
+    const city =
+      dayBox.closest(".land-city-card")
+        ?.querySelector(".land-city-header h4")
+        ?.childNodes[0]
+        ?.textContent
+        ?.trim() || "";
+
+    dayBox.querySelectorAll(".selected-service").forEach(row => {
+
+      const serviceLeft = row.querySelector(".service-left");
+
+      if (!serviceLeft) return;
+
+      services.push({
+
+        city,          // NEW
+        day,
+
+        service: serviceLeft.textContent.trim(),
+
+        rate: Number(
+          row.querySelector(".service-right")
+            .textContent
+            .replace("$", "")
+        ) || 0
+
+      });
+
+    });
+
+  });
+
+  return services;
+
+}
+function restoreLandServices(savedServices) {
+
+  if (!savedServices?.length) return;
+
+  document.querySelectorAll(".land-day-box").forEach(dayBox => {
+
+    const day = Number(
+      dayBox.querySelector(".land-day-title")
+        ?.textContent.replace("Day", "")
+        .trim()
+    );
+
+    const list = dayBox.querySelector(".land-service-list");
+
+    const totalBox = dayBox
+      .closest(".land-city-card")
+      .querySelector(".land-city-total strong");
+
+    savedServices
+      .filter(x => x.day === day)
+      .forEach(service => {
+
+        if (list.querySelector(".empty-service")) {
+          list.innerHTML = "";
+        }
+
+        const row = document.createElement("div");
+
+        row.className = "selected-service";
+
+        row.innerHTML = `
+<div class="service-left">
+${service.service}
+</div>
+
+<div class="service-right">
+$${service.rate}
+</div>
+
+<button
+type="button"
+class="remove-service">
+
+<i class="fa-solid fa-trash"></i>
+
+</button>
+`;
+
+        list.appendChild(row);
+
+        row.querySelector(".remove-service").onclick = function () {
+
+          row.remove();
+
+          currentLandCost = calculateLandCost();
+
+          calculateQuote();
+
+        };
+
+      });
+
+    let total = 0;
+
+    dayBox
+      .closest(".land-city-card")
+      .querySelectorAll(".service-right")
+      .forEach(x => {
+
+        total += Number(
+          x.textContent.replace("$", "")
+        );
+
+      });
+
+    totalBox.innerHTML = "$" + total;
+
+  });
+
+  calculateQuote();
+
+}

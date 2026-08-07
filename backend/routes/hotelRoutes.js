@@ -52,17 +52,30 @@ function getDisplayName(hotel) {
 ========================================================= */
 router.get("/", async (req, res) => {
   try {
-    const hotels = await Hotel.find({}).lean();
-    return res.json(hotels);
+
+    const destination = req.query.destination || "Vietnam";
+
+    const hotels = await Hotel.find({
+      destination,
+      ...getActiveFilter()
+    }).lean();
+
+    return res.json({
+      success: true,
+      hotels: hotels
+    });
+
   } catch (error) {
+
     console.error("GET /api/hotels error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Failed to fetch hotels"
     });
+
   }
 });
-
 /* =========================================================
    1) GET ALL CITIES FOR DESTINATION
    /api/hotels/cities?destination=Vietnam
