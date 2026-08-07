@@ -45,7 +45,11 @@ app.use(cookieParser());
 // =============================
 // STATIC FRONTEND
 // =============================
-app.use(express.static(path.join(__dirname, "../frontend")));
+app.use(
+  express.static(path.join(__dirname, "../frontend"), {
+    index: false
+  })
+);
 app.use("/assets", express.static(path.join(__dirname, "../frontend/assets")));
 
 // =============================
