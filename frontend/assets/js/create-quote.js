@@ -1596,11 +1596,7 @@ function buildPreview() {
 
     itineraryHtml = `
 
-<div class="quotation-section-title">
-    <strong>DAY WISE BRIEF ITINERARY</strong>
-</div>
 
-<div class="quotation-package">
 
 `;
 
@@ -1894,7 +1890,7 @@ Points to be Noted:
   if (landServices.length > 0) {
 
     whatsappText.push("");
-    whatsappText.push("DAY WISE BRIEF ITINERARY");
+
 
     const groupedDays = {};
 
