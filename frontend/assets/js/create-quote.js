@@ -2696,7 +2696,7 @@ function handleWhatsappClick() {
     return;
   }
 
-  const phone = prompt("Enter WhatsApp Number with Country Code");
+  const phone = prompt("Enter WhatsApp Number with Country Code(Example: 918128367107)");
 
   if (!phone) return;
 

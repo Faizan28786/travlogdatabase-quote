@@ -1422,10 +1422,11 @@ s .passenger-grid .field {
   padding: 0 12px;
 
 }
-.quotation-notes{
-    white-space: pre-wrap;
-    font-family: inherit;
-    font-size: 14px;
-    line-height: 1.6;
-    margin: 0;
+
+.quotation-notes {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
 }
