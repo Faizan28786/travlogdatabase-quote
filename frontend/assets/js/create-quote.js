@@ -692,99 +692,120 @@ function createSegment(segmentData = null) {
   segment.dataset.segmentId = segmentCounter;
 
   segment.innerHTML = `
-    <div class="segment-head">
-      <div class="segment-title-wrap">
-        <div class="segment-badge">${segmentCounter}</div>
-<div class="segment-title-content">
-  <div>
-    <h4>City Segment ${segmentCounter}</h4>
-    <p>Select city, hotel, room type and number of nights for this stay.</p>
+
+<div class="segment-header">
+
+  <div class="segment-title">
+    <span class="segment-number">${segmentCounter}</span>
+    <h3>City Segment ${segmentCounter}</h3>
   </div>
 
-  <div class="segment-date-range">
-    <div class="segment-date-box">
-      <label>Check In</label>
-      <input type="date" class="segment-checkin">
-    </div>
+  <button type="button" class="segment-remove-btn">
+    <i class="fa-solid fa-trash"></i>
+    Remove
+  </button>
 
-    <div class="segment-date-box">
-      <label>Check Out</label>
-      <input type="date" class="segment-checkout">
-    </div>
-  </div>
 </div>
-      </div>
-      <button type="button" class="segment-remove-btn">
-        <i class="fa-solid fa-trash"></i> Remove
-      </button>
+
+<div class="segment-fields-grid compact">
+
+  <!-- CITY -->
+  <div class="field">
+    <label>City</label>
+    <div class="input-wrap">
+      <i class="fa-solid fa-location-dot"></i>
+      <select class="segment-city"></select>
     </div>
+  </div>
 
-    <div class="segment-fields-grid compact">
-      <div class="field">
-        <label>City</label>
-        <div class="input-wrap">
-          <i class="fa-solid fa-location-dot"></i>
-          <select class="segment-city"></select>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Meal Plan</label>
-        <div class="input-wrap">
-          <i class="fa-solid fa-utensils"></i>
-          <select class="segment-meal-plan">
-            <option value="CP" selected>CP</option>
-            <option value="MAP">MAP</option>
-            <option value="AP">AP</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="field field-span-2">
-        <label>Hotel</label>
-        <div class="input-wrap">
-          <i class="fa-solid fa-building"></i>
-          <select class="segment-hotel"></select>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Room Type</label>
-        <div class="input-wrap">
-          <i class="fa-solid fa-door-open"></i>
-          <select class="segment-room-type"></select>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Nights</label>
-        <div class="input-wrap">
-          <i class="fa-solid fa-moon"></i>
-          <input type="number" class="segment-nights" min="1" value="1" />
-        </div>
-      </div>
+  <!-- NIGHTS -->
+  <div class="field">
+    <label>Nights</label>
+    <div class="input-wrap">
+      <i class="fa-solid fa-moon"></i>
+      <input
+        type="number"
+        class="segment-nights"
+        min="1"
+        value="1"
+      />
     </div>
+  </div>
 
-  `;
+  <!-- HOTEL -->
+  <div class="field">
+    <label>Hotel</label>
+    <div class="input-wrap">
+      <i class="fa-solid fa-building"></i>
+      <select class="segment-hotel"></select>
+    </div>
+  </div>
+
+  <!-- ROOM TYPE -->
+  <div class="field">
+    <label>Room Type</label>
+    <div class="input-wrap">
+      <i class="fa-solid fa-door-open"></i>
+      <select class="segment-room-type"></select>
+    </div>
+  </div>
+
+  <!-- MEAL PLAN -->
+  <div class="field">
+    <label>Meal Plan</label>
+    <div class="input-wrap">
+      <i class="fa-solid fa-utensils"></i>
+      <select class="segment-meal-plan">
+        <option value="CP" selected>CP</option>
+        <option value="MAP">MAP</option>
+        <option value="AP">AP</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- CHECK IN -->
+  <div class="field segment-date-field">
+    <label>Check In</label>
+    <input type="date" class="segment-checkin">
+  </div>
+
+  <!-- CHECK OUT -->
+  <div class="field segment-date-field">
+    <label>Check Out</label>
+    <input type="date" class="segment-checkout">
+  </div>
+
+</div>
+
+`;
 
   segmentsContainer.appendChild(segment);
+
   if (segmentData) {
     segment.restoreData = segmentData;
   }
+
   hydrateSegment(segment);
+
   // Restore previous values if data exists
 
   const removeBtn = segment.querySelector(".segment-remove-btn");
+
   removeBtn?.addEventListener("click", () => {
-    const allSegments = document.querySelectorAll(".city-segment");
+
+    const allSegments =
+      document.querySelectorAll(".city-segment");
+
     if (allSegments.length <= 1) {
       alert("At least one city segment is required.");
       return;
     }
 
     segment.remove();
+
     renumberSegments();
     calculateQuote();
+
   });
 
   return segment;
@@ -1180,19 +1201,24 @@ function calculateSegmentCost(segmentEl) {
       childWithBedCharges = extraBedRate * childConfig.cwbCount * nights;
     }
 
+
     // Child Without Bed
-    if (childConfig.cnbAge === "0-3") {
+    // Child Without Bed
+    childWithoutBedCharges = 0;
 
-      childWithoutBedCharges = 0;
+    cnbAgeHistory.forEach(age => {
 
-    } else {
+      if (age === "0-3") {
+        // 0-3 = FREE
+        return;
+      }
 
-      childWithoutBedCharges =
-        childNoBedRate *
-        childConfig.cnbCount *
-        nights;
+      // 4-6 and 7-9 = same hotel CNB rate
+      childWithoutBedCharges +=
+        childNoBedRate * nights;
 
-    }
+    });
+
   }
 
   const childCharges = childWithBedCharges + childWithoutBedCharges;
@@ -1337,20 +1363,10 @@ function calculateQuote() {
   if (landCostEl) {
     landCostEl.textContent = formatCurrency(currentLandCost);
   }
-  if (landChildCostEl) {
-
-    landChildCostEl.textContent =
-      formatCurrency(landChildData.total);
-
-  }
-
   if (landChildBreakdownEl) {
 
     landChildBreakdownEl.textContent =
-      landChildData.breakdown.join(" + ") +
-      " = " +
-      formatCurrency(landChildData.total);
-
+      landChildData.breakdown.join(" - ");
   }
   buildPreview();
   // renderLandDays();
@@ -1431,7 +1447,146 @@ function getAllSegmentsData() {
     };
   });
 }
+function getLandChildCostByAge(age, type = "cnb") {
 
+  const landCost = calculateLandCost();
+
+  let adultTicketCost = 0;
+  let childTicketRate = 0;
+  let adultTicketRate = 0;
+
+  // ==========================================
+  // FIND TICKET RATES
+  // ==========================================
+
+  document.querySelectorAll(".land-service").forEach(select => {
+
+    const option = select.options[select.selectedIndex];
+
+    if (!option || !option.dataset.service) return;
+
+    const service = JSON.parse(option.dataset.service);
+
+    if (!service.isTicket) return;
+
+    const adultRate = Number(
+      service.adult || service.price || 0
+    );
+
+    const childRate = Number(
+      service.child || service.adult || 0
+    );
+
+    adultTicketCost += adultRate;
+
+    childTicketRate = childRate;
+    adultTicketRate = adultRate;
+
+  });
+
+  // ==========================================
+  // REMOVE ADULT TICKET FROM NORMAL LAND COST
+  // ==========================================
+
+  const normalLandCost =
+    Math.max(0, landCost - adultTicketCost);
+
+  // ==========================================
+  // AGE PERCENTAGE
+  // ==========================================
+
+  let percent = 1;
+
+  if (age === "0-3") {
+
+    percent = 0;
+
+  }
+  else if (age === "4-6") {
+
+    percent = 0.5;
+
+  }
+  else if (age === "7-9") {
+
+    percent = 0.8;
+
+  }
+  else if (age === "10+") {
+
+    percent = 1;
+
+  }
+
+  let landRate = normalLandCost * percent;
+
+  // ==========================================
+  // TICKET CHILD RATE
+  // ==========================================
+
+  document.querySelectorAll(".land-service").forEach(select => {
+
+    const option = select.options[select.selectedIndex];
+
+    if (!option || !option.dataset.service) return;
+
+    const service = JSON.parse(option.dataset.service);
+
+    if (!service.isTicket) return;
+
+    const adultRate = Number(
+      service.adult || service.price || 0
+    );
+
+    const childRate = Number(
+      service.child || service.adult || 0
+    );
+
+    let ticketRate = 0;
+
+    if (type === "cnb") {
+
+      if (age === "0-3") {
+
+        ticketRate = 0;
+
+      }
+      else if (
+        age === "4-6" ||
+        age === "7-9"
+      ) {
+
+        ticketRate = childRate;
+
+      }
+
+    }
+
+    if (type === "cwb") {
+
+      if (
+        age === "4-6" ||
+        age === "7-9"
+      ) {
+
+        ticketRate = childRate;
+
+      }
+      else if (age === "10+") {
+
+        ticketRate = adultRate;
+
+      }
+
+    }
+
+    landRate += ticketRate;
+
+  });
+
+  return landRate;
+
+}
 /* =========================================================
    BUILD PREVIEW
 ========================================================= */
@@ -1453,7 +1608,13 @@ function buildPreview() {
   console.log("landChild =", landChild);
   const totalPax = adults + childWithBed + childWithoutBed;
 
-  const cwbAge = childWithBedAgeEl?.value || "-";
+  const cwbAge =
+    cwbAgeHistory.length
+      ? cwbAgeHistory
+        .map((age, index) => `Child ${index + 1}: ${age}`)
+        .join(", ")
+      : "-";
+
   const cnbAge =
     cnbAgeHistory.length
       ? cnbAgeHistory
@@ -1476,6 +1637,7 @@ function buildPreview() {
   let totalChildNoBed = 0;
   let totalLandExtraPerson = 0;
   let totalLandChildNoBed = 0;
+  let totalLandAdult = 0;
   let whatsappNotes = "";
 
   segments.forEach(seg => {
@@ -1487,6 +1649,8 @@ function buildPreview() {
     totalChildNoBed += Number(seg.childWithoutBedCharges || 0);
 
   });
+  totalLandAdult = calculateLandCost();
+
   const landChildData = calculateLandChildCost();
 
   totalLandExtraPerson = landChildData.cwbTotal;
@@ -1691,7 +1855,7 @@ function buildPreview() {
 
         <span class="package-value">
             <strong>
-                ${formatCurrency(totalPerPerson)} Per Pax
+                ${formatCurrency(totalPerPerson + totalLandAdult)} Per Pax
             </strong>
         </span>
     </div>
@@ -1710,23 +1874,96 @@ ${(childWithBed > 0 || landChild > 0)
         </span>
     </div>
 
-    <div class="package-row">
-        <span>
-            Child No Bed (1m - 1m40) (${cnbAge}):
-        </span>
+<div class="package-row">
+    <span>
+        Child No Bed (1m - 1m40)
+    </span>
 
-        <span class="package-value">
-            <strong>
-                ${childWithoutBed > 0
-      ? `${formatCurrency(totalChildNoBed / childWithoutBed)}
- + ${formatCurrency(totalLandChildNoBed / childWithoutBed)}
- = ${formatCurrency(
-        (totalChildNoBed + totalLandChildNoBed) / childWithoutBed
-      )} Per Person`
+    <span class="package-value">
+        <strong>
+            ${childWithoutBed > 0
+      ? cnbAgeHistory.map((age, index) => {
+
+        // ==========================================
+        // 0-3 = FREE
+        // ==========================================
+        if (age === "0-3") {
+
+          return `
+                Child ${index + 1}: ${age}
+                → ${formatCurrency(0)}
+                + ${formatCurrency(0)}
+                = ${formatCurrency(0)} Per Person
+            `;
+
+        }
+
+        // ==========================================
+        // ELIGIBLE CHILD
+        // 4-6 / 7-9
+        // Hotel CNB rate same rahega
+        // ==========================================
+
+        const eligibleChildren =
+          cnbAgeHistory.filter(a => a !== "0-3").length;
+
+        const hotelChildRate =
+          eligibleChildren > 0
+            ? totalChildNoBed / eligibleChildren
+            : 0;
+
+        // ==========================================
+        // LAND CHILD RATE
+        // ==========================================
+
+        let landPercent = 1;
+
+        if (age === "4-6") {
+          landPercent = 0.5;
+        }
+        else if (age === "7-9") {
+          landPercent = 0.8;
+        }
+
+        const eligibleLandChildren =
+          cnbAgeHistory.filter(a => a !== "0-3");
+
+        const totalLandEligible =
+          eligibleLandChildren.reduce((sum, childAge) => {
+
+            let p = 1;
+
+            if (childAge === "4-6") {
+              p = 0.5;
+            }
+            else if (childAge === "7-9") {
+              p = 0.8;
+            }
+
+            return sum + p;
+
+          }, 0);
+
+        const landChildRate =
+          totalLandEligible > 0
+            ? (totalLandChildNoBed / totalLandEligible) * landPercent
+            : 0;
+
+        const finalChildRate =
+          hotelChildRate + landChildRate;
+
+        return `
+              Child ${index + 1}: ${age}
+              → ${formatCurrency(hotelChildRate)}
+              + ${formatCurrency(landChildRate)}
+              = ${formatCurrency(finalChildRate)} Per Person
+          `;
+
+      }).join("<br>")
       : "N/A"}
-            </strong>
-        </span>
-    </div>
+        </strong>
+    </span>
+</div>
 
     <div class="package-row">
         <span>Compulsory Tip:</span>
@@ -1786,7 +2023,7 @@ ${itineraryHtml}
   whatsappText.push("PACKAGE COST");
 
   whatsappText.push(
-    `Price Per Person: ${formatCurrency(totalPerPerson)} Per Pax`
+    `Price Per Person: ${formatCurrency(totalPerPerson + totalLandAdult)} Per Pax`
   );
 
   whatsappText.push(
@@ -1974,6 +2211,7 @@ function buildPreviewFinal(data = null) {
   let totalChildNoBed = 0;
   let totalLandExtraPerson = 0;
   let totalLandChildNoBed = 0;
+  let totalLandAdult = 0;
 
   segments.forEach(seg => {
     totalPerPerson += Number(seg.baseHotelCost || 0);
@@ -2032,6 +2270,7 @@ function buildPreviewFinal(data = null) {
   let notesHtml = "";
 
   const landServices = data?.landServices || getLandServicesData();
+  totalLandAdult = calculateLandCost();
   let whatsappItinerary = "";
   let whatsappNotes = "";
 
@@ -2295,7 +2534,7 @@ ${quotationAccommodation}
 <div class="package-row">
 <span>Price Per Person:</span>
 <span class="package-value">
-<strong>${formatCurrency(totalPerPerson)} Per Pax</strong>
+<strong>${formatCurrency(totalPerPerson + totalLandAdult)} Per Pax</strong>
 </span>
 </div>
 
@@ -2311,22 +2550,79 @@ ${(childWithBed > 0 || landChild > 0)
 </div>
 
 <div class="package-row">
-<span>
-Child No Bed (${cnbAgeText}):
-</span>
+  <span>
+    Child No Bed (1m - 1m40):
+  </span>
 
-<span class="package-value">
-<strong>
-${childWithoutBed
-      ? formatCurrency(
-        (totalChildNoBed +
-          totalLandChildNoBed) /
-        childWithoutBed
-      ) + " Per Person"
+  <span class="package-value">
+    <strong>
+      ${childWithoutBed > 0
+      ? cnbAgeHistory.map((age, index) => {
+
+        // 0-3 = FREE
+        if (age === "0-3") {
+          return `
+                  Child ${index + 1}: ${age} → ${formatCurrency(0)} Per Person
+                `;
+        }
+
+        // Eligible children only
+        const eligibleChildren =
+          cnbAgeHistory.filter(a => a !== "0-3").length;
+
+        // Existing hotel calculation — DON'T CHANGE
+        const hotelChildRate =
+          eligibleChildren > 0
+            ? totalChildNoBed / eligibleChildren
+            : 0;
+
+        // Existing land calculation — DON'T CHANGE
+        let landPercent = 1;
+
+        if (age === "4-6") {
+          landPercent = 0.5;
+        }
+        else if (age === "7-9") {
+          landPercent = 0.8;
+        }
+
+        const eligibleLandChildren =
+          cnbAgeHistory.filter(a => a !== "0-3");
+
+        const totalLandEligible =
+          eligibleLandChildren.reduce((sum, childAge) => {
+
+            let p = 1;
+
+            if (childAge === "4-6") {
+              p = 0.5;
+            }
+            else if (childAge === "7-9") {
+              p = 0.8;
+            }
+
+            return sum + p;
+
+          }, 0);
+
+        const landChildRate =
+          totalLandEligible > 0
+            ? (totalLandChildNoBed / totalLandEligible) * landPercent
+            : 0;
+
+        const finalChildRate =
+          hotelChildRate + landChildRate;
+
+        // FINAL PREVIEW: only final rate
+        return `
+                Child ${index + 1}: ${age} → ${formatCurrency(finalChildRate)} Per Person
+              `;
+
+      }).join("<br>")
       : "N/A"
     }
-</strong>
-</span>
+    </strong>
+  </span>
 </div>
 
 <div class="package-row">
@@ -3084,7 +3380,10 @@ async function populateLandServices(card, city) {
     ...(data.transfer || []),
     ...(data.privateTours || []),
     ...(data.sicTours || []),
-    ...(data.localServices || []),
+    ...(data.localServices || []).map(service => ({
+      ...service,
+      isTicket: true
+    })),
     ...(data.meals || [])
   ];
   services.forEach(service => {
@@ -3185,6 +3484,7 @@ $${service.rate}
   });
 
 }
+
 function renderLandDays() {
   console.trace("renderLandDays Called");
 
@@ -3197,11 +3497,11 @@ function renderLandDays() {
 
   let globalDay = 1;
 
-  segments.forEach(segment => {
+  segments.forEach((segment) => {
 
     html += createCityCard(segment, globalDay);
 
-    globalDay += segment.nights + 1;
+    globalDay += segment.nights;
 
   });
 
@@ -3237,6 +3537,8 @@ function renderLandDays() {
 
 function createCityCard(segment, startDay) {
 
+  const totalDays = segment.nights + 1;
+
   let html = `
 <div class="land-city-card">
 
@@ -3244,7 +3546,7 @@ function createCityCard(segment, startDay) {
 
         <h4>
             ${segment.city}
-            <small>(${segment.nights}N / ${segment.nights + 1}D)</small>
+            <small>(${segment.nights}N / ${totalDays}D)</small>
         </h4>
 
     </div>
@@ -3254,7 +3556,7 @@ function createCityCard(segment, startDay) {
 
   let day = startDay;
 
-  for (let i = 0; i <= segment.nights; i++) {
+  for (let i = 0; i < totalDays; i++) {
 
     html += `
 
@@ -3389,27 +3691,38 @@ function initializeLandEvents() {
 
       let rate = 0;
 
-      // New Format
-      if (service.adult !== undefined || service.child !== undefined) {
+      // ===============================
+      // TICKET / LOCAL SERVICE
+      // ===============================
+      if (service.isTicket) {
+
+        // Ticket is a fixed per-person rate.
+        // Do NOT multiply by adults/children here.
+        rate = Number(service.adult || service.price || 0);
+
+      }
+
+      // ===============================
+      // EXISTING NON-TICKET CALCULATION
+      // ===============================
+      else if (service.adult !== undefined || service.child !== undefined) {
 
         const adults = Number(adultsEl.value || 0);
+
         const children =
           Number(childWithBedEl.value || 0) +
           Number(childWithoutBedEl.value || 0);
+
         const landChildAge = landChildAgeEl?.value || "4-6";
 
         let childMultiplier = 0.5;
 
         if (landChildAge === "7-9") {
-
           childMultiplier = 0.8;
-
         }
 
         if (landChildAge === "10+") {
-
           childMultiplier = 1;
-
         }
 
         const adultRate = Number(service.adult || 0);
@@ -3419,7 +3732,9 @@ function initializeLandEvents() {
           (children * adultRate * childMultiplier);
       }
 
-      // Old Format
+      // ===============================
+      // OLD FORMAT
+      // ===============================
       else if (service.price !== undefined) {
 
         rate = Number(service.price);
@@ -3611,7 +3926,46 @@ function calculateLandChildCost() {
   let total = 0;
   let cnbTotal = 0;
   let cwbTotal = 0;
+
   const breakdown = [];
+
+  // ==========================================
+  // 1. FIND ADULT TICKET COST
+  // ==========================================
+
+  let adultTicketCost = 0;
+
+  document.querySelectorAll(".land-service").forEach(select => {
+
+    const option = select.options[select.selectedIndex];
+
+    if (!option || !option.dataset.service) return;
+
+    const service = JSON.parse(option.dataset.service);
+
+    if (service.isTicket) {
+
+      adultTicketCost += Number(
+        service.adult || service.price || 0
+      );
+
+    }
+
+  });
+
+
+  // ==========================================
+  // 2. REMOVE TICKET FROM NORMAL LAND COST
+  // ==========================================
+
+  const normalLandCost =
+    Math.max(0, landCost - adultTicketCost);
+
+
+  // ==========================================
+  // 3. EXISTING CHILD POLICY
+  //    ONLY ON NORMAL LAND SERVICES
+  // ==========================================
 
   // Child Without Bed
   cnbAgeHistory.forEach(age => {
@@ -3620,13 +3974,15 @@ function calculateLandChildCost() {
 
     if (age === "0-3") {
       percent = 0;
-    } else if (age === "4-6") {
+    }
+    else if (age === "4-6") {
       percent = 0.5;
-    } else if (age === "7-9") {
+    }
+    else if (age === "7-9") {
       percent = 0.8;
     }
 
-    const value = landCost * percent;
+    const value = normalLandCost * percent;
 
     breakdown.push(formatCurrency(value));
 
@@ -3635,28 +3991,112 @@ function calculateLandChildCost() {
 
   });
 
-  // Child With Bed (LCA)
+
+  // Child With Bed / Land Child
   cwbAgeHistory.forEach(age => {
 
     let percent = 1;
 
     if (age === "4-6") {
       percent = 0.5;
-    } else if (age === "7-9") {
+    }
+    else if (age === "7-9") {
       percent = 0.8;
-    } else if (age === "10+") {
+    }
+    else if (age === "10+") {
       percent = 1;
     }
 
-    const value = landCost * percent;
+    const value = normalLandCost * percent;
 
     breakdown.push(formatCurrency(value));
 
     total += value;
     cwbTotal += value;
 
+  });
+
+
+  // ==========================================
+  // 4. TICKET CHILD RATE
+  // ==========================================
+
+  document.querySelectorAll(".land-service").forEach(select => {
+
+    const option = select.options[select.selectedIndex];
+
+    if (!option || !option.dataset.service) return;
+
+    const service = JSON.parse(option.dataset.service);
+
+    if (!service.isTicket) return;
+
+    const childRate = Number(
+      service.child || service.adult || 0
+    );
+
+    const adultRate = Number(
+      service.adult || service.price || 0
+    );
+
+
+    // --------------------------
+    // Child Without Bed
+    // --------------------------
+
+    cnbAgeHistory.forEach(age => {
+
+      let ticketRate = 0;
+
+      if (age === "0-3") {
+
+        ticketRate = 0;
+
+      }
+      else if (
+        age === "4-6" ||
+        age === "7-9"
+      ) {
+
+        ticketRate = childRate;
+
+      }
+
+      cnbTotal += ticketRate;
+      total += ticketRate;
+
+    });
+
+
+    // --------------------------
+    // Child With Bed
+    // --------------------------
+
+    cwbAgeHistory.forEach(age => {
+
+      let ticketRate = 0;
+
+      if (
+        age === "4-6" ||
+        age === "7-9"
+      ) {
+
+        ticketRate = childRate;
+
+      }
+      else if (age === "10+") {
+
+        ticketRate = adultRate;
+
+      }
+
+      cwbTotal += ticketRate;
+      total += ticketRate;
+
+    });
 
   });
+
 
   return {
     total,

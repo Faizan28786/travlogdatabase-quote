@@ -425,13 +425,6 @@ s .passenger-grid .field {
 }
 
 /* ---------- Compact Segment Grid ---------- */
-.segment-fields-grid.compact {
-  display: grid;
-  grid-template-columns:
-    minmax(170px, 1.15fr) minmax(120px, 0.75fr) minmax(250px, 1.45fr) minmax(170px, 1fr) minmax(90px, 0.55fr) minmax(90px, 0.55fr);
-  gap: 12px;
-  align-items: end;
-}
 
 .segment-fields-grid.compact .field {
   margin: 0;
@@ -870,9 +863,9 @@ s .passenger-grid .field {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .segment-fields-grid.compact {
+  /* .segment-fields-grid.compact {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  } */
 
   .segment-summary-grid.compact {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -920,10 +913,10 @@ s .passenger-grid .field {
     align-self: flex-start;
   }
 
-  .segment-fields-grid.compact {
+  /* .segment-fields-grid.compact {
     grid-template-columns: 1fr;
     gap: 10px;
-  }
+  } */
 
   .segment-summary-grid.compact {
     grid-template-columns: 1fr;
@@ -978,7 +971,7 @@ s .passenger-grid .field {
 
 .segment-date-box label {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   color: #7b89a8;
   margin-bottom: 4px;
 }
@@ -1429,4 +1422,159 @@ s .passenger-grid .field {
   font-size: 14px;
   line-height: 1.6;
   margin: 0;
+}
+
+/* ================================
+   CITY SEGMENT NEW LAYOUT
+================================ */
+
+.segment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.segment-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.segment-title h3 {
+  margin: 0;
+}
+
+.segment-number {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0ebff;
+  color: #6c4cff;
+  font-weight: 700;
+}
+
+.segment-fields-grid.compact {
+  display: grid;
+  grid-template-columns:
+    1.4fr 0.6fr 1.5fr 1.15fr 0.8fr 1.1fr 1.1fr;
+
+  gap: 14px;
+  align-items: end;
+}
+
+/* ================================
+   CHECK IN / CHECK OUT
+   SAME STYLE AS OTHER SEGMENT FIELDS
+================================ */
+
+.segment-fields-grid.compact .segment-date-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
+}
+
+.segment-fields-grid.compact .segment-date-box label {
+  display: block;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 600;
+  color: #42506b;
+}
+
+.segment-fields-grid.compact .segment-date-box input,
+.segment-fields-grid.compact .segment-checkin,
+.segment-fields-grid.compact .segment-checkout {
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  box-sizing: border-box;
+
+  border: 1.5px solid #dbe5ff;
+  border-radius: 14px;
+
+  background: #fff;
+  outline: none;
+
+  padding: 0 12px;
+
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: #24324b;
+
+  transition: 0.2s ease;
+}
+
+.segment-fields-grid.compact .segment-date-box input:focus {
+  border-color: #6d8cff;
+  box-shadow: 0 0 0 4px rgba(109, 140, 255, 0.12);
+}
+
+/* Calendar icon */
+.segment-fields-grid.compact input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  cursor: pointer;
+}
+
+/* Same focus as other fields */
+.city-segment .segment-checkin:focus,
+.city-segment .segment-checkout:focus {
+  border-color: #b9c7ff;
+  box-shadow: none;
+}
+
+/* Date label */
+.city-segment .segment-date-box label {
+  display: block;
+  margin-bottom: 8px;
+
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: #46536f;
+}
+
+/* Keep both date blocks exactly same width */
+.city-segment .segment-date-box {
+  min-width: 0;
+  width: 100%;
+}
+
+/* Browser date text */
+.city-segment input[type="date"] {
+  font-family: inherit;
+  font-weight: 600;
+  color: #2f3b59;
+}
+
+/* Calendar icon */
+.city-segment input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  cursor: pointer;
+}
+
+/* Only Check In / Check Out styling */
+.city-segment .segment-checkin,
+.city-segment .segment-checkout {
+  width: 100%;
+  height: 58px;
+  box-sizing: border-box;
+
+  padding: 0 12px;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: #46536f;
+
+  border: 1px solid #cfd9f2;
+  border-radius: 16px;
+  background: transparent;
 }
