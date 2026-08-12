@@ -2783,6 +2783,7 @@ async function saveQuote() {
    RESET
 ========================================================= */
 async function resetForm() {
+
   if (travelDateEl) travelDateEl.value = "";
   if (adultsEl) adultsEl.value = 2;
   if (childWithBedEl) childWithBedEl.value = 0;
@@ -2803,12 +2804,48 @@ async function resetForm() {
   currentGrandTotal = 0;
   lastSavedQuote = null;
 
+  // ==========================================
+  // RESET CITY SEGMENTS
+  // ==========================================
 
   if (segmentsContainer) {
     segmentsContainer.innerHTML = "";
     segmentCounter = 0;
     createSegment();
   }
+
+  // ==========================================
+  // RESET OPTIONS
+  // Keep ONLY Option 1
+  // ==========================================
+
+  quoteOptions = [
+    {
+      id: 1,
+      title: "Option 1",
+      data: {}
+    }
+  ];
+
+  currentOption = 0;
+
+  renderOptionTabs();
+
+  // ==========================================
+  // RESET LAND PACKAGE
+  // ==========================================
+
+  if (landPartContainer) {
+    landPartContainer.innerHTML = "";
+  }
+
+  // Re-render land package from the CURRENT
+  // reset city segments only.
+  renderLandDays();
+
+  // ==========================================
+  // RECALCULATE
+  // ==========================================
 
   calculateQuote();
 }
