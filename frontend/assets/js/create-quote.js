@@ -2246,13 +2246,35 @@ function buildPreviewFinal(data = null) {
 
   let quotationAccommodation = "";
 
-  segments.forEach(seg => {
+segments.forEach((seg, index) => {
 
-    quotationAccommodation += `
+  const checkIn =
+    seg.checkIn ||
+    document.querySelectorAll(".segment-checkin")[index]?.value ||
+    "";
+
+  const checkOut =
+    seg.checkOut ||
+    document.querySelectorAll(".segment-checkout")[index]?.value ||
+    "";
+
+  quotationAccommodation += `
 
 <div class="quotation-row">
   <div class="quotation-city">
+
     <strong>${seg.nights}nt</strong>
+
+    ${
+      checkIn && checkOut
+        ? `
+          <strong>
+            (${formatQuoteDate(checkIn)}-${formatQuoteDate(checkOut)})
+          </strong>
+        `
+        : ""
+    }
+
     <strong>${seg.city}</strong>
     -
     <strong>
@@ -2260,12 +2282,13 @@ function buildPreviewFinal(data = null) {
       ${seg.hotelCategory ? `(${seg.hotelCategory})` : ""}
     </strong>
     ${seg.roomType ? " / " + seg.roomType : ""}
+
   </div>
 </div>
 
 `;
 
-  });
+});
   let itineraryHtml = "";
   let notesHtml = "";
 
@@ -2655,6 +2678,57 @@ ${(childWithBed > 0 || landChild > 0)
   previewBox.innerHTML = html;
   window.latestPreviewHtml = html;
 
+}
+function formatQuoteDate(dateValue) {
+  if (!dateValue) return "";
+
+  let day, month, year;
+
+  const value = String(dateValue).trim();
+
+  // YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const parts = value.split("-");
+    year = Number(parts[0]);
+    month = Number(parts[1]);
+    day = Number(parts[2]);
+  }
+
+  // DD-MM-YYYY
+  else if (/^\d{2}-\d{2}-\d{4}$/.test(value)) {
+    const parts = value.split("-");
+    day = Number(parts[0]);
+    month = Number(parts[1]);
+    year = Number(parts[2]);
+  }
+
+  // DD/MM/YYYY
+  else if (/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+    const parts = value.split("/");
+    day = Number(parts[0]);
+    month = Number(parts[1]);
+    year = Number(parts[2]);
+  }
+
+  // Existing Date format
+  else {
+    const d = new Date(value);
+
+    if (isNaN(d.getTime())) return "";
+
+    day = d.getDate();
+    month = d.getMonth() + 1;
+    year = d.getFullYear();
+  }
+
+  if (!day || !month || !year) return "";
+
+  const monthNames = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+
+  return `${String(day).padStart(2, "0")}${monthNames[month - 1]}`;
 }
 function formatDate(dateStr) {
 
