@@ -324,7 +324,7 @@ function getChildChargeConfig() {
     cnbAge: childWithoutBedAgeEl?.value || "4-10",
 
     // Child With Bed + Land Child
-    cwbCount: cwb + lca,
+    cwbCount: cwb,
 
     cnbCount: Number(childWithoutBedEl?.value || 0)
   };
@@ -494,19 +494,26 @@ function bindTopLevelEvents() {
 
   let landPartInitialized = false;
 
-  addLandPartBtn?.addEventListener("click", () => {
+  if (addLandPartBtn) {
 
-    if (!landPartInitialized) {
+    addLandPartBtn.onclick = function () {
+
+      console.log("ADD LAND PART CLICKED");
+
+      if (!landPartContainer) {
+        console.error("landPartContainer not found");
+        return;
+      }
 
       createLandPartUI();
 
       landPartInitialized = true;
 
-    }
+      landPartContainer.style.display = "block";
 
-    landPartContainer.style.display = "block";
+    };
 
-  });
+  }
   function createLandPartUI() {
 
     landPartContainer.innerHTML = `
@@ -1196,13 +1203,15 @@ function calculateSegmentCost(segmentEl) {
 
     });
 
+
+
     // Child With Bed
     if (childConfig.cwbCount > 0) {
       childWithBedCharges = extraBedRate * childConfig.cwbCount * nights;
     }
 
 
-    // Child Without Bed
+
     // Child Without Bed
     childWithoutBedCharges = 0;
 
@@ -2246,34 +2255,33 @@ function buildPreviewFinal(data = null) {
 
   let quotationAccommodation = "";
 
-segments.forEach((seg, index) => {
+  segments.forEach((seg, index) => {
 
-  const checkIn =
-    seg.checkIn ||
-    document.querySelectorAll(".segment-checkin")[index]?.value ||
-    "";
+    const checkIn =
+      seg.checkIn ||
+      document.querySelectorAll(".segment-checkin")[index]?.value ||
+      "";
 
-  const checkOut =
-    seg.checkOut ||
-    document.querySelectorAll(".segment-checkout")[index]?.value ||
-    "";
+    const checkOut =
+      seg.checkOut ||
+      document.querySelectorAll(".segment-checkout")[index]?.value ||
+      "";
 
-  quotationAccommodation += `
+    quotationAccommodation += `
 
 <div class="quotation-row">
   <div class="quotation-city">
 
     <strong>${seg.nights}nt</strong>
 
-    ${
-      checkIn && checkOut
+    ${checkIn && checkOut
         ? `
           <strong>
             (${formatQuoteDate(checkIn)}-${formatQuoteDate(checkOut)})
           </strong>
         `
         : ""
-    }
+      }
 
     <strong>${seg.city}</strong>
     -
@@ -2288,7 +2296,7 @@ segments.forEach((seg, index) => {
 
 `;
 
-});
+  });
   let itineraryHtml = "";
   let notesHtml = "";
 
@@ -2911,11 +2919,10 @@ async function resetForm() {
 
   if (landPartContainer) {
     landPartContainer.innerHTML = "";
+    landPartContainer.style.display = "none";
   }
 
-  // Re-render land package from the CURRENT
-  // reset city segments only.
-  renderLandDays();
+  landPartInitialized = false;
 
   // ==========================================
   // RECALCULATE
@@ -3493,7 +3500,8 @@ async function populateLandServices(card, city) {
     ...(data.sicTours || []),
     ...(data.localServices || []).map(service => ({
       ...service,
-      isTicket: true
+      isTicket: city.toLowerCase() === "phu quoc" ||
+        city.toLowerCase() === "sapa"
     })),
     ...(data.meals || [])
   ];
@@ -3961,6 +3969,10 @@ class="remove-service">
 
         row.remove();
 
+        // Reset service selection + rate
+        serviceSelect.value = "";
+        rateBox.value = 0;
+
         let grand = 0;
 
         card.querySelectorAll(".service-right").forEach(x => {
@@ -3976,15 +3988,18 @@ class="remove-service">
         if (list.children.length === 0) {
 
           list.innerHTML = `
-<div class="empty-service">
-No Service Added
-</div>
-`;
+            <div class="empty-service">
+                No Service Added
+            </div>
+        `;
 
         }
+
         list.style.maxHeight = "";
+
         currentLandCost = calculateLandCost();
         calculateQuote();
+
         // Refresh preview after deleting service
         buildPreview();
 
