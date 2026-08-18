@@ -1665,15 +1665,17 @@ function buildPreview() {
   totalLandExtraPerson = landChildData.cwbTotal;
 
   totalLandChildNoBed = landChildData.cnbTotal;
-const hotelExtraRate =
-  childWithBed > 0
-    ? (totalExtraPerson / childWithBed) + Number(totalLandAdult || 0)
-    : 0;
+  const hotelExtraRate =
+    childWithBed > 0
+      ? (totalExtraPerson / childWithBed) + Number(totalLandAdult || 0)
+      : 0;
 
-const landExtraRate =
-  landChild > 0
-    ? totalLandExtraPerson / landChild
-    : 0;
+  const landExtraRate =
+    landChild > 0
+      ? totalLandExtraPerson / landChild
+      : 0;
+
+  window.finalExtraPersonRate = hotelExtraRate + landExtraRate;
   /* ===========================
      ACCOMMODATION
   ============================ */
@@ -2035,12 +2037,12 @@ ${itineraryHtml}
     `Price Per Person: ${formatCurrency(totalPerPerson + totalLandAdult)} Per Pax`
   );
 
-  whatsappText.push(
-    `Extra Person: ${childWithBed > 0
-      ? formatCurrency(totalExtraPerson / childWithBed)
-      : "N/A"
-    } Per Person`
-  );
+whatsappText.push(
+  `Extra Person: ${childWithBed > 0 || landChild > 0
+    ? formatCurrency(finalExtraPersonRate)
+    : "N/A"
+  } Per Person`
+);
 
   whatsappText.push(
     `Child No Bed (1m - 1m40) (${cnbAge}): ${formatCurrency(totalChildNoBed)} Per Person`
@@ -2206,6 +2208,8 @@ Points to be Noted:
   window.latestPreviewHtml = previewHtml;
 
 }
+
+
 function buildPreviewFinal(data = null) {
 
   if (!previewBox) return;
@@ -2234,15 +2238,19 @@ function buildPreviewFinal(data = null) {
   const childWithoutBed = Number(childWithoutBedEl?.value || 0);
   const landChild = Number(landChildEl?.value || 0);
 
-  const hotelExtraRate =
-    childWithBed > 0
-      ? totalExtraPerson / childWithBed
-      : 0;
+  // const hotelExtraRate =
+  //   childWithBed > 0
+  //     ? totalExtraPerson / childWithBed
+  //     : 0;
 
-  const landExtraRate =
-    landChild > 0
-      ? totalLandExtraPerson / landChild
-      : 0;
+  const finalExtraPersonRate =
+    Number(window.finalExtraPersonRate || 0);
+
+
+  // const landExtraRate =
+  //   childWithBed > 0
+  //     ? totalLandExtraPerson / childWithBed
+  //     : 0;
   const cnbAgeText =
     cnbAgeHistory.length
       ? cnbAgeHistory
@@ -2574,7 +2582,7 @@ ${quotationAccommodation}
 <span class="package-value">
 <strong>
 ${(childWithBed > 0 || landChild > 0)
-      ? `${formatCurrency(hotelExtraRate + landExtraRate)} Per Person`
+      ? `${formatCurrency(finalExtraPersonRate)} Per Person`
       : "N/A"}
 </strong>
 </span>
