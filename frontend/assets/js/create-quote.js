@@ -1665,15 +1665,15 @@ function buildPreview() {
   totalLandExtraPerson = landChildData.cwbTotal;
 
   totalLandChildNoBed = landChildData.cnbTotal;
-  const hotelExtraRate =
-    childWithBed > 0
-      ? totalExtraPerson / childWithBed
-      : 0;
+const hotelExtraRate =
+  childWithBed > 0
+    ? (totalExtraPerson / childWithBed) + Number(totalLandAdult || 0)
+    : 0;
 
-  const landExtraRate =
-    landChild > 0
-      ? totalLandExtraPerson / landChild
-      : 0;
+const landExtraRate =
+  landChild > 0
+    ? totalLandExtraPerson / landChild
+    : 0;
   /* ===========================
      ACCOMMODATION
   ============================ */
