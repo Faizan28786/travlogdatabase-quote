@@ -976,9 +976,18 @@ function populateSegmentHotels(segmentEl) {
     }
   });
 
-  const uniqueHotels = [...uniqueHotelsMap.values()].sort((a, b) =>
-    String(a.hotelName || "").localeCompare(String(b.hotelName || ""))
-  );
+const uniqueHotels = [...uniqueHotelsMap.values()].sort((a, b) => {
+
+  const getStar = hotel =>
+    Number(
+      String(hotel.category || "").match(/\d+/)?.[0] || 99
+    );
+
+  const starA = getStar(a);
+  const starB = getStar(b);
+
+  return starA - starB;
+});
 
   hotelSelect.innerHTML = `<option value="">Select Hotel</option>`;
 
@@ -3862,17 +3871,17 @@ function initializeLandEvents() {
       // ===============================
       // TRANSFER
       // ===============================
-else if (service.isTransfer && service.rates) {
+      else if (service.isTransfer && service.rates) {
 
-  const totalTransferRate =
-    Number(service.rates[pax] || 0);
+        const totalTransferRate =
+          Number(service.rates[pax] || 0);
 
-  rate =
-    pax > 0
-      ? Math.round(totalTransferRate / pax)
-      : 0;
+        rate =
+          pax > 0
+            ? Math.round(totalTransferRate / pax)
+            : 0;
 
-}
+      }
 
       // ===============================
       // OLD FORMAT
