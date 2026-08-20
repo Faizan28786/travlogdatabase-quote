@@ -22,6 +22,7 @@ const landServices = [
             {
                 name: "Hanoi Airport Private Transfer (One Way)",
                 vehicle: "04 / 07 / 16 / 29 Seater",
+                isTransfer: true,
                 rates: {
                     2: 12, 3: 13, 4: 13, 5: 20, 6: 20, 7: 20, 8: 20,
                     9: 63, 10: 63, 11: 63, 12: 63, 13: 63, 14: 63
@@ -31,6 +32,7 @@ const landServices = [
             {
                 name: "Hanoi Hotel → Halong Bay Private Transfer",
                 vehicle: "04 / 07 / 16 / 29 Seater",
+                isTransfer: true,
                 rates: {
                     2: 60, 3: 63, 4: 63, 5: 84, 6: 84, 7: 84, 8: 84,
                     9: 146, 10: 146, 11: 146, 12: 146, 13: 146, 14: 146
@@ -40,6 +42,7 @@ const landServices = [
             {
                 name: "Halong Bay → Hanoi Airport Private Transfer",
                 vehicle: "04 / 07 / 16 / 29 Seater",
+                isTransfer: true,
                 rates: {
                     2: 60, 3: 63, 4: 63, 5: 84, 6: 84, 7: 84, 8: 84,
                     9: 146, 10: 146, 11: 146, 12: 146, 13: 146, 14: 146
@@ -49,6 +52,7 @@ const landServices = [
             {
                 name: "Airport → Halong Bay Private Transfer",
                 vehicle: "04 / 07 / 16 / 29 Seater",
+                isTransfer: true,
                 rates: {
                     2: 60, 3: 63, 4: 63, 5: 84, 6: 84, 7: 84, 8: 84,
                     9: 146, 10: 146, 11: 146, 12: 146, 13: 146, 14: 146
@@ -259,6 +263,7 @@ const landServices = [
             {
                 name: "Hanoi Airport → Sapa Hotel (Private)",
                 vehicle: "04 / 07 / 16 / 29 Seater",
+                isTransfer: true,
                 rates: {
                     2: 108, 3: 112, 4: 112, 5: 145, 6: 145, 7: 145, 8: 145,
                     9: 342, 10: 342, 11: 342, 12: 342, 13: 342, 14: 342
@@ -268,6 +273,7 @@ const landServices = [
             {
                 name: "Sapa Hotel → Hanoi Airport (Private)",
                 vehicle: "04 / 07 / 16 / 29 Seater",
+                isTransfer: true,
                 rates: {
                     2: 108, 3: 112, 4: 112, 5: 145, 6: 145, 7: 145, 8: 145,
                     9: 342, 10: 342, 11: 342, 12: 342, 13: 342, 14: 342
@@ -277,6 +283,7 @@ const landServices = [
             {
                 name: "Hanoi Hotel → Sapa (Private)",
                 vehicle: "04 / 07 / 16 / 29 Seater",
+                isTransfer: true,
                 rates: {
                     2: 108, 3: 112, 4: 112, 5: 145, 6: 145, 7: 145, 8: 145,
                     9: 342, 10: 342, 11: 342, 12: 342, 13: 342, 14: 342
@@ -286,6 +293,7 @@ const landServices = [
             {
                 name: "Sapa → Hanoi Hotel (Private)",
                 vehicle: "04 / 07 / 16 / 29 Seater",
+                isTransfer: true,
                 rates: {
                     2: 108, 3: 112, 4: 112, 5: 145, 6: 145, 7: 145, 8: 145,
                     9: 342, 10: 342, 11: 342, 12: 342, 13: 342, 14: 342

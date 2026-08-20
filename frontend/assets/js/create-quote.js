@@ -2037,12 +2037,12 @@ ${itineraryHtml}
     `Price Per Person: ${formatCurrency(totalPerPerson + totalLandAdult)} Per Pax`
   );
 
-whatsappText.push(
-  `Extra Person: ${childWithBed > 0 || landChild > 0
-    ? formatCurrency(finalExtraPersonRate)
-    : "N/A"
-  } Per Person`
-);
+  whatsappText.push(
+    `Extra Person: ${childWithBed > 0 || landChild > 0
+      ? formatCurrency(finalExtraPersonRate)
+      : "N/A"
+    } Per Person`
+  );
 
   whatsappText.push(
     `Child No Bed (1m - 1m40) (${cnbAge}): ${formatCurrency(totalChildNoBed)} Per Person`
@@ -3858,6 +3858,21 @@ function initializeLandEvents() {
           (adults * adultRate) +
           (children * adultRate * childMultiplier);
       }
+
+      // ===============================
+      // TRANSFER
+      // ===============================
+else if (service.isTransfer && service.rates) {
+
+  const totalTransferRate =
+    Number(service.rates[pax] || 0);
+
+  rate =
+    pax > 0
+      ? Math.round(totalTransferRate / pax)
+      : 0;
+
+}
 
       // ===============================
       // OLD FORMAT
