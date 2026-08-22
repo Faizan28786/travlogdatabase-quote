@@ -976,18 +976,18 @@ function populateSegmentHotels(segmentEl) {
     }
   });
 
-const uniqueHotels = [...uniqueHotelsMap.values()].sort((a, b) => {
+  const uniqueHotels = [...uniqueHotelsMap.values()].sort((a, b) => {
 
-  const getStar = hotel =>
-    Number(
-      String(hotel.category || "").match(/\d+/)?.[0] || 99
-    );
+    const getStar = hotel =>
+      Number(
+        String(hotel.category || "").match(/\d+/)?.[0] || 99
+      );
 
-  const starA = getStar(a);
-  const starB = getStar(b);
+    const starA = getStar(a);
+    const starB = getStar(b);
 
-  return starA - starB;
-});
+    return starA - starB;
+  });
 
   hotelSelect.innerHTML = `<option value="">Select Hotel</option>`;
 
@@ -1681,7 +1681,7 @@ function buildPreview() {
 
   const landExtraRate =
     landChild > 0
-      ? totalLandExtraPerson / landChild
+      ? totalLandExtraPerson
       : 0;
 
   window.finalExtraPersonRate = hotelExtraRate + landExtraRate;
