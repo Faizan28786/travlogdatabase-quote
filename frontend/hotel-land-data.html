@@ -165,7 +165,7 @@
 
                 <table id="roomTable" class="roomTable">
 
-                    <thead>
+                    <thead id="roomTableHead">
 
                         <tr>
 
@@ -208,9 +208,98 @@
         </section>
 
     </div>
+    <!-- =========================
+     ADD HOTEL MODAL
+========================= -->
+
+<div id="hotelModal" class="modalOverlay">
+
+    <div class="modalBox">
+
+        <div class="modalHeader">
+            <h2>Add Hotel</h2>
+
+            <button id="closeHotelModal" class="modalClose">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="modalBody">
+
+            <div class="formGrid">
+
+                <div class="formGroup">
+                    <label>Hotel Name</label>
+                    <input id="hotelNameInput" type="text"
+                        placeholder="Enter hotel name">
+                </div>
+
+                <div class="formGroup">
+                    <label>Destination</label>
+                    <input id="hotelDestinationInput" type="text"
+                        value="Vietnam">
+                </div>
+
+                <div class="formGroup">
+                    <label>Region</label>
+                    <input id="hotelRegionInput" type="text"
+                        placeholder="North Vietnam">
+                </div>
+
+                <div class="formGroup">
+                    <label>City</label>
+                    <input id="hotelCityInput" type="text"
+                        placeholder="Hanoi">
+                </div>
+
+                <div class="formGroup">
+                    <label>Category</label>
+                    <input id="hotelCategoryInput" type="text"
+                        placeholder="5 Star">
+                </div>
+
+                <div class="formGroup">
+                    <label>Currency</label>
+                    <input id="hotelCurrencyInput" type="text"
+                        placeholder="USD">
+                </div>
+
+                <div class="formGroup">
+                    <label>Pricing Unit</label>
+                    <input id="hotelPricingUnitInput" type="text"
+                        placeholder="Per Room / Night">
+                </div>
+
+                <div class="formGroup fullWidth">
+                    <label>Note</label>
+                    <textarea id="hotelNoteInput"
+                        placeholder="Optional note"></textarea>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="modalFooter">
+
+            <button id="cancelHotelBtn" class="cancelBtn">
+                Cancel
+            </button>
+
+            <button id="saveHotelBtn" class="blueBtn">
+                <i class="fa-solid fa-floppy-disk"></i>
+                Save Hotel
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
 
     <script src="assets/js/config.js"></script>
     <script src="assets/js/hotel-land-data.js"></script>
+
 
 </body>
 

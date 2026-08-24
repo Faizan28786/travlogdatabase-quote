@@ -1616,6 +1616,7 @@ function buildPreview() {
   const quoteNo = quoteNoEl?.textContent || "-";
   const country = countryEl?.value || "-";
   const travelDate = travelDateEl?.value || "-";
+  const rooms = Number(roomsEl?.value || 0);
 
   const adults = Number(adultsEl?.value || 0);
   const childWithBed = Number(childWithBedEl?.value || 0);
@@ -1649,6 +1650,24 @@ function buildPreview() {
     "Select Drop Vehicle";
 
   const segments = getAllSegmentsData();
+
+  const totalNights = segments.reduce(
+    (sum, seg) => sum + Number(seg.nights || 0),
+    0
+  );
+
+  const totalDays = totalNights + 1;
+
+  const hotelCategories = [...new Set(
+    segments
+      .map(seg => String(seg.hotelCategory || "").trim())
+      .filter(Boolean)
+  )];
+
+  const hotelText = hotelCategories.length
+    ? hotelCategories.join("/")
+    : "-";
+
 
   let totalPerPerson = 0;
   let totalExtraPerson = 0;
@@ -1847,15 +1866,45 @@ function buildPreview() {
 
 <div class="quotation-document">
 
-    <!-- OPTION -->
-    <div class="quotation-title">
-        <h2>${optionTitle.toUpperCase()}</h2>
-    </div>
+
+    <div class="quotation-trip-details">
+
+<div>
+    TRIP ID:
+    <strong>${quoteNo}</strong>
+</div>
+
+<div>
+    DESTINATION:
+    <strong>${country}</strong>
+</div>
+
+<div>
+    TRAVEL DATE:
+    <strong>${travelDate}</strong>
+</div>
+    NO OF PAX:
+    <strong>${String(totalPax).padStart(2, "0")} ADULTS</strong>
+</div>
+
+<div>
+    NO OF ROOM:
+    <strong>${String(rooms).padStart(2, "0")}</strong>
+</div>
+
+<div>
+    NO OF NIGHT:
+    <strong>${totalNights}N/${totalNights + 1}D</strong>
+</div>
 
     <!-- ACCOMMODATION -->
 <div class="quotation-section-title">
     <strong>ACCOMMODATION</strong>
 </div>
+    <!-- OPTION -->
+    <div class="quotation-title">
+        <h2>${optionTitle.toUpperCase()}</h2>
+    </div>
 
     <div class="quotation-accommodation">
 
@@ -2010,9 +2059,36 @@ ${itineraryHtml}
 `;
   const whatsappText = [];
 
-  whatsappText.push(optionTitle.toUpperCase());
+  // ==========================
+  // WHATSAPP HEADER
+  // Show only once for Option 1
+  // ==========================
+  if (currentOption === 0) {
+
+    const totalNights = segments.reduce(
+      (sum, seg) => sum + Number(seg.nights || 0),
+      0
+    );
+
+    whatsappText.push(`TRIP ID: ${quoteNo}`);
+    whatsappText.push(`DESTINATION: ${country}`);
+    whatsappText.push(`TRAVEL DATE: ${travelDate}`);
+    whatsappText.push(
+      `NO OF PAX: ${String(totalPax).padStart(2, "0")} ADULTS`
+    );
+    whatsappText.push(
+      `NO OF ROOM: ${String(rooms).padStart(2, "0")}`
+    );
+    whatsappText.push(
+      `NO OF NIGHT: ${totalNights}N/${totalNights + 1}D`
+    );
+
+  }
+
   whatsappText.push("");
   whatsappText.push("ACCOMMODATION");
+  whatsappText.push("");
+  whatsappText.push(`${optionTitle.toUpperCase()}:`);
 
   segments.forEach((seg, index) => {
 
@@ -2219,7 +2295,7 @@ Points to be Noted:
 }
 
 
-function buildPreviewFinal(data = null) {
+function buildPreviewFinal(data = null, showHeader = true) {
 
   if (!previewBox) return;
   if (data) {
@@ -2269,6 +2345,23 @@ function buildPreviewFinal(data = null) {
 
   const optionTitle =
     quoteOptions[currentOption]?.title || "Option 1";
+  const quoteNo = quoteNoEl?.textContent || "-";
+  const country = countryEl?.value || "-";
+  const travelDate = travelDateEl?.value || "-";
+  const rooms = Number(roomsEl?.value || 0);
+
+  const adults = Number(adultsEl?.value || 0);
+  const childWithBedCount = Number(childWithBedEl?.value || 0);
+  const childWithoutBedCount = Number(childWithoutBedEl?.value || 0);
+
+  const totalPax =
+    adults + childWithBedCount + childWithoutBedCount;
+
+  const totalNights =
+    segments.reduce(
+      (sum, seg) => sum + Number(seg.nights || 0),
+      0
+    );
 
   let quotationAccommodation = "";
 
@@ -2556,17 +2649,29 @@ Points to be Noted:
 `;
 
   }
+  const finalHeaderHtml = showHeader ? `
+<div class="quotation-title">
+  <div>TRIP ID: <strong>${quoteNo}</strong></div>
+  <div>DESTINATION: <strong>${country}</strong></div>
+  <div>TRAVEL DATE: <strong>${travelDate}</strong></div>
+  <div>NO OF PAX: <strong>${String(totalPax).padStart(2, "0")} ADULTS</strong></div>
+  <div>NO OF ROOM: <strong>${String(rooms).padStart(2, "0")}</strong></div>
+  <div>NO OF NIGHT: <strong>${totalNights}N/${totalNights + 1}D</strong></div>
+</div>
+` : "";
 
   const finalHtml = `
 
 <div class="quotation-document">
 
-<div class="quotation-title">
-<h2>${optionTitle.toUpperCase()}</h2>
-</div>
+${finalHeaderHtml}
 
 <div class="quotation-section-title">
-<strong>ACCOMMODATION</strong>
+  <strong>ACCOMMODATION</strong>
+</div>
+
+<div class="quotation-option-title">
+  <strong>${optionTitle.toUpperCase()}</strong>
 </div>
 
 <div class="quotation-accommodation">
@@ -2775,6 +2880,43 @@ function openPreviewModal() {
   const activeOption = currentOption;
 
   let finalHtml = "";
+  const quoteNo = quoteNoEl?.textContent || "-";
+  const country = countryEl?.value || "-";
+  const travelDate = travelDateEl?.value || "-";
+  const rooms = Number(roomsEl?.value || 0);
+
+  const adults = Number(adultsEl?.value || 0);
+  const childWithBed = Number(childWithBedEl?.value || 0);
+  const childWithoutBed = Number(childWithoutBedEl?.value || 0);
+
+  const totalPax =
+    adults + childWithBed + childWithoutBed;
+
+  const segmentsForHeader = getAllSegmentsData();
+
+  const totalNights =
+    segmentsForHeader.reduce(
+      (sum, seg) => sum + Number(seg.nights || 0),
+      0
+    );
+
+  finalHtml += `
+<div class="quotation-document">
+
+<div class="quotation-title">
+  <div>TRIP ID: <strong>${quoteNo}</strong></div>
+  <div>DESTINATION: <strong>${country}</strong></div>
+  <div>TRAVEL DATE: <strong>${travelDate}</strong></div>
+  <div>NO OF PAX: <strong>${String(totalPax).padStart(2, "0")} ADULTS</strong></div>
+  <div>NO OF ROOM: <strong>${String(rooms).padStart(2, "0")}</strong></div>
+  <div>NO OF NIGHT: <strong>${totalNights}N/${totalNights + 1}D</strong></div>
+</div>
+
+
+
+</div>
+`;
+
 
   for (let i = 0; i < quoteOptions.length; i++) {
 
@@ -2785,7 +2927,7 @@ function openPreviewModal() {
     currentOption = i;
 
     // Only modal uses final preview
-    buildPreviewFinal(optionData);
+    buildPreviewFinal(optionData, false);
 
     finalHtml += window.latestPreviewHtml;
 

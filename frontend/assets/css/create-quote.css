@@ -1578,3 +1578,37 @@ s .passenger-grid .field {
   border-radius: 16px;
   background: transparent;
 }
+/* Dashboard + Trip ID */
+.quote-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-left: auto;
+}
+
+/* Dashboard Button */
+.dashboard-btn {
+    height: 48px;
+    padding: 0 22px;
+    border: none;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #243b6b;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+}
+
+.dashboard-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.dashboard-btn i {
+    font-size: 15px;
+}

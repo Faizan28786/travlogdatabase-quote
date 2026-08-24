@@ -527,6 +527,17 @@ function showHotelDetails(hotel) {
 
     document.getElementById("hotelLocation").innerText =
         `${hotel.city} • ${hotel.region}`;
+    document.getElementById("roomTableHead").innerHTML = `
+    <tr>
+        <th>Room Type</th>
+        <th>Meal</th>
+        <th>2D1N</th>
+        <th>3D2N</th>
+        <th>Extra Bed</th>
+        <th>CNB</th>
+        <th>Action</th>
+    </tr>
+`;
 
     // Summary Card
 
@@ -595,29 +606,7 @@ function showHotelDetails(hotel) {
     const tbody = document.getElementById("roomTableBody");
 
     tbody.innerHTML = "";
-    // ===============================
-    // LOCAL SERVICE ADULT / CHILD RATE
-    // ===============================
 
-    if (
-        type === "Local Service" &&
-        service.priceConfig
-    ) {
-
-        tbody.innerHTML = `
-        <tr>
-            <td colspan="5">Adult</td>
-            <td colspan="2">$${service.priceConfig.adult}</td>
-        </tr>
-
-        <tr>
-            <td colspan="5">Child</td>
-            <td colspan="2">$${service.priceConfig.child}</td>
-        </tr>
-    `;
-
-        return;
-    }
     rooms.forEach(room => {
 
         tbody.innerHTML += `
@@ -690,6 +679,67 @@ function showLandDetails(service, type) {
     `;
 
     const tbody = document.getElementById("roomTableBody");
+    const tableHead = document.getElementById("roomTableHead");
+
+    if (type === "Transfer") {
+
+        tableHead.innerHTML = `
+        <tr>
+            <th>Pax</th>
+            <th>Price</th>
+            <th>Action</th>
+        </tr>
+    `;
+
+    }
+    else if (type === "Private Tour") {
+
+        tableHead.innerHTML = `
+        <tr>
+            <th>Vehicle</th>
+            <th>Guide</th>
+            <th>Price</th>
+            <th>Action</th>
+        </tr>
+    `;
+
+    }
+    else if (type === "SIC Tour") {
+
+        tableHead.innerHTML = `
+        <tr>
+            <th>Vehicle</th>
+            <th>Guide</th>
+            <th>Price</th>
+            <th>Action</th>
+        </tr>
+    `;
+
+    }
+    else if (type === "Local Service") {
+
+        tableHead.innerHTML = `
+        <tr>
+            <th>Adult</th>
+            <th>Child</th>
+            <th>Price</th>
+            <th>Action</th>
+        </tr>
+    `;
+
+    }
+    else if (type === "Meal") {
+
+        tableHead.innerHTML = `
+        <tr>
+            <th>Meal</th>
+            <th>Adult</th>
+            <th>Child</th>
+            <th>Action</th>
+        </tr>
+    `;
+
+    }
 
     tbody.innerHTML = "";
 
@@ -729,23 +779,29 @@ function showLandDetails(service, type) {
 
             tbody.innerHTML += `
 
-                <tr>
+            <tr>
 
-                    <td colspan="6">
+                <td>
+                    ${pax} Pax
+                </td>
 
-                        ${pax} Pax
+                <td>
+                    $${service.rates[pax]}
+                </td>
 
-                    </td>
+                <td>
+                    <button class="editBtn">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
 
-                    <td>
+                    <button class="deleteBtn">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
 
-                        $${service.rates[pax]}
+            </tr>
 
-                    </td>
-
-                </tr>
-
-            `;
+        `;
 
         });
 
@@ -787,3 +843,25 @@ async function loadLandServices() {
     }
 
 }
+console.log("Hotel/Land Master JS Loaded");
+const hotelModal = document.getElementById("hotelModal");
+const closeHotelModal = document.getElementById("closeHotelModal");
+const cancelHotelBtn = document.getElementById("cancelHotelBtn");
+
+document.getElementById("btnAddHotel").addEventListener("click", () => {
+    hotelModal.classList.add("open");
+});
+
+closeHotelModal.addEventListener("click", () => {
+    hotelModal.classList.remove("open");
+});
+
+cancelHotelBtn.addEventListener("click", () => {
+    hotelModal.classList.remove("open");
+});
+
+hotelModal.addEventListener("click", (e) => {
+    if (e.target === hotelModal) {
+        hotelModal.classList.remove("open");
+    }
+});

@@ -354,5 +354,86 @@ router.post("/calculate", async (req, res) => {
     });
   }
 });
+/* =========================================================
+   5) UPDATE HOTEL / ROOM
+   PUT /api/hotels/:id
+========================================================= */
+router.put("/:id", async (req, res) => {
+  try {
+    const updatedHotel = await Hotel.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+        runValidators: true
+      }
+    ).lean();
 
+    if (!updatedHotel) {
+      return res.status(404).json({
+        success: false,
+        message: "Hotel / Room not found"
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: updatedHotel
+    });
+
+  } catch (error) {
+    console.error("PUT /api/hotels/:id error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update hotel / room",
+      error: error.message
+    });
+  }
+});
+
+
+/* =========================================================
+   6) DELETE HOTEL / ROOM
+   DELETE /api/hotels/:id
+
+   Soft delete:
+   Existing fetching ko safe rakhne ke liye document
+   MongoDB se physically delete nahi hoga.
+========================================================= */
+router.delete("/:id", async (req, res) => {
+  try {
+    const deletedHotel = await Hotel.findByIdAndUpdate(
+      req.params.id,
+      {
+        isActive: false
+      },
+      {
+        new: true
+      }
+    ).lean();
+
+    if (!deletedHotel) {
+      return res.status(404).json({
+        success: false,
+        message: "Hotel / Room not found"
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Hotel / Room deleted successfully",
+      data: deletedHotel
+    });
+
+  } catch (error) {
+    console.error("DELETE /api/hotels/:id error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete hotel / room",
+      error: error.message
+    });
+  }
+});
 module.exports = router;
