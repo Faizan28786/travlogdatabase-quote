@@ -3701,34 +3701,34 @@ async function populateLandServices(card, city) {
 
   });
 
-selects.forEach(select => {
+  selects.forEach(select => {
 
-  select.innerHTML = `<option value="">Select Service</option>`;
+    select.innerHTML = `<option value="">Select Service</option>`;
 
-  // Sort services alphabetically A → Z
-  const sortedServices = [...services].sort((a, b) =>
-    String(a.name || "").localeCompare(
-      String(b.name || ""),
-      undefined,
-      { sensitivity: "base" }
-    )
-  );
+    // Sort services alphabetically A → Z
+    const sortedServices = [...services].sort((a, b) =>
+      String(a.name || "").localeCompare(
+        String(b.name || ""),
+        undefined,
+        { sensitivity: "base" }
+      )
+    );
 
-  sortedServices.forEach(service => {
+    sortedServices.forEach(service => {
 
-    const option = document.createElement("option");
+      const option = document.createElement("option");
 
-    option.value = service.name;
-    option.textContent = service.name;
+      option.value = service.name;
+      option.textContent = service.name;
 
-    option.dataset.category = service.category || "";
-    option.dataset.service = JSON.stringify(service);
+      option.dataset.category = service.category || "";
+      option.dataset.service = JSON.stringify(service);
 
-    select.appendChild(option);
+      select.appendChild(option);
+
+    });
 
   });
-
-});
   // =========================
   // Restore Selected Services
   // =========================

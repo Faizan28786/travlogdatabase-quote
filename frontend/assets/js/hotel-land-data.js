@@ -759,79 +759,86 @@ function showLandDetails(service, type) {
     const tbody = document.getElementById("roomTableBody");
     const tableHead = document.getElementById("roomTableHead");
 
+    tbody.innerHTML = "";
+
+    /* =====================================================
+       TABLE HEAD
+    ===================================================== */
+
     if (type === "Transfer") {
 
         tableHead.innerHTML = `
-        <tr>
-            <th>Pax</th>
-            <th>Price</th>
-            <th>Action</th>
-        </tr>
-    `;
+            <tr>
+                <th>Pax</th>
+                <th>Price</th>
+                <th>Action</th>
+            </tr>
+        `;
 
     }
+
     else if (type === "Private Tour") {
 
         tableHead.innerHTML = `
-        <tr>
-            <th>Vehicle</th>
-            <th>Guide</th>
-            <th>Price</th>
-            <th>Action</th>
-        </tr>
-    `;
+            <tr>
+                <th>Vehicle</th>
+                <th>Price</th>
+                <th>Action</th>
+            </tr>
+        `;
 
     }
+
     else if (type === "SIC Tour") {
 
         tableHead.innerHTML = `
-        <tr>
-            <th>Vehicle</th>
-            <th>Guide</th>
-            <th>Price</th>
-            <th>Action</th>
-        </tr>
-    `;
+            <tr>
+                <th>Vehicle</th>
+                <th>Price</th>
+                <th>Action</th>
+            </tr>
+        `;
 
     }
+
     else if (type === "Local Service") {
 
         tableHead.innerHTML = `
-        <tr>
-            <th>Adult</th>
-            <th>Child</th>
-            <th>Price</th>
-            <th>Action</th>
-        </tr>
-    `;
+            <tr>
+                <th>Adult</th>
+                <th>Child</th>
+                <th>Price</th>
+                <th>Action</th>
+            </tr>
+        `;
 
     }
+
     else if (type === "Meal") {
 
         tableHead.innerHTML = `
-        <tr>
-            <th>Meal</th>
-            <th>Adult</th>
-            <th>Child</th>
-            <th>Action</th>
-        </tr>
-    `;
+            <tr>
+                <th>Meal</th>
+                <th>Adult</th>
+                <th>Child</th>
+                <th>Action</th>
+            </tr>
+        `;
 
     }
 
-    tbody.innerHTML = "";
 
-    // ===============================
-    // PER PERSON PRICE
-    // ===============================
+    /* =====================================================
+       PER PERSON PRICE
+    ===================================================== */
 
-    if (service.price) {
+    if (service.price !== undefined && service.price !== null) {
 
         tbody.innerHTML = `
 
             <tr>
 
-                <td colspan="6">
+                <td>
                     Per Person
                 </td>
 
@@ -839,49 +846,86 @@ function showLandDetails(service, type) {
                     $${service.price}
                 </td>
 
+                <td>
+
+                    <button
+                        class="editBtn"
+                        onclick='openEditLandModal(
+                            ${JSON.stringify(service)},
+                            "${type}",
+                            "price"
+                        )'>
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+
+                    <button
+                        class="deleteBtn"
+                        onclick='deleteLandService(
+                            ${JSON.stringify(service)},
+                            "${type}"
+                        )'>
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+
+                </td>
+
             </tr>
 
         `;
 
         return;
-
     }
 
-    // ===============================
-    // RATES OBJECT
-    // ===============================
+
+    /* =====================================================
+       RATES OBJECT
+    ===================================================== */
 
     if (service.rates) {
 
         Object.keys(service.rates).forEach(pax => {
 
+            const price = service.rates[pax];
+
             tbody.innerHTML += `
 
-            <tr>
+                <tr>
 
-                <td>
-                    ${pax} Pax
-                </td>
+                    <td>
+                        ${pax} Pax
+                    </td>
 
-                <td>
-                    $${service.rates[pax]}
-                </td>
+                    <td>
+                        $${price}
+                    </td>
 
-                <td>
-<button
-    class="editBtn"
-    onclick='openEditLandModal(${JSON.stringify(service)}, "${type}", "${pax}")'>
-    <i class="fa-solid fa-pen"></i>
-</button>
+                    <td>
 
-                    <button class="deleteBtn">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </td>
+                        <button
+                            class="editBtn"
+                            onclick='openEditLandModal(
+                                ${JSON.stringify(service)},
+                                "${type}",
+                                "${pax}"
+                            )'>
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
 
-            </tr>
+                        <button
+                            class="deleteBtn"
+                            onclick='deleteLandService(
+                                ${JSON.stringify(service)},
+                                "${type}",
+                                "${pax}"
+                            )'>
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
 
-        `;
+                    </td>
+
+                </tr>
+
+            `;
 
         });
 
