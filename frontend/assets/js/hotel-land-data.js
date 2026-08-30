@@ -802,16 +802,13 @@ function showLandDetails(service, type) {
     }
 
     else if (type === "Local Service") {
-
         tableHead.innerHTML = `
-            <tr>
-                <th>Adult</th>
-                <th>Child</th>
-                <th>Price</th>
-                <th>Action</th>
-            </tr>
-        `;
-
+        <tr>
+            <th>Adult</th>
+            <th>Child</th>
+            <th>Action</th>
+        </tr>
+    `;
     }
 
     else if (type === "Meal") {
@@ -827,7 +824,58 @@ function showLandDetails(service, type) {
 
     }
 
+    // =========================================
+    // LOCAL SERVICE - ADULT / CHILD PRICING
+    // =========================================
 
+    if (
+        type === "Local Service" &&
+        (
+            service.adult !== undefined ||
+            service.child !== undefined
+        )
+    ) {
+
+        tbody.innerHTML = `
+
+        <tr>
+
+            <td>
+                $${Number(service.adult) || 0}
+            </td>
+
+            <td>
+                $${Number(service.child) || 0}
+            </td>
+
+            <td>
+
+                <button
+                    class="editBtn"
+                    onclick='openEditLandModal(
+                        ${JSON.stringify(service)},
+                        "${type}"
+                    )'>
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+
+                <button
+                    class="deleteBtn"
+                    onclick='deleteLandService(
+                        ${JSON.stringify(service)},
+                        "${type}"
+                    )'>
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+
+            </td>
+
+        </tr>
+
+    `;
+
+        return;
+    }
     /* =====================================================
        PER PERSON PRICE
     ===================================================== */
@@ -1336,10 +1384,129 @@ function openEditLandModal(service, type, pax) {
 
     modal.className = "editModalOverlay";
 
+    // =====================================================
+    // LOCAL SERVICE
+    // Adult + Child pricing
+    // =====================================================
+
+    if (type === "Local Service") {
+
+        modal.innerHTML = `
+            <div class="editModal">
+
+                <div class="editModalHeader">
+
+                    <h2>Edit Local Service</h2>
+
+                    <button
+                        class="editCloseBtn"
+                        type="button"
+                        onclick="this.closest('.editModalOverlay').remove()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+
+                </div>
+
+
+                <div class="editForm">
+
+                    <div class="formGroup">
+
+                        <label>Service Name</label>
+
+                        <input
+                            id="editLandServiceName"
+                            type="text"
+                            value="${service.name || ""}">
+
+                    </div>
+
+
+                    <div class="formGroup">
+
+                        <label>Adult Rate</label>
+
+                        <input
+                            id="editLandAdult"
+                            type="number"
+                            min="0"
+                            value="${Number(service.adult) || 0}">
+
+                    </div>
+
+
+                    <div class="formGroup">
+
+                        <label>Child Rate</label>
+
+                        <input
+                            id="editLandChild"
+                            type="number"
+                            min="0"
+                            value="${Number(service.child) || 0}">
+
+                    </div>
+
+                </div>
+
+
+                <div class="editModalFooter">
+
+                    <button
+                        class="cancelEditBtn"
+                        type="button"
+                        onclick="this.closest('.editModalOverlay').remove()">
+
+                        Cancel
+
+                    </button>
+
+
+                    <button
+                        class="saveEditBtn"
+                        type="button"
+                        id="saveLandServiceBtn">
+
+                        <i class="fa-solid fa-save"></i>
+                        Save Changes
+
+                    </button>
+
+                </div>
+
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+
+        document
+            .getElementById("saveLandServiceBtn")
+            .addEventListener("click", () => {
+
+                saveEditedLandService(
+                    service._parentId,
+                    type,
+                    service.name,
+                    null
+                );
+
+            });
+
+        return;
+    }
+
+
+    // =====================================================
+    // EXISTING LAND SERVICE
+    // Transfer / Private Tour / SIC Tour / Meal
+    // =====================================================
+
     modal.innerHTML = `
         <div class="editModal">
 
             <div class="editModalHeader">
+
                 <h2>Edit Land Service</h2>
 
                 <button
@@ -1348,38 +1515,50 @@ function openEditLandModal(service, type, pax) {
                     onclick="this.closest('.editModalOverlay').remove()">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
+
             </div>
+
 
             <div class="editForm">
 
                 <div class="formGroup">
+
                     <label>Service Name</label>
 
                     <input
                         id="editLandServiceName"
                         type="text"
                         value="${service.name || ""}">
+
                 </div>
 
+
                 <div class="formGroup">
+
                     <label>Vehicle</label>
 
                     <input
                         id="editLandVehicle"
                         type="text"
                         value="${service.vehicle || ""}">
+
                 </div>
 
+
                 <div class="formGroup">
+
                     <label>Pax</label>
 
                     <input
                         id="editLandPax"
                         type="text"
                         value="${pax || ""}">
+
                 </div>
 
+
                 <div class="formGroup">
+
                     <label>Price</label>
 
                     <input
@@ -1387,9 +1566,11 @@ function openEditLandModal(service, type, pax) {
                         type="number"
                         min="0"
                         value="${service.rates?.[pax] ?? service.price ?? 0}">
+
                 </div>
 
             </div>
+
 
             <div class="editModalFooter">
 
@@ -1401,6 +1582,7 @@ function openEditLandModal(service, type, pax) {
                     Cancel
 
                 </button>
+
 
                 <button
                     class="saveEditBtn"
@@ -1420,7 +1602,6 @@ function openEditLandModal(service, type, pax) {
     document.body.appendChild(modal);
 
 
-    // Save button
     document
         .getElementById("saveLandServiceBtn")
         .addEventListener("click", () => {
@@ -1442,44 +1623,15 @@ async function saveEditedLandService(
     oldPax
 ) {
 
+    // =====================================================
+    // COMMON
+    // =====================================================
+
     const serviceName =
         document.getElementById("editLandServiceName")
-            .value
-            .trim();
+            ?.value
+            .trim() || "";
 
-    const vehicle =
-        document.getElementById("editLandVehicle")
-            .value
-            .trim();
-
-    const pax =
-        document.getElementById("editLandPax")
-            .value
-            .trim();
-
-    const price =
-        document.getElementById("editLandPrice")
-            .value;
-
-    console.log("SAVE LAND SERVICE:", {
-
-        id,
-
-        type,
-
-        oldServiceName,
-
-        serviceName,
-
-        vehicle,
-
-        oldPax,
-
-        pax,
-
-        price
-
-    });
 
     if (!id) {
 
@@ -1488,6 +1640,181 @@ async function saveEditedLandService(
         return;
 
     }
+
+
+    // =====================================================
+    // LOCAL SERVICE
+    // Adult + Child
+    // =====================================================
+
+    if (type === "Local Service") {
+
+        const adult =
+            document.getElementById("editLandAdult")
+                ?.value;
+
+
+        const child =
+            document.getElementById("editLandChild")
+                ?.value;
+
+
+        console.log(
+            "SAVE LOCAL SERVICE:",
+            {
+                id,
+                type,
+                oldServiceName,
+                serviceName,
+                adult,
+                child
+            }
+        );
+
+
+        try {
+
+            const res = await fetch(
+
+                CONFIG.API_BASE +
+                "/land-services/" +
+                id,
+
+                {
+
+                    method: "PUT",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body: JSON.stringify({
+
+                        type: type,
+
+                        serviceName:
+                            serviceName,
+
+                        oldServiceName:
+                            oldServiceName,
+
+                        adult:
+                            Number(adult) || 0,
+
+                        child:
+                            Number(child) || 0
+
+                    })
+
+                }
+
+            );
+
+
+            const result =
+                await res.json();
+
+
+            console.log(
+                "LOCAL SERVICE EDIT RESULT:",
+                result
+            );
+
+
+            if (!res.ok || !result.success) {
+
+                alert(
+                    result.message ||
+                    "Failed to update local service"
+                );
+
+                return;
+
+            }
+
+
+            // Close modal
+            document
+                .querySelector(".editModalOverlay")
+                ?.remove();
+
+
+            // Reload data
+            await loadLandServices();
+
+
+            alert(
+                "Local service updated successfully"
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "SAVE LOCAL SERVICE ERROR:",
+                error
+            );
+
+
+            alert(
+                "Unable to update local service"
+            );
+
+        }
+
+
+        return;
+    }
+
+
+    // =====================================================
+    // EXISTING LAND SERVICE
+    // Transfer / Private / SIC / Meal
+    // =====================================================
+
+    const vehicle =
+        document.getElementById("editLandVehicle")
+            ?.value
+            .trim() || "";
+
+
+    const pax =
+        document.getElementById("editLandPax")
+            ?.value
+            .trim() || "";
+
+
+    const price =
+        document.getElementById("editLandPrice")
+            ?.value || 0;
+
+
+    console.log(
+        "SAVE LAND SERVICE:",
+        {
+
+            id,
+
+            type,
+
+            oldServiceName,
+
+            serviceName,
+
+            vehicle,
+
+            oldPax,
+
+            pax,
+
+            price
+
+        }
+    );
+
 
     try {
 
@@ -1512,17 +1839,23 @@ async function saveEditedLandService(
 
                     type: type,
 
-                    serviceName: serviceName,
+                    serviceName:
+                        serviceName,
 
-                    oldServiceName: oldServiceName,
+                    oldServiceName:
+                        oldServiceName,
 
-                    vehicle: vehicle,
+                    vehicle:
+                        vehicle,
 
-                    oldPax: oldPax,
+                    oldPax:
+                        oldPax,
 
-                    pax: pax,
+                    pax:
+                        pax,
 
-                    price: price
+                    price:
+                        price
 
                 })
 
@@ -1530,14 +1863,18 @@ async function saveEditedLandService(
 
         );
 
-        const result = await res.json();
+
+        const result =
+            await res.json();
+
 
         console.log(
             "LAND EDIT RESULT:",
             result
         );
 
-        if (!result.success) {
+
+        if (!res.ok || !result.success) {
 
             alert(
                 result.message ||
@@ -1548,17 +1885,21 @@ async function saveEditedLandService(
 
         }
 
+
         // Close edit modal
         document
             .querySelector(".editModalOverlay")
             ?.remove();
 
+
         // Reload existing land data
         await loadLandServices();
+
 
         alert(
             "Land service updated successfully"
         );
+
 
     } catch (error) {
 
@@ -1567,199 +1908,11 @@ async function saveEditedLandService(
             error
         );
 
+
         alert(
             "Unable to update land service"
         );
 
     }
-
-}
-/* =========================================================
-   SAVE NEW HOTEL
-   POST /api/hotels
-========================================================= */
-
-const saveHotelBtn = document.getElementById("saveHotelBtn");
-
-if (saveHotelBtn) {
-
-    saveHotelBtn.addEventListener("click", async () => {
-
-        // ==========================================
-        // GET FORM VALUES
-        // ==========================================
-
-        const hotelName =
-            document.getElementById("hotelNameInput")?.value.trim() || "";
-
-        const destination =
-            document.getElementById("hotelDestinationInput")?.value.trim() || "";
-
-        const region =
-            document.getElementById("hotelRegionInput")?.value.trim() || "";
-
-        const city =
-            document.getElementById("hotelCityInput")?.value.trim() || "";
-
-        const category =
-            document.getElementById("hotelCategoryInput")?.value.trim() || "";
-
-        const currency =
-            document.getElementById("hotelCurrencyInput")?.value.trim() || "USD";
-
-        const pricingUnit =
-            document.getElementById("hotelPricingUnitInput")?.value.trim()
-            || "Per Room / Night";
-
-        const note =
-            document.getElementById("hotelNoteInput")?.value.trim() || "";
-
-
-        // ==========================================
-        // BASIC VALIDATION
-        // ==========================================
-
-        if (!hotelName) {
-            alert("Please enter Hotel Name");
-            return;
-        }
-
-        if (!destination) {
-            alert("Please enter Destination");
-            return;
-        }
-
-        if (!region) {
-            alert("Please enter Region");
-            return;
-        }
-
-        if (!city) {
-            alert("Please enter City");
-            return;
-        }
-
-        if (!category) {
-            alert("Please enter Category");
-            return;
-        }
-
-
-        // ==========================================
-        // PREVENT DOUBLE CLICK
-        // ==========================================
-
-        saveHotelBtn.disabled = true;
-
-        const originalButtonHTML = saveHotelBtn.innerHTML;
-
-        saveHotelBtn.innerHTML = `
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            Saving...
-        `;
-
-
-        try {
-
-            // ==========================================
-            // SEND DATA TO BACKEND
-            // ==========================================
-
-            const res = await fetch(
-                CONFIG.API_BASE + "/hotels",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
-                    body: JSON.stringify({
-
-                        hotelName,
-                        destination,
-                        region,
-                        city,
-                        category,
-                        currency,
-                        pricingUnit,
-                        note
-
-                    })
-                }
-            );
-
-
-            const result = await res.json();
-
-            console.log("SAVE HOTEL RESULT:", result);
-
-
-            // ==========================================
-            // ERROR
-            // ==========================================
-
-            if (!res.ok || !result.success) {
-
-                alert(
-                    result.message ||
-                    "Failed to save hotel"
-                );
-
-                return;
-            }
-
-
-            // ==========================================
-            // SUCCESS
-            // ==========================================
-
-            alert("Hotel added successfully");
-
-
-            // Close modal
-            document
-                .getElementById("hotelModal")
-                ?.classList.remove("open");
-
-
-            // Clear form
-            document.getElementById("hotelNameInput").value = "";
-            document.getElementById("hotelDestinationInput").value = "Vietnam";
-            document.getElementById("hotelRegionInput").value = "";
-            document.getElementById("hotelCityInput").value = "";
-            document.getElementById("hotelCategoryInput").value = "";
-            document.getElementById("hotelCurrencyInput").value = "";
-            document.getElementById("hotelPricingUnitInput").value = "";
-            document.getElementById("hotelNoteInput").value = "";
-
-
-            // ==========================================
-            // REFRESH HOTEL TREE
-            // ==========================================
-
-            await loadHotels();
-
-
-        } catch (error) {
-
-            console.error(
-                "SAVE HOTEL ERROR:",
-                error
-            );
-
-            alert(
-                "Unable to save hotel. Please try again."
-            );
-
-        } finally {
-
-            // Restore button
-            saveHotelBtn.disabled = false;
-            saveHotelBtn.innerHTML = originalButtonHTML;
-
-        }
-
-    });
 
 }
