@@ -1625,7 +1625,10 @@ function buildPreview() {
 
   console.log("childWithBed =", childWithBed);
   console.log("landChild =", landChild);
-  const totalPax = adults + childWithBed + childWithoutBed;
+  const totalPax = Number(totalPaxInputEl?.value || 0);
+
+  // Build Preview ka exact Pax save karo
+  window.buildPreviewTotalPax = totalPax;
 
   const cwbAge =
     cwbAgeHistory.length
@@ -2298,9 +2301,12 @@ Points to be Noted:
 function buildPreviewFinal(data = null, showHeader = true) {
 
   if (!previewBox) return;
-  if (data) {
-    restoreQuoteData(data);
-  }
+
+  // IMPORTANT:
+  // Final Preview must use the CURRENT passenger values
+  // from the Passenger Details section.
+  // Do NOT call restoreQuoteData() here because it changes
+  // passenger fields and runs calculateQuote() again.
 
   const segments = getAllSegmentsData();
 
@@ -2350,12 +2356,14 @@ function buildPreviewFinal(data = null, showHeader = true) {
   const travelDate = travelDateEl?.value || "-";
   const rooms = Number(roomsEl?.value || 0);
 
-  const adults = Number(adultsEl?.value || 0);
-  const childWithBedCount = Number(childWithBedEl?.value || 0);
-  const childWithoutBedCount = Number(childWithoutBedEl?.value || 0);
-
-  const totalPax =
-    adults + childWithBedCount + childWithoutBedCount;
+  // Use EXACT Pax captured by Build Preview
+  // Extra Person is NOT added here.
+  // EXACT SAME PAX AS BUILD PREVIEW
+  const totalPax = Number(
+    window.buildPreviewTotalPax ??
+    totalPaxInputEl?.value ??
+    0
+  );
 
   const totalNights =
     segments.reduce(
@@ -2889,8 +2897,12 @@ function openPreviewModal() {
   const childWithBed = Number(childWithBedEl?.value || 0);
   const childWithoutBed = Number(childWithoutBedEl?.value || 0);
 
-  const totalPax =
-    adults + childWithBed + childWithoutBed;
+  // FINAL PREVIEW MUST USE EXACT BUILD PREVIEW PAX
+  const totalPax = Number(
+    window.buildPreviewTotalPax ??
+    totalPaxInputEl?.value ??
+    0
+  );
 
   const segmentsForHeader = getAllSegmentsData();
 
@@ -3689,25 +3701,34 @@ async function populateLandServices(card, city) {
 
   });
 
-  selects.forEach(select => {
+selects.forEach(select => {
 
-    select.innerHTML = `<option value="">Select Service</option>`;
+  select.innerHTML = `<option value="">Select Service</option>`;
 
-    services.forEach(service => {
+  // Sort services alphabetically A → Z
+  const sortedServices = [...services].sort((a, b) =>
+    String(a.name || "").localeCompare(
+      String(b.name || ""),
+      undefined,
+      { sensitivity: "base" }
+    )
+  );
 
-      const option = document.createElement("option");
+  sortedServices.forEach(service => {
 
-      option.value = service.name;
-      option.textContent = service.name;
+    const option = document.createElement("option");
 
-      option.dataset.category = service.category || "";
-      option.dataset.service = JSON.stringify(service);
+    option.value = service.name;
+    option.textContent = service.name;
 
-      select.appendChild(option);
+    option.dataset.category = service.category || "";
+    option.dataset.service = JSON.stringify(service);
 
-    });
+    select.appendChild(option);
 
   });
+
+});
   // =========================
   // Restore Selected Services
   // =========================

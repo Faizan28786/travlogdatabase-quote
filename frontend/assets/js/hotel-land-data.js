@@ -316,6 +316,7 @@ function buildLandTree(data) {
             regionBody.appendChild(title);
 
             region.transfer.forEach(service => {
+                service._parentId = region._id;
 
                 const item = document.createElement("div");
                 item.className = "hotelItem";
@@ -358,6 +359,7 @@ function buildLandTree(data) {
             regionBody.appendChild(title);
 
             region.privateTours.forEach(service => {
+                service._parentId = region._id;
 
                 const item = document.createElement("div");
                 item.className = "hotelItem";
@@ -400,6 +402,7 @@ function buildLandTree(data) {
             regionBody.appendChild(title);
 
             region.sicTours.forEach(service => {
+                service._parentId = region._id;
 
                 const item = document.createElement("div");
                 item.className = "hotelItem";
@@ -442,6 +445,7 @@ function buildLandTree(data) {
             regionBody.appendChild(title);
 
             region.localServices.forEach(service => {
+                service._parentId = region._id;
 
                 const item = document.createElement("div");
                 item.className = "hotelItem";
@@ -484,6 +488,7 @@ function buildLandTree(data) {
             regionBody.appendChild(title);
 
             region.meals.forEach(service => {
+                service._parentId = region._id;
 
                 const item = document.createElement("div");
                 item.className = "hotelItem";
@@ -627,13 +632,17 @@ function showHotelDetails(hotel) {
 
             <td>
 
-                <button class="editBtn">
-                    <i class="fa-solid fa-pen"></i>
-                </button>
+<button
+    class="editBtn"
+    data-room-id="${room._id}">
+    <i class="fa-solid fa-pen"></i>
+</button>
 
-                <button class="deleteBtn">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
+<button
+    class="deleteBtn"
+    onclick="deleteHotelRoom('${room._id}')">
+    <i class="fa-solid fa-trash"></i>
+</button>
 
             </td>
 
@@ -642,7 +651,76 @@ function showHotelDetails(hotel) {
         `;
 
     });
+    document.querySelectorAll(".editBtn").forEach(button => {
 
+        button.addEventListener("click", () => {
+
+            const roomId = button.dataset.roomId;
+
+            const room = rooms.find(
+                r => String(r._id) === String(roomId)
+            );
+
+            if (!room) {
+                alert("Room data not found");
+                return;
+            }
+
+            console.log("EDIT ROOM:", room);
+
+            openEditRoomModal(room);
+
+        });
+
+    });
+
+}
+
+async function deleteHotelRoom(id) {
+
+    if (!id) {
+        alert("Room ID not found");
+        return;
+    }
+
+    const confirmDelete = confirm(
+        "Are you sure you want to delete this room?"
+    );
+
+    if (!confirmDelete) {
+        return;
+    }
+
+    try {
+
+        const res = await fetch(
+            CONFIG.API_BASE + "/hotels/" + id,
+            {
+                method: "DELETE"
+            }
+        );
+
+        const result = await res.json();
+
+        console.log("DELETE RESULT:", result);
+
+        if (!result.success) {
+            alert(result.message || "Failed to delete room");
+            return;
+        }
+
+        alert("Room deleted successfully");
+
+        // Existing MongoDB data dobara fetch hoga
+        await loadHotels();
+
+    } catch (error) {
+
+        console.error("Delete room error:", error);
+
+        alert("Unable to delete room");
+
+    }
 }
 function showLandDetails(service, type) {
 
@@ -790,9 +868,11 @@ function showLandDetails(service, type) {
                 </td>
 
                 <td>
-                    <button class="editBtn">
-                        <i class="fa-solid fa-pen"></i>
-                    </button>
+<button
+    class="editBtn"
+    onclick='openEditLandModal(${JSON.stringify(service)}, "${type}", "${pax}")'>
+    <i class="fa-solid fa-pen"></i>
+</button>
 
                     <button class="deleteBtn">
                         <i class="fa-solid fa-trash"></i>
@@ -865,3 +945,777 @@ hotelModal.addEventListener("click", (e) => {
         hotelModal.classList.remove("open");
     }
 });
+
+async function restoreHotelRoom(id) {
+
+    if (!id) {
+        alert("Hotel / Room ID not found");
+        return;
+    }
+
+    const confirmRestore = confirm(
+        "Are you sure you want to restore this room?"
+    );
+
+    if (!confirmRestore) {
+        return;
+    }
+
+    try {
+
+        const res = await fetch(
+            CONFIG.API_BASE + "/hotels/" + id + "/restore",
+            {
+                method: "PATCH"
+            }
+        );
+
+        const result = await res.json();
+
+        console.log("RESTORE RESULT:", result);
+
+        if (!result.success) {
+            alert(result.message || "Failed to restore room");
+            return;
+        }
+
+        alert("Room restored successfully");
+
+        await loadHotels();
+
+    } catch (error) {
+
+        console.error("Restore room error:", error);
+
+        alert("Unable to restore room");
+
+    }
+}
+document.getElementById("btnRestoreHotel").addEventListener("click", async () => {
+
+    try {
+
+        const res = await fetch(
+            CONFIG.API_BASE + "/hotels/inactive"
+        );
+
+        const result = await res.json();
+
+        console.log("INACTIVE HOTELS:", result);
+
+        if (!result.success) {
+            alert("Unable to load deleted rooms");
+            return;
+        }
+
+        if (!result.hotels.length) {
+            alert("No deleted hotel / room found.");
+            return;
+        }
+
+        let html = "";
+
+        result.hotels.forEach(hotel => {
+
+            html += `
+                <div class="restoreItem">
+
+                    <div>
+                        <strong>${hotel.hotelName}</strong>
+
+                        <div>
+                            ${hotel.city} •
+                            ${hotel.roomType} •
+                            ${hotel.mealPlan}
+                        </div>
+                    </div>
+
+                    <button
+                        class="restoreOneBtn"
+                        onclick="restoreHotelRoom('${hotel._id}')">
+
+                        <i class="fa-solid fa-rotate-left"></i>
+                        Restore
+
+                    </button>
+
+                </div>
+            `;
+
+        });
+
+        const modal = document.createElement("div");
+
+        modal.className = "restoreModalOverlay";
+
+        modal.innerHTML = `
+            <div class="restoreModal">
+
+                <div class="restoreModalHeader">
+
+                    <h2>Deleted Hotels / Rooms</h2>
+
+                    <button
+                        class="restoreCloseBtn"
+                        onclick="this.closest('.restoreModalOverlay').remove()">
+
+                        <i class="fa-solid fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+                <div class="restoreList">
+
+                    ${html}
+
+                </div>
+
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+    } catch (error) {
+
+        console.error("Load inactive hotels error:", error);
+
+        alert("Unable to load deleted rooms");
+
+    }
+
+});
+function openEditRoomModal(room) {
+
+    const modal = document.createElement("div");
+
+    modal.className = "editModalOverlay";
+
+    modal.innerHTML = `
+        <div class="editModal">
+
+            <div class="editModalHeader">
+                <h2>Edit Hotel / Room</h2>
+
+                <button
+                    class="editCloseBtn"
+                    onclick="this.closest('.editModalOverlay').remove()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="editForm">
+
+                <div class="formGroup">
+                    <label>Hotel Name</label>
+                    <input
+                        id="editHotelName"
+                        type="text"
+                        value="${room.hotelName || ""}">
+                </div>
+
+                <div class="formGroup">
+                    <label>Room Type</label>
+                    <input
+                        id="editRoomType"
+                        type="text"
+                        value="${room.roomType || ""}">
+                </div>
+
+                <div class="formGroup">
+                    <label>Meal Plan</label>
+                    <input
+                        id="editMealPlan"
+                        type="text"
+                        value="${room.mealPlan || ""}">
+                </div>
+
+                <div class="formGroup">
+                    <label>2D1N Rate</label>
+                    <input
+                        id="editRate2D1N"
+                        type="number"
+                        min="0"
+                        value="${room.rate2D1N ?? 0}">
+                </div>
+
+                <div class="formGroup">
+                    <label>3D2N Rate</label>
+                    <input
+                        id="editRate3D2N"
+                        type="number"
+                        min="0"
+                        value="${room.rate3D2N ?? 0}">
+                </div>
+
+                <div class="formGroup">
+                    <label>Extra Bed</label>
+                    <input
+                        id="editExtraBed"
+                        type="number"
+                        min="0"
+                        value="${room.extraBed ?? 0}">
+                </div>
+
+                <div class="formGroup">
+                    <label>Child No Bed</label>
+                    <input
+                        id="editChildNoBed"
+                        type="number"
+                        min="0"
+                        value="${room.childNoBed ?? 0}">
+                </div>
+
+                <div class="formGroup">
+                    <label>Currency</label>
+                    <input
+                        id="editCurrency"
+                        type="text"
+                        value="${room.currency || "USD"}">
+                </div>
+
+                <div class="formGroup full">
+                    <label>Note</label>
+                    <textarea id="editNote">${room.note || ""}</textarea>
+                </div>
+
+            </div>
+
+            <div class="editModalFooter">
+
+                <button
+                    class="cancelEditBtn"
+                    onclick="this.closest('.editModalOverlay').remove()">
+                    Cancel
+                </button>
+
+                <button
+                    class="saveEditBtn"
+                    onclick="saveEditedRoom('${room._id}')">
+                    <i class="fa-solid fa-save"></i>
+                    Save Changes
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+}
+async function saveEditedRoom(id) {
+
+    if (!id) {
+        alert("Room ID not found");
+        return;
+    }
+
+    const updatedData = {
+
+        hotelName: document.getElementById("editHotelName").value.trim(),
+
+        roomType: document.getElementById("editRoomType").value.trim(),
+
+        mealPlan: document.getElementById("editMealPlan").value.trim(),
+
+        rate2D1N: Number(
+            document.getElementById("editRate2D1N").value
+        ) || 0,
+
+        rate3D2N: Number(
+            document.getElementById("editRate3D2N").value
+        ) || 0,
+
+        extraBed: Number(
+            document.getElementById("editExtraBed").value
+        ) || 0,
+
+        childNoBed: Number(
+            document.getElementById("editChildNoBed").value
+        ) || 0,
+
+        currency: document.getElementById("editCurrency").value.trim(),
+
+        note: document.getElementById("editNote").value.trim()
+
+    };
+
+    try {
+
+        const res = await fetch(
+            CONFIG.API_BASE + "/hotels/" + id,
+            {
+                method: "PUT",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify(updatedData)
+            }
+        );
+
+        const result = await res.json();
+
+        console.log("EDIT RESULT:", result);
+
+        if (!result.success) {
+
+            alert(
+                result.message || "Failed to update hotel / room"
+            );
+
+            return;
+        }
+
+        alert("Hotel / Room updated successfully");
+
+        document
+            .querySelector(".editModalOverlay")
+            ?.remove();
+
+        // MongoDB se latest data dobara fetch
+        await loadHotels();
+
+    } catch (error) {
+
+        console.error("Edit hotel / room error:", error);
+
+        alert("Unable to update hotel / room");
+
+    }
+
+}
+function openEditLandModal(service, type, pax) {
+
+    const modal = document.createElement("div");
+
+    modal.className = "editModalOverlay";
+
+    modal.innerHTML = `
+        <div class="editModal">
+
+            <div class="editModalHeader">
+                <h2>Edit Land Service</h2>
+
+                <button
+                    class="editCloseBtn"
+                    type="button"
+                    onclick="this.closest('.editModalOverlay').remove()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="editForm">
+
+                <div class="formGroup">
+                    <label>Service Name</label>
+
+                    <input
+                        id="editLandServiceName"
+                        type="text"
+                        value="${service.name || ""}">
+                </div>
+
+                <div class="formGroup">
+                    <label>Vehicle</label>
+
+                    <input
+                        id="editLandVehicle"
+                        type="text"
+                        value="${service.vehicle || ""}">
+                </div>
+
+                <div class="formGroup">
+                    <label>Pax</label>
+
+                    <input
+                        id="editLandPax"
+                        type="text"
+                        value="${pax || ""}">
+                </div>
+
+                <div class="formGroup">
+                    <label>Price</label>
+
+                    <input
+                        id="editLandPrice"
+                        type="number"
+                        min="0"
+                        value="${service.rates?.[pax] ?? service.price ?? 0}">
+                </div>
+
+            </div>
+
+            <div class="editModalFooter">
+
+                <button
+                    class="cancelEditBtn"
+                    type="button"
+                    onclick="this.closest('.editModalOverlay').remove()">
+
+                    Cancel
+
+                </button>
+
+                <button
+                    class="saveEditBtn"
+                    type="button"
+                    id="saveLandServiceBtn">
+
+                    <i class="fa-solid fa-save"></i>
+                    Save Changes
+
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+
+    // Save button
+    document
+        .getElementById("saveLandServiceBtn")
+        .addEventListener("click", () => {
+
+            saveEditedLandService(
+                service._parentId,
+                type,
+                service.name,
+                pax
+            );
+
+        });
+
+}
+async function saveEditedLandService(
+    id,
+    type,
+    oldServiceName,
+    oldPax
+) {
+
+    const serviceName =
+        document.getElementById("editLandServiceName")
+            .value
+            .trim();
+
+    const vehicle =
+        document.getElementById("editLandVehicle")
+            .value
+            .trim();
+
+    const pax =
+        document.getElementById("editLandPax")
+            .value
+            .trim();
+
+    const price =
+        document.getElementById("editLandPrice")
+            .value;
+
+    console.log("SAVE LAND SERVICE:", {
+
+        id,
+
+        type,
+
+        oldServiceName,
+
+        serviceName,
+
+        vehicle,
+
+        oldPax,
+
+        pax,
+
+        price
+
+    });
+
+    if (!id) {
+
+        alert("Land service ID not found");
+
+        return;
+
+    }
+
+    try {
+
+        const res = await fetch(
+
+            CONFIG.API_BASE +
+            "/land-services/" +
+            id,
+
+            {
+
+                method: "PUT",
+
+                headers: {
+
+                    "Content-Type":
+                        "application/json"
+
+                },
+
+                body: JSON.stringify({
+
+                    type: type,
+
+                    serviceName: serviceName,
+
+                    oldServiceName: oldServiceName,
+
+                    vehicle: vehicle,
+
+                    oldPax: oldPax,
+
+                    pax: pax,
+
+                    price: price
+
+                })
+
+            }
+
+        );
+
+        const result = await res.json();
+
+        console.log(
+            "LAND EDIT RESULT:",
+            result
+        );
+
+        if (!result.success) {
+
+            alert(
+                result.message ||
+                "Failed to update land service"
+            );
+
+            return;
+
+        }
+
+        // Close edit modal
+        document
+            .querySelector(".editModalOverlay")
+            ?.remove();
+
+        // Reload existing land data
+        await loadLandServices();
+
+        alert(
+            "Land service updated successfully"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "SAVE LAND SERVICE ERROR:",
+            error
+        );
+
+        alert(
+            "Unable to update land service"
+        );
+
+    }
+
+}
+/* =========================================================
+   SAVE NEW HOTEL
+   POST /api/hotels
+========================================================= */
+
+const saveHotelBtn = document.getElementById("saveHotelBtn");
+
+if (saveHotelBtn) {
+
+    saveHotelBtn.addEventListener("click", async () => {
+
+        // ==========================================
+        // GET FORM VALUES
+        // ==========================================
+
+        const hotelName =
+            document.getElementById("hotelNameInput")?.value.trim() || "";
+
+        const destination =
+            document.getElementById("hotelDestinationInput")?.value.trim() || "";
+
+        const region =
+            document.getElementById("hotelRegionInput")?.value.trim() || "";
+
+        const city =
+            document.getElementById("hotelCityInput")?.value.trim() || "";
+
+        const category =
+            document.getElementById("hotelCategoryInput")?.value.trim() || "";
+
+        const currency =
+            document.getElementById("hotelCurrencyInput")?.value.trim() || "USD";
+
+        const pricingUnit =
+            document.getElementById("hotelPricingUnitInput")?.value.trim()
+            || "Per Room / Night";
+
+        const note =
+            document.getElementById("hotelNoteInput")?.value.trim() || "";
+
+
+        // ==========================================
+        // BASIC VALIDATION
+        // ==========================================
+
+        if (!hotelName) {
+            alert("Please enter Hotel Name");
+            return;
+        }
+
+        if (!destination) {
+            alert("Please enter Destination");
+            return;
+        }
+
+        if (!region) {
+            alert("Please enter Region");
+            return;
+        }
+
+        if (!city) {
+            alert("Please enter City");
+            return;
+        }
+
+        if (!category) {
+            alert("Please enter Category");
+            return;
+        }
+
+
+        // ==========================================
+        // PREVENT DOUBLE CLICK
+        // ==========================================
+
+        saveHotelBtn.disabled = true;
+
+        const originalButtonHTML = saveHotelBtn.innerHTML;
+
+        saveHotelBtn.innerHTML = `
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            Saving...
+        `;
+
+
+        try {
+
+            // ==========================================
+            // SEND DATA TO BACKEND
+            // ==========================================
+
+            const res = await fetch(
+                CONFIG.API_BASE + "/hotels",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        hotelName,
+                        destination,
+                        region,
+                        city,
+                        category,
+                        currency,
+                        pricingUnit,
+                        note
+
+                    })
+                }
+            );
+
+
+            const result = await res.json();
+
+            console.log("SAVE HOTEL RESULT:", result);
+
+
+            // ==========================================
+            // ERROR
+            // ==========================================
+
+            if (!res.ok || !result.success) {
+
+                alert(
+                    result.message ||
+                    "Failed to save hotel"
+                );
+
+                return;
+            }
+
+
+            // ==========================================
+            // SUCCESS
+            // ==========================================
+
+            alert("Hotel added successfully");
+
+
+            // Close modal
+            document
+                .getElementById("hotelModal")
+                ?.classList.remove("open");
+
+
+            // Clear form
+            document.getElementById("hotelNameInput").value = "";
+            document.getElementById("hotelDestinationInput").value = "Vietnam";
+            document.getElementById("hotelRegionInput").value = "";
+            document.getElementById("hotelCityInput").value = "";
+            document.getElementById("hotelCategoryInput").value = "";
+            document.getElementById("hotelCurrencyInput").value = "";
+            document.getElementById("hotelPricingUnitInput").value = "";
+            document.getElementById("hotelNoteInput").value = "";
+
+
+            // ==========================================
+            // REFRESH HOTEL TREE
+            // ==========================================
+
+            await loadHotels();
+
+
+        } catch (error) {
+
+            console.error(
+                "SAVE HOTEL ERROR:",
+                error
+            );
+
+            alert(
+                "Unable to save hotel. Please try again."
+            );
+
+        } finally {
+
+            // Restore button
+            saveHotelBtn.disabled = false;
+            saveHotelBtn.innerHTML = originalButtonHTML;
+
+        }
+
+    });
+
+}

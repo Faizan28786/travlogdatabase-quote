@@ -762,6 +762,7 @@ RESPONSIVE
     cursor: pointer;
 
 }
+
 /* =========================
    ADD HOTEL MODAL
 ========================= */
@@ -863,4 +864,48 @@ RESPONSIVE
     background: #fff;
     border-radius: 8px;
     cursor: pointer;
+}
+
+.editModalOverlay {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.55);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    z-index: 99999;
+}
+
+.editModal {
+    width: min(700px, 90%);
+    max-height: 90vh;
+    overflow-y: auto;
+
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+.dashboardBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    background: #ffffff;
+    color: #203b73;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    white-space: nowrap;
+}
+
+.dashboardBtn:hover {
+    color: #203b73;
+    text-decoration: none;
+    transform: translateY(-1px);
 }
