@@ -1071,8 +1071,32 @@ document.getElementById("saveHotelBtn").addEventListener("click", async () => {
     const childNoBed =
         Number(document.getElementById("hotelChildNoBedInput").value) || 0;
 
-    const pricingUnit =
-        document.getElementById("hotelPricingUnitInput").value.trim();
+    let pricingUnit =
+        document.getElementById("hotelPricingUnitInput").value.trim().toLowerCase();
+
+    if (
+        pricingUnit === "" ||
+        pricingUnit === "0"
+    ) {
+        pricingUnit = "perRoom";
+    }
+    else if (
+        pricingUnit === "per room / night" ||
+        pricingUnit === "per room/night" ||
+        pricingUnit === "per night"
+    ) {
+        pricingUnit = "perNight";
+    }
+    else if (
+        pricingUnit === "per room"
+    ) {
+        pricingUnit = "perRoom";
+    }
+    else {
+        alert("Pricing Unit must be: Per Room or Per Room / Night");
+        document.getElementById("hotelPricingUnitInput").focus();
+        return;
+    }
 
     const note =
         document.getElementById("hotelNoteInput").value.trim();
@@ -1194,10 +1218,10 @@ document.getElementById("saveHotelBtn").addEventListener("click", async () => {
         document.getElementById("hotelCategoryInput").value = "";
         document.getElementById("hotelCurrencyInput").value = "";
         document.getElementById("hotelRoomTypeInput").value = "";
-document.getElementById("hotelMealPlanInput").value = "CP";
-document.getElementById("hotelRate2D1NInput").value = "0";
-document.getElementById("hotelExtraBedInput").value = "0";
-document.getElementById("hotelChildNoBedInput").value = "0";
+        document.getElementById("hotelMealPlanInput").value = "CP";
+        document.getElementById("hotelRate2D1NInput").value = "0";
+        document.getElementById("hotelExtraBedInput").value = "0";
+        document.getElementById("hotelChildNoBedInput").value = "0";
         document.getElementById("hotelPricingUnitInput").value = "";
         document.getElementById("hotelNoteInput").value = "";
 

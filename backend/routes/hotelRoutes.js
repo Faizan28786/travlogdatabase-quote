@@ -715,6 +715,11 @@ router.get("/inactive", async (req, res) => {
 router.post("/", async (req, res) => {
 
   try {
+    console.log("========== ADD HOTEL REQUEST ==========");
+    console.log(req.body);
+    console.log("ROOM TYPE RECEIVED:", req.body?.roomType);
+    console.log("PRICING UNIT RECEIVED:", req.body?.pricingUnit);
+    console.log("=======================================");
 
     const {
 
@@ -801,12 +806,18 @@ router.post("/", async (req, res) => {
     let normalizedPricingUnit = "perRoom";
 
     if (
-      pricingUnit === "perPerson" ||
-      pricingUnit === "Per Person" ||
-      pricingUnit === "per person"
+      pricingUnit === "perNight" ||
+      pricingUnit === "per night" ||
+      pricingUnit === "Per Night" ||
+      pricingUnit === "per room / night" ||
+      pricingUnit === "Per Room / Night"
     ) {
 
-      normalizedPricingUnit = "perPerson";
+      normalizedPricingUnit = "perNight";
+
+    } else {
+
+      normalizedPricingUnit = "perRoom";
 
     }
 
