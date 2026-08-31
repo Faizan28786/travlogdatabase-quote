@@ -1613,3 +1613,103 @@ s .passenger-grid .field {
 .dashboard-btn i {
   font-size: 15px;
 }
+
+
+/* =========================================================
+   LAND PACKAGE - AUTO WRAP AROUND RIGHT PREVIEW
+========================================================= */
+
+.land-grid {
+  display: grid;
+
+  /* Cards ki fixed width */
+  grid-template-columns: repeat(auto-fill, 280px);
+
+  /* Day order maintain rahega */
+  grid-auto-flow: row;
+
+  gap: 14px;
+
+  width: 100%;
+  max-width: 100%;
+
+  /* Extra cards next row mein jayenge */
+  overflow: visible;
+
+  justify-content: start;
+  align-items: start;
+}
+
+.land-city-card {
+  width: 280px;
+  min-width: 280px;
+  max-width: 280px;
+}
+
+/* =========================================================
+   FIX LAND PACKAGE CARDS GOING BEHIND BUILD PREVIEW
+========================================================= */
+
+.left-column {
+  min-width: 0;
+  width: 100%;
+}
+
+.right-column {
+  min-width: 0;
+  width: 100%;
+}
+
+.land-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 280px);
+  grid-auto-flow: row;
+  gap: 14px;
+
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  overflow: visible;
+  justify-content: start;
+  align-items: start;
+}
+
+.land-city-card {
+  width: 280px;
+  min-width: 280px;
+  max-width: 280px;
+}
+
+/* =========================================================
+   LAND PACKAGE - MULTI CARD ROW
+========================================================= */
+
+#landPartContainer {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+#landPartContainer .land-grid {
+    display: grid !important;
+
+    /* 3 cards ek row mein */
+    grid-template-columns: repeat(3, 280px) !important;
+
+    gap: 14px !important;
+
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+
+    justify-content: start !important;
+    align-items: start !important;
+}
+
+#landPartContainer .land-city-card {
+    width: 280px !important;
+    min-width: 280px !important;
+    max-width: 280px !important;
+}

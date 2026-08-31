@@ -730,70 +730,172 @@ router.post("/", async (req, res) => {
 
       currency = "USD",
 
-      pricingUnit = "Per Room / Night",
+      // NEW: Hotel ke andar Room Type
+      roomType = "Standard",
 
-      note = ""
+      // NEW: Meal Plan
+      mealPlan = "CP",
+
+      // NEW: Room Rate
+      rate2D1N = 0,
+
+      // Optional 3D2N rate
+      rate3D2N = 0,
+
+      // Extra Person / Child With Bed
+      extraBed = 0,
+
+      // Child No Bed
+      childNoBed = 0,
+
+      note = "",
+
+      pricingUnit = "perRoom"
 
     } = req.body || {};
 
 
-    if (!hotelName || !city) {
+    /* -----------------------------------------------------
+       BASIC VALIDATION
+    ----------------------------------------------------- */
+
+    if (!hotelName || !String(hotelName).trim()) {
 
       return res.status(400).json({
 
         success: false,
 
-        message:
-          "Hotel name and city are required"
+        message: "Hotel name is required"
 
       });
 
     }
 
 
+    if (!city || !String(city).trim()) {
+
+      return res.status(400).json({
+
+        success: false,
+
+        message: "City is required"
+
+      });
+
+    }
+
+
+    /* -----------------------------------------------------
+       NORMALIZE PRICING UNIT
+       
+       Old frontend may send:
+       "Per Room / Night"
+       "0"
+       ""
+       
+       Database accepts only:
+       "perRoom"
+       "perPerson"
+       ----------------------------------------------------- */
+
+    let normalizedPricingUnit = "perRoom";
+
+    if (
+      pricingUnit === "perPerson" ||
+      pricingUnit === "Per Person" ||
+      pricingUnit === "per person"
+    ) {
+
+      normalizedPricingUnit = "perPerson";
+
+    }
+
+
+    /* -----------------------------------------------------
+       NORMALIZE ROOM TYPE
+       
+       Room Type ab Hotel ke saath hi save hoga.
+       Example:
+       Superior
+       Deluxe
+       Suite
+       Standard
+       ----------------------------------------------------- */
+
+    const normalizedRoomType =
+      String(roomType || "Standard").trim() || "Standard";
+
+
+    /* -----------------------------------------------------
+       CREATE HOTEL + ROOM TOGETHER
+       ----------------------------------------------------- */
+
     const hotel =
       await Hotel.create({
 
         hotelName:
-          hotelName.trim(),
+          String(hotelName).trim(),
 
         destination:
-          destination.trim(),
+          String(destination || "Vietnam").trim(),
 
         region:
-          region.trim(),
+          String(region || "").trim(),
 
         city:
           normalizeCityInput(city),
 
         category:
-          category.trim(),
+          String(category || "").trim(),
 
         currency:
-          currency.trim(),
+          String(currency || "USD").trim(),
 
-        pricingUnit:
-          pricingUnit.trim(),
+        roomType:
+          normalizedRoomType,
+
+        mealPlan:
+          String(mealPlan || "CP").trim(),
+
+        rate2D1N:
+          Math.max(
+            0,
+            Number(rate2D1N) || 0
+          ),
+
+        rate3D2N:
+          Math.max(
+            0,
+            Number(rate3D2N) || 0
+          ),
+
+        extraBed:
+          Math.max(
+            0,
+            Number(extraBed) || 0
+          ),
+
+        childNoBed:
+          Math.max(
+            0,
+            Number(childNoBed) || 0
+          ),
 
         note:
-          note.trim(),
+          String(note || "").trim(),
 
-        isActive: true,
+        pricingUnit:
+          normalizedPricingUnit,
 
-        roomType: "",
-
-        mealPlan: "",
-
-        rate2D1N: 0,
-
-        rate3D2N: 0,
-
-        extraBed: 0,
-
-        childNoBed: 0
+        isActive:
+          true
 
       });
 
+
+    /* -----------------------------------------------------
+       SUCCESS
+       ----------------------------------------------------- */
 
     return res.status(201).json({
 
@@ -802,9 +904,11 @@ router.post("/", async (req, res) => {
       message:
         "Hotel added successfully",
 
-      data: hotel
+      data:
+        hotel
 
     });
+
 
   } catch (error) {
 
@@ -813,6 +917,7 @@ router.post("/", async (req, res) => {
       error
     );
 
+
     return res.status(500).json({
 
       success: false,
@@ -820,7 +925,8 @@ router.post("/", async (req, res) => {
       message:
         "Failed to add hotel",
 
-      error: error.message
+      error:
+        error.message
 
     });
 

@@ -1031,7 +1031,205 @@ closeHotelModal.addEventListener("click", () => {
 cancelHotelBtn.addEventListener("click", () => {
     hotelModal.classList.remove("open");
 });
+// =========================================
+// SAVE NEW HOTEL
+// =========================================
 
+document.getElementById("saveHotelBtn").addEventListener("click", async () => {
+
+    const saveBtn = document.getElementById("saveHotelBtn");
+
+    const hotelName =
+        document.getElementById("hotelNameInput").value.trim();
+
+    const destination =
+        document.getElementById("hotelDestinationInput").value.trim();
+
+    const region =
+        document.getElementById("hotelRegionInput").value.trim();
+
+    const city =
+        document.getElementById("hotelCityInput").value.trim();
+
+    const category =
+        document.getElementById("hotelCategoryInput").value.trim();
+
+    const currency =
+        document.getElementById("hotelCurrencyInput").value.trim();
+    const roomType =
+        document.getElementById("hotelRoomTypeInput").value.trim();
+
+    const mealPlan =
+        document.getElementById("hotelMealPlanInput").value.trim();
+
+    const rate2D1N =
+        Number(document.getElementById("hotelRate2D1NInput").value) || 0;
+
+    const extraBed =
+        Number(document.getElementById("hotelExtraBedInput").value) || 0;
+
+    const childNoBed =
+        Number(document.getElementById("hotelChildNoBedInput").value) || 0;
+
+    const pricingUnit =
+        document.getElementById("hotelPricingUnitInput").value.trim();
+
+    const note =
+        document.getElementById("hotelNoteInput").value.trim();
+
+
+    // =========================================
+    // VALIDATION
+    // =========================================
+
+    if (!hotelName) {
+
+        alert("Please enter hotel name");
+
+        document.getElementById("hotelNameInput").focus();
+
+        return;
+    }
+
+
+    if (!city) {
+
+        alert("Please enter city");
+
+        document.getElementById("hotelCityInput").focus();
+
+        return;
+    }
+    if (!roomType) {
+
+        alert("Please enter room type");
+
+        document.getElementById("hotelRoomTypeInput").focus();
+
+        return;
+    }
+
+
+    // =========================================
+    // PREVENT DOUBLE CLICK
+    // =========================================
+
+    saveBtn.disabled = true;
+
+    saveBtn.innerHTML = `
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        Saving...
+    `;
+
+
+    try {
+
+        const response = await fetch(
+            CONFIG.API_BASE + "/hotels",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    hotelName,
+                    destination,
+                    region,
+                    city,
+                    category,
+                    currency,
+                    pricingUnit,
+                    note,
+
+                    roomType,
+                    mealPlan,
+                    rate2D1N,
+                    extraBed,
+                    childNoBed
+
+                })
+            }
+        );
+
+
+        const result = await response.json();
+
+
+        console.log("ADD HOTEL RESULT:", result);
+
+
+        // =========================================
+        // API ERROR
+        // =========================================
+
+        if (!response.ok || !result.success) {
+
+            alert(
+                result.message ||
+                "Failed to add hotel"
+            );
+
+            return;
+        }
+
+
+        // =========================================
+        // SUCCESS
+        // =========================================
+
+        alert("Hotel added successfully");
+
+
+        // Close modal
+        hotelModal.classList.remove("open");
+
+
+        // Clear form
+        document.getElementById("hotelNameInput").value = "";
+        document.getElementById("hotelRegionInput").value = "";
+        document.getElementById("hotelCityInput").value = "";
+        document.getElementById("hotelCategoryInput").value = "";
+        document.getElementById("hotelCurrencyInput").value = "";
+        document.getElementById("hotelRoomTypeInput").value = "";
+document.getElementById("hotelMealPlanInput").value = "CP";
+document.getElementById("hotelRate2D1NInput").value = "0";
+document.getElementById("hotelExtraBedInput").value = "0";
+document.getElementById("hotelChildNoBedInput").value = "0";
+        document.getElementById("hotelPricingUnitInput").value = "";
+        document.getElementById("hotelNoteInput").value = "";
+
+
+        // =========================================
+        // RELOAD HOTELS
+        // =========================================
+
+        await loadHotels();
+
+
+    } catch (error) {
+
+        console.error("ADD HOTEL ERROR:", error);
+
+        alert(
+            "Unable to add hotel. Please check server."
+        );
+
+
+    } finally {
+
+        saveBtn.disabled = false;
+
+        saveBtn.innerHTML = `
+            <i class="fa-solid fa-floppy-disk"></i>
+            Save Hotel
+        `;
+
+    }
+
+});
 hotelModal.addEventListener("click", (e) => {
     if (e.target === hotelModal) {
         hotelModal.classList.remove("open");
