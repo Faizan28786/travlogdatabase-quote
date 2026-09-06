@@ -24,6 +24,8 @@ const quoteDataRoutes = require("./routes/quotedata");
 const quoteExportRoutes = require("./routes/quoteExportRoutes");
 const emailRoutes = require("./routes/emailRoutes");
 const masterDataRoutes = require("./routes/masterDataRoutes");
+const settingsroutes = require("./routes/settingsroute");
+
 
 const app = express();
 
@@ -69,6 +71,7 @@ app.use("/api/quote-data", quoteDataRoutes);
 app.use("/api/quote-export", quoteExportRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/master-data", masterDataRoutes);
+app.use("/api/settings", settingsroutes);
 
 // =============================
 // 404

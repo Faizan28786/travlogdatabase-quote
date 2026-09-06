@@ -910,3 +910,67 @@ RESPONSIVE
     text-decoration: none;
     transform: translateY(-1px);
 }
+
+/* =========================
+   RESTORE & MARGIN BUTTONS
+========================= */
+
+.restoreBtn {
+    height: 44px;
+    padding: 0 15px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    background: #ffffff;
+    color: #243b64;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+/* ICON */
+
+.restoreBtn i {
+    font-size: 12px;
+}
+
+
+/* HOVER */
+
+.restoreBtn:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+
+    transform: translateY(-1px);
+}
+
+
+/* ACTIVE / CLICK */
+
+.restoreBtn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+#btnRestoreHotel,
+#marginBtn {
+    min-width: 76px;
+}

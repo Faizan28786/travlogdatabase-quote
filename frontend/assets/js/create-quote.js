@@ -1608,7 +1608,7 @@ function getLandChildCostByAge(age, type = "cnb") {
 /* =========================================================
    BUILD PREVIEW
 ========================================================= */
-function buildPreview() {
+async function buildPreview() {
 
   if (!previewBox) return;
 
@@ -1653,7 +1653,32 @@ function buildPreview() {
     "Select Drop Vehicle";
 
   const segments = getAllSegmentsData();
+  // ==========================================
+  // UNIVERSAL MARGIN
+  // ==========================================
 
+  let universalMargin = 0;
+
+  try {
+
+    const settingsRes = await fetch(
+      CONFIG.API_BASE + "/settings"
+    );
+
+    const settingsResult = await settingsRes.json();
+
+    if (settingsResult.success) {
+
+      universalMargin =
+        Number(settingsResult.settings?.universalMargin || 0);
+
+    }
+
+  } catch (error) {
+
+    console.error("BUILD PREVIEW MARGIN ERROR:", error);
+
+  }
   const totalNights = segments.reduce(
     (sum, seg) => sum + Number(seg.nights || 0),
     0
@@ -1675,6 +1700,7 @@ function buildPreview() {
   let totalPerPerson = 0;
   let totalExtraPerson = 0;
   let totalChildNoBed = 0;
+  let finalPricePerPerson = 0;
   let totalLandExtraPerson = 0;
   let totalLandChildNoBed = 0;
   let totalLandAdult = 0;
@@ -1696,6 +1722,104 @@ function buildPreview() {
   totalLandExtraPerson = landChildData.cwbTotal;
 
   totalLandChildNoBed = landChildData.cnbTotal;
+
+  // ==========================================
+  // CHILD WITH BED — DISPLAY ONLY
+  // Existing calculation ko touch nahi karna
+  // ==========================================
+
+  let childWithBedDisplayHtml = "";
+
+  if (landChild > 0 && cwbAgeHistory.length) {
+
+    const landCostForChildDisplay = calculateLandCost();
+
+    // Ticket cost ko normal land cost se alag kar rahe hain
+    // sirf display calculation ke liye
+    let adultTicketCostForDisplay = 0;
+
+    document.querySelectorAll(".land-service").forEach(select => {
+
+      const option = select.options[select.selectedIndex];
+
+      if (!option || !option.dataset.service) return;
+
+      const service = JSON.parse(option.dataset.service);
+
+      if (service.isTicket) {
+        adultTicketCostForDisplay += Number(
+          service.adult || service.price || 0
+        );
+      }
+
+    });
+
+    const normalLandCostForDisplay =
+      Math.max(
+        0,
+        landCostForChildDisplay - adultTicketCostForDisplay
+      );
+
+    cwbAgeHistory.forEach((age, index) => {
+
+      let percent = 1;
+
+      if (age === "4-6") {
+        percent = 0.5;
+      }
+      else if (age === "7-9") {
+        percent = 0.8;
+      }
+      else if (age === "10+") {
+        percent = 1;
+      }
+
+      let childCost =
+        normalLandCostForDisplay * percent;
+
+      // Ticket ka existing child rate
+      document.querySelectorAll(".land-service").forEach(select => {
+
+        const option = select.options[select.selectedIndex];
+
+        if (!option || !option.dataset.service) return;
+
+        const service = JSON.parse(option.dataset.service);
+
+        if (!service.isTicket) return;
+
+        const childRate = Number(
+          service.child || service.adult || 0
+        );
+
+        const adultRate = Number(
+          service.adult || service.price || 0
+        );
+
+        if (age === "4-6" || age === "7-9") {
+          childCost += childRate;
+        }
+        else if (age === "10+") {
+          childCost += adultRate;
+        }
+
+      });
+
+      childWithBedDisplayHtml += `
+      <div>
+        Child ${index + 1} (${age}) = ${formatCurrency(childCost)}
+      </div>
+    `;
+
+    });
+
+  }
+  finalPricePerPerson =
+    totalPerPerson +
+    totalLandAdult +
+    universalMargin;
+  window.universalMargin = universalMargin;
+
   const hotelExtraRate =
     childWithBed > 0
       ? (totalExtraPerson / childWithBed) + Number(totalLandAdult || 0)
@@ -1707,6 +1831,20 @@ function buildPreview() {
       : 0;
 
   window.finalExtraPersonRate = hotelExtraRate + landExtraRate;
+  // ==========================================
+  // DISPLAY ONLY — EXTRA PERSON / CHILD WITH BED
+  // DO NOT USE THESE FOR CALCULATIONS
+  // ==========================================
+
+  const hotelExtraDisplayRate =
+    childWithBed > 0
+      ? totalExtraPerson / childWithBed
+      : 0;
+
+  const landAdultDisplayRate =
+    childWithBed > 0
+      ? Number(totalLandAdult || 0)
+      : 0;
   /* ===========================
      ACCOMMODATION
   ============================ */
@@ -1927,25 +2065,36 @@ function buildPreview() {
 
         <span class="package-value">
             <strong>
-                ${formatCurrency(totalPerPerson + totalLandAdult)} Per Pax
+                ${formatCurrency(finalPricePerPerson)} Per Pax
             </strong>
         </span>
     </div>
 
-    <div class="package-row">
-        <span>Extra Person:</span>
+<div class="package-row">
+    <span>Extra Person:</span>
+    <span class="package-value">
+        <strong>
+${childWithBed > 0
+      ? `${formatCurrency(hotelExtraDisplayRate)}
+ + ${formatCurrency(landAdultDisplayRate)}
+ = ${formatCurrency(hotelExtraDisplayRate + landAdultDisplayRate)} Per Person`
+      : "N/A"
+    }
+        </strong>
+    </span>
+</div>
+<div class="package-row">
+    <span>Child With Bed:</span>
 
-        <span class="package-value">
-            <strong>
-${(childWithBed > 0 || landChild > 0)
-      ? `${formatCurrency(hotelExtraRate)}
- + ${formatCurrency(landExtraRate)}
- = ${formatCurrency(hotelExtraRate + landExtraRate)} Per Person`
-      : "N/A"}
-            </strong>
-        </span>
-    </div>
-
+    <span class="package-value">
+        <strong>
+            ${childWithBedDisplayHtml
+      ? childWithBedDisplayHtml
+      : "N/A"
+    }
+        </strong>
+    </span>
+</div>
 <div class="package-row">
     <span>
         Child No Bed (1m - 1m40)
@@ -2122,7 +2271,7 @@ ${itineraryHtml}
   whatsappText.push("PACKAGE COST");
 
   whatsappText.push(
-    `Price Per Person: ${formatCurrency(totalPerPerson + totalLandAdult)} Per Pax`
+    `Price Per Person: ${formatCurrency(finalPricePerPerson)} Per Pax`
   );
 
   whatsappText.push(
@@ -2309,6 +2458,12 @@ function buildPreviewFinal(data = null, showHeader = true) {
   // passenger fields and runs calculateQuote() again.
 
   const segments = getAllSegmentsData();
+  const universalMargin =
+    Number(
+      window.universalMargin ??
+      universalMarginInput?.value ??
+      0
+    );
 
   let totalPerPerson = 0;
   let totalExtraPerson = 0;
@@ -2334,8 +2489,13 @@ function buildPreviewFinal(data = null, showHeader = true) {
   //     ? totalExtraPerson / childWithBed
   //     : 0;
 
-  const finalExtraPersonRate =
-    Number(window.finalExtraPersonRate || 0);
+// DISPLAY ONLY — existing calculation ko touch nahi karna
+totalLandAdult = calculateLandCost();
+
+const finalExtraPersonRate =
+  childWithBed > 0
+    ? (totalExtraPerson / childWithBed) + Number(totalLandAdult || 0)
+    : 0;
 
 
   // const landExtraRate =
@@ -2422,7 +2582,107 @@ function buildPreviewFinal(data = null, showHeader = true) {
   totalLandAdult = calculateLandCost();
   let whatsappItinerary = "";
   let whatsappNotes = "";
+  // ==========================================
+  // CHILD WITH BED — DISPLAY ONLY
+  // Existing calculation ko touch nahi karna
+  // ==========================================
 
+  let childWithBedDisplayHtml = "";
+
+  if (landChild > 0 && cwbAgeHistory.length) {
+
+    const landCostForChildDisplay = calculateLandCost();
+
+    let adultTicketCostForDisplay = 0;
+
+    document.querySelectorAll(".land-service").forEach(select => {
+
+      const option = select.options[select.selectedIndex];
+
+      if (!option || !option.dataset.service) return;
+
+      const service = JSON.parse(option.dataset.service);
+
+      if (service.isTicket) {
+        adultTicketCostForDisplay += Number(
+          service.adult || service.price || 0
+        );
+      }
+
+    });
+
+    const normalLandCostForDisplay =
+      Math.max(
+        0,
+        landCostForChildDisplay - adultTicketCostForDisplay
+      );
+
+    cwbAgeHistory.forEach((age, index) => {
+
+      let percent = 1;
+
+      if (age === "4-6") {
+        percent = 0.5;
+      }
+      else if (age === "7-9") {
+        percent = 0.8;
+      }
+      else if (age === "10+") {
+        percent = 1;
+      }
+
+      let childCost =
+        normalLandCostForDisplay * percent;
+
+      document.querySelectorAll(".land-service").forEach(select => {
+
+        const option = select.options[select.selectedIndex];
+
+        if (!option || !option.dataset.service) return;
+
+        const service = JSON.parse(option.dataset.service);
+
+        if (!service.isTicket) return;
+
+        const childRate = Number(
+          service.child || service.adult || 0
+        );
+
+        const adultRate = Number(
+          service.adult || service.price || 0
+        );
+
+        if (age === "4-6" || age === "7-9") {
+          childCost += childRate;
+        }
+        else if (age === "10+") {
+          childCost += adultRate;
+        }
+
+      });
+
+      childWithBedDisplayHtml += `
+  ${index > 0 ? "<br>" : ""}
+  Child ${index + 1} (${age}) = ${formatCurrency(childCost)}
+`;
+
+    });
+
+  }
+  // ==========================================
+  // DISPLAY ONLY — EXTRA PERSON
+  // Existing calculation ko touch nahi karna
+  // ==========================================
+
+  const hotelExtraDisplayRate =
+    childWithBed > 0
+      ? totalExtraPerson / childWithBed
+      : 0;
+
+  const landAdultDisplayRate =
+    childWithBed > 0
+      ? Number(totalLandAdult || 0)
+      : 0;
   if (landServices.length > 0) {
 
     itineraryHtml = `
@@ -2695,21 +2955,34 @@ ${quotationAccommodation}
 <div class="package-row">
 <span>Price Per Person:</span>
 <span class="package-value">
-<strong>${formatCurrency(totalPerPerson + totalLandAdult)} Per Pax</strong>
+<strong>${formatCurrency(totalPerPerson + totalLandAdult + universalMargin)} Per Pax</strong>
 </span>
 </div>
 
 <div class="package-row">
-<span>Extra Person:</span>
-<span class="package-value">
-<strong>
-${(childWithBed > 0 || landChild > 0)
-      ? `${formatCurrency(finalExtraPersonRate)} Per Person`
-      : "N/A"}
-</strong>
-</span>
-</div>
+  <span>Extra Person:</span>
 
+  <span class="package-value">
+    <strong>
+      ${childWithBed > 0
+      ? `${formatCurrency(finalExtraPersonRate)} Per Person`
+      : "N/A"
+    }
+    </strong>
+  </span>
+</div>
+<div class="package-row">
+  <span>Child With Bed:</span>
+
+  <span class="package-value">
+    <strong>
+      ${landChild > 0 && childWithBedDisplayHtml
+      ? childWithBedDisplayHtml
+      : "N/A"
+    }
+    </strong>
+  </span>
+</div>
 <div class="package-row">
   <span>
     Child No Bed (1m - 1m40):

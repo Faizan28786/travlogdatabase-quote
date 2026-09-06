@@ -2138,3 +2138,141 @@ async function saveEditedLandService(
     }
 
 }
+// ==========================================
+// UNIVERSAL MARGIN
+// ==========================================
+
+const marginBtn = document.getElementById("marginBtn");
+const marginModal = document.getElementById("marginModal");
+const closeMarginModal = document.getElementById("closeMarginModal");
+const cancelMarginBtn = document.getElementById("cancelMarginBtn");
+const saveMarginBtn = document.getElementById("saveMarginBtn");
+const universalMarginInput = document.getElementById("universalMarginInput");
+
+
+// OPEN MARGIN MODAL
+if (marginBtn) {
+
+    marginBtn.addEventListener("click", async () => {
+
+        try {
+
+            const res = await fetch(
+                CONFIG.API_BASE + "/settings"
+            );
+
+            const result = await res.json();
+
+            console.log("SETTINGS:", result);
+
+            if (!result.success) {
+                alert("Unable to load margin.");
+                return;
+            }
+
+            universalMarginInput.value =
+                Number(result.settings?.universalMargin || 0);
+
+            window.universalMargin =
+                Number(result.settings?.universalMargin || 0);
+
+            marginModal.style.display = "flex";
+
+        } catch (error) {
+
+            console.error("LOAD MARGIN ERROR:", error);
+
+            alert("Unable to load margin.");
+
+        }
+
+    });
+
+}
+
+
+// CLOSE MARGIN MODAL
+if (closeMarginModal) {
+
+    closeMarginModal.addEventListener("click", () => {
+
+        marginModal.style.display = "none";
+
+    });
+
+}
+
+
+if (cancelMarginBtn) {
+
+    cancelMarginBtn.addEventListener("click", () => {
+
+        marginModal.style.display = "none";
+
+    });
+
+}
+
+
+// SAVE MARGIN
+if (saveMarginBtn) {
+
+    saveMarginBtn.addEventListener("click", async () => {
+
+        const margin =
+            Number(universalMarginInput.value) || 0;
+
+        if (margin < 0) {
+
+            alert("Margin cannot be negative.");
+            return;
+
+        }
+
+        try {
+
+            const res = await fetch(
+                CONFIG.API_BASE + "/settings",
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        universalMargin: margin
+                    })
+                }
+            );
+
+            const result = await res.json();
+
+            console.log("SAVED SETTINGS:", result);
+
+            if (!result.success) {
+
+                alert("Unable to save margin.");
+                return;
+
+            }
+
+            universalMarginInput.value =
+                Number(result.settings?.universalMargin || 0);
+
+            window.universalMargin =
+                Number(result.settings?.universalMargin || 0);
+
+            marginModal.style.display = "none";
+
+            alert("Universal margin saved successfully.");
+
+        } catch (error) {
+
+            console.error("SAVE MARGIN ERROR:", error);
+
+            alert("Unable to save margin.");
+
+        }
+
+    });
+
+}
