@@ -2275,11 +2275,34 @@ ${itineraryHtml}
   );
 
   whatsappText.push(
-    `Extra Person: ${childWithBed > 0 || landChild > 0
-      ? formatCurrency(finalExtraPersonRate)
+    `Extra Person: ${childWithBed > 0
+      ? formatCurrency(hotelExtraDisplayRate + landAdultDisplayRate)
       : "N/A"
     } Per Person`
   );
+  if (landChild > 0 && childWithBedDisplayHtml) {
+
+    const childWithBedWhatsApp =
+      cwbAgeHistory.map((age, index) => {
+
+        // childWithBedDisplayHtml mein already
+        // final display-only child cost calculated hai
+        const match =
+          childWithBedDisplayHtml.match(
+            new RegExp(
+              `Child ${index + 1} \\(${age}\\) = ([^\\n]+)`
+            )
+          );
+
+        const amount =
+          match ? match[1].trim() : formatCurrency(0);
+
+        return `Child With Bed: Child ${index + 1} (${age}) = ${amount}`;
+
+      }).join("\n");
+
+    whatsappText.push(childWithBedWhatsApp);
+  }
 
   whatsappText.push(
     `Child No Bed (1m - 1m40) (${cnbAge}): ${formatCurrency(totalChildNoBed)} Per Person`
@@ -2489,13 +2512,13 @@ function buildPreviewFinal(data = null, showHeader = true) {
   //     ? totalExtraPerson / childWithBed
   //     : 0;
 
-// DISPLAY ONLY — existing calculation ko touch nahi karna
-totalLandAdult = calculateLandCost();
+  // DISPLAY ONLY — existing calculation ko touch nahi karna
+  totalLandAdult = calculateLandCost();
 
-const finalExtraPersonRate =
-  childWithBed > 0
-    ? (totalExtraPerson / childWithBed) + Number(totalLandAdult || 0)
-    : 0;
+  const finalExtraPersonRate =
+    childWithBed > 0
+      ? (totalExtraPerson / childWithBed) + Number(totalLandAdult || 0)
+      : 0;
 
 
   // const landExtraRate =
