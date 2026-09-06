@@ -1952,7 +1952,26 @@ async function buildPreview() {
         groupedDays[service.day] = [];
       }
 
-      groupedDays[service.day].push(service.service);
+      let serviceText = service.service;
+
+      // DISPLAY ONLY — Transfer ke end mein vehicle seater add hoga
+      const serviceName =
+        String(service.service || "").toLowerCase();
+
+      const isTransfer =
+        serviceName.includes("transfer");
+
+      if (isTransfer) {
+
+        const seater = getVehicleSeater(totalPax);
+
+        if (seater) {
+          serviceText += ` (${seater})`;
+        }
+
+      }
+
+      groupedDays[service.day].push(serviceText);
 
     });
 
@@ -2329,7 +2348,7 @@ Notes:
 -Note: SIC sightseeing have, fix Pickup points, Guest need to reach at the given point on time by their own.
 
 SERVICES INCLUDED
-● A/C airport transfer on Pvt Suv 7s & Tours as mentioned in Itinerary
+● A/C airport transfer & Tours as mentioned in Itinerary
 ● Accommodation double/ twin sharing room
 ● English speaking local tour guides
 ● Meals without drinks as indicated: B = Breakfast ; L = Lunch ; D = Dinner (Indian Dinner served at Indian restaurant / Not at the hotel guest staying)
@@ -2720,15 +2739,34 @@ function buildPreviewFinal(data = null, showHeader = true) {
 
     const groupedDays = {};
 
-    landServices.forEach(service => {
+landServices.forEach(service => {
 
-      if (!groupedDays[service.day]) {
-        groupedDays[service.day] = [];
-      }
+  if (!groupedDays[service.day]) {
+    groupedDays[service.day] = [];
+  }
 
-      groupedDays[service.day].push(service.service);
+  let serviceText = service.service;
 
-    });
+  // DISPLAY ONLY — transfer ke end mein vehicle seater
+  const serviceName =
+    String(service.service || "").toLowerCase();
+
+  const isTransfer =
+    serviceName.includes("transfer");
+
+  if (isTransfer) {
+
+    const seater = getVehicleSeater(totalPax);
+
+    if (seater) {
+      serviceText += ` (${seater})`;
+    }
+
+  }
+
+  groupedDays[service.day].push(serviceText);
+
+});
 
     const firstDate =
       data?.segments?.[0]?.checkIn ||
@@ -2797,7 +2835,7 @@ function buildPreviewFinal(data = null, showHeader = true) {
 -Note: SIC sightseeing have, fix Pickup points, Guest need to reach at the given point on time by their own.
 
 SERVICES INCLUDED
-● A/C airport transfer on Pvt Suv 7s & Tours as mentioned in Itinerary
+● A/C airport transfer & Tours as mentioned in Itinerary
 ● Accommodation double/ twin sharing room
 ● English speaking local tour guides
 ● Meals without drinks as indicated: B = Breakfast ; L = Lunch ; D = Dinner (Indian Dinner served at Indian restaurant / Not at the hotel guest staying)
@@ -2875,7 +2913,7 @@ Notes:
 -Note: SIC sightseeing have, fix Pickup points, Guest need to reach at the given point on time by their own.
 
 SERVICES INCLUDED
-● A/C airport transfer on Pvt Suv 7s & Tours as mentioned in Itinerary
+● A/C airport transfer & Tours as mentioned in Itinerary
 ● Accommodation double/ twin sharing room
 ● English speaking local tour guides
 ● Meals without drinks as indicated: B = Breakfast ; L = Lunch ; D = Dinner (Indian Dinner served at Indian restaurant / Not at the hotel guest staying)
@@ -4852,4 +4890,23 @@ class="remove-service">
 
   calculateQuote();
 
+}
+function getVehicleSeater(pax) {
+  pax = Number(pax) || 0;
+
+  if (pax === 2) return "4 Seater";
+
+  if (pax >= 3 && pax <= 4) {
+    return "7 Seater";
+  }
+
+  if (pax >= 5 && pax <= 8) {
+    return "16 Seater";
+  }
+
+  if (pax >= 9 && pax <= 14) {
+    return "29 Seater";
+  }
+
+  return "";
 }
