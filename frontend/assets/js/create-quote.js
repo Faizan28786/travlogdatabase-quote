@@ -57,6 +57,7 @@ let landChildAge = "";
 let quoteOptions = [];
 
 let currentOption = 0;
+let isRestoringQuoteOption = false;
 /* ==========================================
    OPTION MANAGEMENT
 ========================================== */
@@ -83,6 +84,8 @@ function getCurrentQuoteData() {
       city: seg.querySelector(".segment-city")?.value || "",
       mealPlan: seg.querySelector(".segment-meal-plan")?.value || "",
       hotel: seg.querySelector(".segment-hotel")?.value || "",
+      hotelName:
+        seg.querySelector(".segment-hotel")?.selectedOptions?.[0]?.textContent?.trim() || "",
       roomType: seg.querySelector(".segment-room-type")?.value || "",
       checkIn: seg.querySelector(".segment-checkin")?.value || "",
       checkOut: seg.querySelector(".segment-checkout")?.value || "",
@@ -96,6 +99,8 @@ function getCurrentQuoteData() {
 function restoreQuoteData(data) {
 
   if (!data) return;
+
+  isRestoringQuoteOption = true;
 
   segmentCounter = 0;
 
@@ -111,30 +116,50 @@ function restoreQuoteData(data) {
 
   segmentsContainer.innerHTML = "";
 
-  data.segments.forEach(seg => {
-
+  (data.segments || []).forEach(seg => {
     createSegment(seg);
-
   });
 
-  // Restore saved land services
   window.restoredLandServices = data.landServices || [];
 
-  calculateQuote();
+  isRestoringQuoteOption = false;
 
+  calculateQuote();
 }
 function saveCurrentOption() {
 
   quoteOptions[currentOption].data = getCurrentQuoteData();
 
 }
-function switchOption(index) {
+// function switchOption(index) {
+
+//   // Current option save
+//   saveCurrentOption();
+
+//   // Current preview bhi save
+//   buildPreview();
+
+//   currentOption = index;
+
+//   // Active tab
+//   document.querySelectorAll(".option-tab").forEach((btn, i) => {
+//     btn.classList.toggle("active", i === index);
+//   });
+
+//   // Restore selected option
+//   restoreQuoteData(quoteOptions[index].data);
+
+//   // Preview refresh
+//   buildPreview();
+
+// }
+async function switchOption(index) {
 
   // Current option save
   saveCurrentOption();
 
-  // Current preview bhi save
-  buildPreview();
+  // Current preview save
+  await buildPreview();
 
   currentOption = index;
 
@@ -147,7 +172,7 @@ function switchOption(index) {
   restoreQuoteData(quoteOptions[index].data);
 
   // Preview refresh
-  buildPreview();
+  await buildPreview();
 
 }
 function renderOptionTabs() {
@@ -361,7 +386,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderOptionTabs();
   quoteOptions[0].data = getCurrentQuoteData();
 
-  addOptionBtn.addEventListener("click", addNewOption);
 });
 
 /* =========================================================
@@ -477,7 +501,7 @@ function bindTopLevelEvents() {
   });
 
   calculateBtn?.addEventListener("click", calculateQuote);
-  previewBtn?.addEventListener("click", buildPreview);
+
 
   resetBtn?.addEventListener("click", async () => {
     await resetForm();
@@ -880,31 +904,62 @@ function hydrateSegment(segmentEl) {
     renderLandDays();
   });
   /* =========================
-   Restore Saved Option
-========================= */
+     Restore Saved Option
+  ========================= */
 
   if (segmentEl.restoreData) {
 
     const d = segmentEl.restoreData;
 
+    // =========================================================
+    // 1. RESTORE CITY FIRST
+    // =========================================================
+
     citySelect.value = d.city || "";
 
-    populateSegmentHotels(segmentEl);
 
-    hotelSelect.value = d.hotel || "";
+    // =========================================================
+    // 2. RESTORE EXACT SAVED HOTEL
+    //    Do NOT allow previous option's hotel to interfere.
+    // =========================================================
+
+    populateSegmentHotels(
+      segmentEl,
+      d.hotel || ""
+    );
+
+
+    // =========================================================
+    // 3. RESTORE EXACT SAVED ROOM TYPE
+    // =========================================================
 
     populateSegmentRoomTypes(segmentEl);
 
-    roomTypeSelect.value = d.roomType || "";
-
-    mealPlanSelect.value = d.mealPlan || "CP";
-
-    nightsInput.value = d.nights || 1;
+    if (d.roomType) {
+      roomTypeSelect.value = d.roomType;
+    }
 
 
-    checkInInput.value = d.checkIn || "";
+    // =========================================================
+    // 4. RESTORE OTHER DATA
+    // =========================================================
 
-    checkOutInput.value = d.checkOut || "";
+    mealPlanSelect.value =
+      d.mealPlan || "CP";
+
+    nightsInput.value =
+      d.nights || 1;
+
+    checkInInput.value =
+      d.checkIn || "";
+
+    checkOutInput.value =
+      d.checkOut || "";
+
+
+    // =========================================================
+    // FINAL CALCULATION
+    // =========================================================
 
     calculateQuote();
 
@@ -948,70 +1003,124 @@ function populateSegmentCities(citySelect) {
   }
 }
 
-function populateSegmentHotels(segmentEl) {
+function populateSegmentHotels(segmentEl, preferredHotelName = null) {
+
   const citySelect = segmentEl.querySelector(".segment-city");
   const hotelSelect = segmentEl.querySelector(".segment-hotel");
 
   if (!citySelect || !hotelSelect) return;
 
-  const selectedCity = String(citySelect.value || "").trim().toLowerCase();
-  const prevHotelName = hotelSelect.value || "";
+  const selectedCity =
+    String(citySelect.value || "").trim().toLowerCase();
+
+  // =========================================================
+  // IMPORTANT
+  // If a saved hotel is supplied, ALWAYS use that hotel.
+  // Otherwise keep current selected hotel.
+  // =========================================================
+
+  const previousHotelName =
+    preferredHotelName !== null
+      ? String(preferredHotelName || "").trim()
+      : String(hotelSelect.value || "").trim();
 
   let hotels = [...currentCountryHotels];
 
   if (selectedCity) {
     hotels = hotels.filter(
-      h => String(h.city || "").trim().toLowerCase() === selectedCity
+      h =>
+        String(h.city || "")
+          .trim()
+          .toLowerCase() === selectedCity
     );
   }
 
-  // unique hotel names only
+  // =========================================================
+  // UNIQUE HOTEL NAMES
+  // =========================================================
+
   const uniqueHotelsMap = new Map();
+
   hotels.forEach(h => {
-    const hotelName = String(h.hotelName || "").trim();
+
+    const hotelName =
+      String(h.hotelName || "").trim();
+
     if (!hotelName) return;
 
     if (!uniqueHotelsMap.has(hotelName)) {
       uniqueHotelsMap.set(hotelName, h);
     }
+
   });
 
-  const uniqueHotels = [...uniqueHotelsMap.values()].sort((a, b) => {
+  const uniqueHotels =
+    [...uniqueHotelsMap.values()].sort((a, b) => {
 
-    const getStar = hotel =>
-      Number(
-        String(hotel.category || "").match(/\d+/)?.[0] || 99
-      );
+      const getStar = hotel =>
+        Number(
+          String(hotel.category || "")
+            .match(/\d+/)?.[0] || 99
+        );
 
-    const starA = getStar(a);
-    const starB = getStar(b);
+      return getStar(a) - getStar(b);
 
-    return starA - starB;
-  });
+    });
 
-  hotelSelect.innerHTML = `<option value="">Select Hotel</option>`;
+
+  // =========================================================
+  // REBUILD HOTEL DROPDOWN
+  // =========================================================
+
+  hotelSelect.innerHTML =
+    `<option value="">Select Hotel</option>`;
+
 
   uniqueHotels.forEach(hotel => {
 
-    const opt = document.createElement("option");
+    const opt =
+      document.createElement("option");
 
-    opt.value = hotel.hotelName;
+    opt.value =
+      String(hotel.hotelName || "").trim();
 
     opt.textContent =
       `${hotel.displayName || hotel.hotelName} (${hotel.category || "Hotel"})`;
 
-    // ye baad me preview ke kaam aayega
-    opt.dataset.category = hotel.category || "";
+    opt.dataset.category =
+      hotel.category || "";
 
     hotelSelect.appendChild(opt);
 
   });
 
-  if (uniqueHotels.some(h => h.hotelName === prevHotelName)) {
-    hotelSelect.value = prevHotelName;
+
+  // =========================================================
+  // RESTORE EXACT HOTEL
+  // =========================================================
+
+  if (
+    previousHotelName &&
+    uniqueHotels.some(
+      h =>
+        String(h.hotelName || "").trim() ===
+        previousHotelName
+    )
+  ) {
+
+    hotelSelect.value = previousHotelName;
+
   } else if (uniqueHotels.length) {
-    hotelSelect.value = uniqueHotels[0].hotelName;
+
+    hotelSelect.value =
+      uniqueHotels[0].hotelName;
+
+  } else {
+
+    hotelSelect.value = "";
+
   }
+
 }
 
 function populateSegmentRoomTypes(segmentEl) {
@@ -1304,7 +1413,7 @@ function resetAgeDropdown(select) {
 /* =========================================================
    CALCULATE QUOTE
 ========================================================= */
-function calculateQuote() {
+function calculateQuote(saveOption = true) {
   const adults = Number(adultsEl?.value || 0);
   const childWithBed = Number(childWithBedEl?.value || 0);
   const childWithoutBed = Number(childWithoutBedEl?.value || 0);
@@ -1373,7 +1482,7 @@ function calculateQuote() {
   if (grandTotalEl) grandTotalEl.textContent = formatCurrency(grandTotal);
 
   updateSegmentDates();
-  if (quoteOptions[currentOption]) {
+  if (quoteOptions[currentOption] && !isRestoringQuoteOption) {
 
     quoteOptions[currentOption].data = getCurrentQuoteData();
 
@@ -1609,6 +1718,7 @@ function getLandChildCostByAge(age, type = "cnb") {
    BUILD PREVIEW
 ========================================================= */
 async function buildPreview() {
+  const previewOptionIndex = currentOption;
 
   if (!previewBox) return;
 
@@ -1729,6 +1839,7 @@ async function buildPreview() {
   // ==========================================
 
   let childWithBedDisplayHtml = "";
+  let childWithBedWhatsAppText = [];
 
   if (landChild > 0 && cwbAgeHistory.length) {
 
@@ -1810,6 +1921,9 @@ async function buildPreview() {
         Child ${index + 1} (${age}) = ${formatCurrency(childCost)}
       </div>
     `;
+      childWithBedWhatsAppText.push(
+        `Child With Bed: Child ${index + 1} (${age}) = ${formatCurrency(childCost)}`
+      );
 
     });
 
@@ -2228,259 +2342,258 @@ ${itineraryHtml}
 </div>
 
 `;
-  const whatsappText = [];
+  //   const whatsappText = [];
 
-  // ==========================
-  // WHATSAPP HEADER
-  // Show only once for Option 1
-  // ==========================
-  if (currentOption === 0) {
+  //   // ==========================
+  //   // WHATSAPP HEADER
+  //   // Show only once for Option 1
+  //   // ==========================
+  //   if (currentOption === 0) {
 
-    const totalNights = segments.reduce(
-      (sum, seg) => sum + Number(seg.nights || 0),
-      0
-    );
+  //     const totalNights = segments.reduce(
+  //       (sum, seg) => sum + Number(seg.nights || 0),
+  //       0
+  //     );
 
-    whatsappText.push(`TRIP ID: ${quoteNo}`);
-    whatsappText.push(`DESTINATION: ${country}`);
-    whatsappText.push(`TRAVEL DATE: ${travelDate}`);
-    whatsappText.push(
-      `NO OF PAX: ${String(totalPax).padStart(2, "0")} ADULTS`
-    );
-    whatsappText.push(
-      `NO OF ROOM: ${String(rooms).padStart(2, "0")}`
-    );
-    whatsappText.push(
-      `NO OF NIGHT: ${totalNights}N/${totalNights + 1}D`
-    );
+  //     whatsappText.push(`TRIP ID: ${quoteNo}`);
+  //     whatsappText.push(`DESTINATION: ${country}`);
+  //     whatsappText.push(`TRAVEL DATE: ${travelDate}`);
+  //     whatsappText.push(
+  //       `NO OF PAX: ${String(totalPax).padStart(2, "0")} ADULTS`
+  //     );
+  //     whatsappText.push(
+  //       `NO OF ROOM: ${String(rooms).padStart(2, "0")}`
+  //     );
+  //     whatsappText.push(
+  //       `NO OF NIGHT: ${totalNights}N/${totalNights + 1}D`
+  //     );
 
-  }
+  //   }
 
-  whatsappText.push("");
-  whatsappText.push("ACCOMMODATION");
-  whatsappText.push("");
-  whatsappText.push(`${optionTitle.toUpperCase()}:`);
+  //   whatsappText.push("");
+  //   whatsappText.push("ACCOMMODATION");
+  //   whatsappText.push("");
+  //   whatsappText.push(`${optionTitle.toUpperCase()}:`);
 
-  segments.forEach((seg, index) => {
+  //   segments.forEach((seg, index) => {
 
-    const checkIn = checkInInputs[index]?.value || "";
-    const checkOut = checkOutInputs[index]?.value || "";
+  //     const checkIn = checkInInputs[index]?.value || "";
+  //     const checkOut = checkOutInputs[index]?.value || "";
 
-    let dateLine = "";
+  //     let dateLine = "";
 
-    if (checkIn && checkOut) {
-      dateLine = `(${formatDate(checkIn)}-${formatDate(checkOut)}) `;
-    }
+  //     if (checkIn && checkOut) {
+  //       dateLine = `(${formatDate(checkIn)}-${formatDate(checkOut)}) `;
+  //     }
 
-    let line = `${seg.nights}nt ${dateLine}${seg.city} - ${seg.hotelName}`;
+  //     let line = `${seg.nights}nt ${dateLine}${seg.city} - ${seg.hotelName}`;
 
-    if (seg.hotelCategory) {
-      line += ` (${seg.hotelCategory})`;
-    }
+  //     if (seg.hotelCategory) {
+  //       line += ` (${seg.hotelCategory})`;
+  //     }
 
-    if (seg.roomType) {
-      line += ` / ${seg.roomType}`;
-    }
+  //     if (seg.roomType) {
+  //       line += ` / ${seg.roomType}`;
+  //     }
 
-    whatsappText.push(line);
+  //     whatsappText.push(line);
 
-  });
+  //   });
 
-  whatsappText.push("");
-  whatsappText.push("PACKAGE COST");
+  //   whatsappText.push("");
+  //   whatsappText.push("PACKAGE COST");
 
-  whatsappText.push(
-    `Price Per Person: ${formatCurrency(finalPricePerPerson)} Per Pax`
-  );
+  //   whatsappText.push(
+  //     `Price Per Person: ${formatCurrency(finalPricePerPerson)} Per Pax`
+  //   );
 
-  whatsappText.push(
-    `Extra Person: ${childWithBed > 0
-      ? formatCurrency(hotelExtraDisplayRate + landAdultDisplayRate)
-      : "N/A"
-    } Per Person`
-  );
-  if (landChild > 0 && childWithBedDisplayHtml) {
+  //   whatsappText.push(
+  //     `Extra Person: ${childWithBed > 0
+  //       ? formatCurrency(hotelExtraDisplayRate + landAdultDisplayRate)
+  //       : "N/A"
+  //     } Per Person`
+  //   );
+  //   if (childWithBedWhatsAppText.length > 0) {
+  //     whatsappText.push(
+  //       childWithBedWhatsAppText.join("\n")
+  //     );
+  //   }
 
-    const childWithBedWhatsApp =
-      cwbAgeHistory.map((age, index) => {
+  //   whatsappText.push(
+  //     `Child No Bed (1m - 1m40) (${cnbAge}): ${formatCurrency(totalChildNoBed)} Per Person`
+  //   );
 
-        // childWithBedDisplayHtml mein already
-        // final display-only child cost calculated hai
-        const match =
-          childWithBedDisplayHtml.match(
-            new RegExp(
-              `Child ${index + 1} \\(${age}\\) = ([^\\n]+)`
-            )
-          );
-
-        const amount =
-          match ? match[1].trim() : formatCurrency(0);
-
-        return `Child With Bed: Child ${index + 1} (${age}) = ${amount}`;
-
-      }).join("\n");
-
-    whatsappText.push(childWithBedWhatsApp);
-  }
-
-  whatsappText.push(
-    `Child No Bed (1m - 1m40) (${cnbAge}): ${formatCurrency(totalChildNoBed)} Per Person`
-  );
-
-  whatsappText.push("Compulsory Tip: USD 3 Per Person / Day");
-  whatsappText.push("E-Visa: ₹2,900 Per Person");
+  //   whatsappText.push("Compulsory Tip: USD 3 Per Person / Day");
+  //   whatsappText.push("E-Visa: ₹2,900 Per Person");
 
 
-  // ==========================
-  // DAY WISE BRIEF ITINERARY
-  // ==========================
-  const selectedCountry = (countryEl?.value || "").toLowerCase();
+  //   // ==========================
+  //   // DAY WISE BRIEF ITINERARY
+  //   // ==========================
+  //   const selectedCountry = (countryEl?.value || "").toLowerCase();
 
-  if (selectedCountry === "vietnam") {
+  //   if (selectedCountry === "vietnam") {
 
-    whatsappNotes = `
-Notes:
+  //     whatsappNotes = `
+  // Notes:
 
-- BANA HILLS : Wax Museum entrance fee (USD 5/pax),  Wine Cellar entrance fee (USD 5/pax for Silver ticket, including 1 glass of wine, or cocktail, or fruit juice), coin games at Fantasy Park are not included in the entrance ticket, joining them will be at your own accounT""
-- Meals as indicated in Brief itinerary only: B = Breakfast ; L = Lunch ; D = Dinner
-- Indian Dinner are served at Indian restaurant only (Outside Hotel)
-- SIC Tour Stand Local Food Only
--Note: SIC sightseeing have, fix Pickup points, Guest need to reach at the given point on time by their own.
+  // - BANA HILLS : Wax Museum entrance fee (USD 5/pax),  Wine Cellar entrance fee (USD 5/pax for Silver ticket, including 1 glass of wine, or cocktail, or fruit juice), coin games at Fantasy Park are not included in the entrance ticket, joining them will be at your own accounT""
+  // - Meals as indicated in Brief itinerary only: B = Breakfast ; L = Lunch ; D = Dinner
+  // - Indian Dinner are served at Indian restaurant only (Outside Hotel)
+  // - SIC Tour Stand Local Food Only
+  // -Note: SIC sightseeing have, fix Pickup points, Guest need to reach at the given point on time by their own.
 
-SERVICES INCLUDED
-● A/C airport transfer & Tours as mentioned in Itinerary
-● Accommodation double/ twin sharing room
-● English speaking local tour guides
-● Meals without drinks as indicated: B = Breakfast ; L = Lunch ; D = Dinner (Indian Dinner served at Indian restaurant / Not at the hotel guest staying)
-● All sightseeing fees as program
-● 02 Water bottles on each day at the hotel.
+  // SERVICES INCLUDED
+  // ● A/C airport transfer & Tours as mentioned in Itinerary
+  // ● Accommodation double/ twin sharing room
+  // ● English speaking local tour guides
+  // ● Meals without drinks as indicated: B = Breakfast ; L = Lunch ; D = Dinner (Indian Dinner served at Indian restaurant / Not at the hotel guest staying)
+  // ● All sightseeing fees as program
+  // ● 02 Water bottles on each day at the hotel.
 
-PAYMENT TERM:
-· A 50% deposit is required upon confirmation of the booking.
-·100% pre-payment must be made 7 days prior arrival.
-------------------------------------------------------
-● Fast Track Immigration(Arrivals)
-(Rates subject to change by Immigration authorities)
-✈️ Da Nang (DAD): $19 per person
-✈️ Tan Son Nhat – Ho Chi Minh City (SGN):
-• Line 2,3 – $25 per person
-• Line 1 – $45 per person
+  // PAYMENT TERM:
+  // · A 50% deposit is required upon confirmation of the booking.
+  // ·100% pre-payment must be made 7 days prior arrival.
+  // ------------------------------------------------------
+  // ● Fast Track Immigration(Arrivals)
+  // (Rates subject to change by Immigration authorities)
+  // ✈️ Da Nang (DAD): $19 per person
+  // ✈️ Tan Son Nhat – Ho Chi Minh City (SGN):
+  // • Line 2,3 – $25 per person
+  // • Line 1 – $45 per person
 
-✈️ Noi Bai – Hanoi (HAN): $20 per person
-✈️ Phu Quoc (PQC): $19 per person
-------------------------------------------------------
-SERVICES EXCLUDED
-● Visa approval and visa stamp fee
-● International air ticket and domestic flights.
-● Late check-out fee and early check in
-● Other meals not mentioned in programs
-● Drinks, personal expenses and others…
-● Bank Fees: 40$ Per transaction  / any mode of payment
-● 3$ Per Person per day Compulsory Tips for tour guide and driver""
+  // ✈️ Noi Bai – Hanoi (HAN): $20 per person
+  // ✈️ Phu Quoc (PQC): $19 per person
+  // ------------------------------------------------------
+  // SERVICES EXCLUDED
+  // ● Visa approval and visa stamp fee
+  // ● International air ticket and domestic flights.
+  // ● Late check-out fee and early check in
+  // ● Other meals not mentioned in programs
+  // ● Drinks, personal expenses and others…
+  // ● Bank Fees: 40$ Per transaction  / any mode of payment
+  // ● 3$ Per Person per day Compulsory Tips for tour guide and driver""
 
-IMP Notes :
-- Local restaurants and Indian restaurants in Vietnam are very basic. Some restaurants might not have air conditioner
-- Language is a big Hurdle, Driver will not understand english, Few Guides May have issues with fluent English
+  // IMP Notes :
+  // - Local restaurants and Indian restaurants in Vietnam are very basic. Some restaurants might not have air conditioner
+  // - Language is a big Hurdle, Driver will not understand english, Few Guides May have issues with fluent English
 
-Luggage:
-- Taxi/CAB in Vietnam has no Top luggage carrier / Hence luggage need to be Less as per Vehicle
-- If luggage are more and unable to fit in a given Vehicle, Surcharge will be applicable for Separate Vehicle Or Need to upgrade vehicle with additional cost.
+  // Luggage:
+  // - Taxi/CAB in Vietnam has no Top luggage carrier / Hence luggage need to be Less as per Vehicle
+  // - If luggage are more and unable to fit in a given Vehicle, Surcharge will be applicable for Separate Vehicle Or Need to upgrade vehicle with additional cost.
 
-Suggested Apps:
-- Grab App for : Food, Taxi
-- Google Translator
+  // Suggested Apps:
+  // - Grab App for : Food, Taxi
+  // - Google Translator
 
-Cruise Notes:
-*Halong Bay Cruise* has limited water. They generally give 1 Glass of water during lunch and dinner. For other times you will require to buy from them which will cost around USD 2 per Bottle (Approx).
-Halong Bay Cruise doesn't have Indian food onboard.
+  // Cruise Notes:
+  // *Halong Bay Cruise* has limited water. They generally give 1 Glass of water during lunch and dinner. For other times you will require to buy from them which will cost around USD 2 per Bottle (Approx).
+  // Halong Bay Cruise doesn't have Indian food onboard.
 
-Points to be Noted:
-- Please keep the soft copy and hard copy of the tour documents with you.
-- Please carry light clothes, Sun glasses, Rain coats, Ponchos, and umbrellas.
-- For NRI Pax need to carry OCI or multiple visa Copy with you.
-- Travel Insurance is recommended.
-- Carry Universal Adapter.
-- Always keep the Business card of the Hotel with you.
-- Please don’t carry any valuable ornaments with you.
-- Tap water is not safe in Vietnam.
-- In Vietnam at the airport you can do Money Exchange & buy a SIM Card.
-- Mini Bar is not included in the tour cost.
-- Check-in time is at 2 PM & Check-out time is at 12 PM.
--Timing is very important as the sightseeing is time based.
-- Coach is not on Disposal & will be from a point to point basis. Deviation is not possible and we will stick to the itinerary and inclusions mentioned in the package.
-- No Alcohol / Food consumption is allowed in the Vehicle/bus"
-`;
+  // Points to be Noted:
+  // - Please keep the soft copy and hard copy of the tour documents with you.
+  // - Please carry light clothes, Sun glasses, Rain coats, Ponchos, and umbrellas.
+  // - For NRI Pax need to carry OCI or multiple visa Copy with you.
+  // - Travel Insurance is recommended.
+  // - Carry Universal Adapter.
+  // - Always keep the Business card of the Hotel with you.
+  // - Please don’t carry any valuable ornaments with you.
+  // - Tap water is not safe in Vietnam.
+  // - In Vietnam at the airport you can do Money Exchange & buy a SIM Card.
+  // - Mini Bar is not included in the tour cost.
+  // - Check-in time is at 2 PM & Check-out time is at 12 PM.
+  // -Timing is very important as the sightseeing is time based.
+  // - Coach is not on Disposal & will be from a point to point basis. Deviation is not possible and we will stick to the itinerary and inclusions mentioned in the package.
+  // - No Alcohol / Food consumption is allowed in the Vehicle/bus"
+  // `;
 
-  }
+  //   }
 
-  let whatsappItinerary = "";
-  if (landServices.length > 0) {
+  //   let whatsappItinerary = "";
+  //   if (landServices.length > 0) {
 
-    whatsappText.push("");
+  //     whatsappText.push("");
 
 
-    const groupedDays = {};
+  //     const groupedDays = {};
 
-    landServices.forEach(service => {
+  //     landServices.forEach(service => {
 
-      if (!groupedDays[service.day]) {
-        groupedDays[service.day] = [];
-      }
+  //       if (!groupedDays[service.day]) {
+  //         groupedDays[service.day] = [];
+  //       }
 
-      groupedDays[service.day].push(service.service);
+  //       let serviceText = service.service;
 
-    });
+  //       // DISPLAY ONLY — transfer ke end mein vehicle seater
+  //       const serviceName =
+  //         String(service.service || "").toLowerCase();
 
-    const firstDate =
-      document.querySelector(".segment-checkin")?.value;
+  //       const isTransfer =
+  //         serviceName.includes("transfer");
 
-    Object.keys(groupedDays).forEach(day => {
+  //       if (isTransfer) {
 
-      let currentDate = "";
+  //         const seater = getVehicleSeater(totalPax);
 
-      if (firstDate) {
+  //         if (seater) {
+  //           serviceText += ` (${seater})`;
+  //         }
 
-        const d = new Date(firstDate);
+  //       }
 
-        d.setDate(d.getDate() + (Number(day) - 1));
+  //       groupedDays[service.day].push(serviceText);
 
-        const dd = String(d.getDate()).padStart(2, "0");
-        const mm = String(d.getMonth() + 1).padStart(2, "0");
-        const yyyy = d.getFullYear();
+  //     });
 
-        currentDate = `${dd}-${mm}-${yyyy}`;
+  //     const firstDate =
+  //       document.querySelector(".segment-checkin")?.value;
 
-      }
+  //     Object.keys(groupedDays).forEach(day => {
 
-      whatsappItinerary += `DAY ${day} (${currentDate}) : ${groupedDays[day].join(" + ")}\n`;
+  //       let currentDate = "";
 
-    });
+  //       if (firstDate) {
 
-  }
-  if (
-    currentOption === Object.keys(quoteOptions).length - 1 &&
-    whatsappItinerary
-  ) {
+  //         const d = new Date(firstDate);
 
-    whatsappText.push("");
-    whatsappText.push("DAY WISE BRIEF ITINERARY");
-    whatsappText.push(whatsappItinerary.trim());
+  //         d.setDate(d.getDate() + (Number(day) - 1));
 
-  }
-  if (
-    currentOption === Object.keys(quoteOptions).length - 1 &&
-    whatsappNotes
-  ) {
-    whatsappText.push("");
-    whatsappText.push(whatsappNotes.trim());
-  }
+  //         const dd = String(d.getDate()).padStart(2, "0");
+  //         const mm = String(d.getMonth() + 1).padStart(2, "0");
+  //         const yyyy = d.getFullYear();
 
-  window.latestWhatsappText = whatsappText.join("\n");
+  //         currentDate = `${dd}-${mm}-${yyyy}`;
+
+  //       }
+
+  //       whatsappItinerary += `DAY ${day} (${currentDate}) : ${groupedDays[day].join(" + ")}\n`;
+
+  //     });
+
+  //   }
+  //   if (
+  //     currentOption === Object.keys(quoteOptions).length - 1 &&
+  //     whatsappItinerary
+  //   ) {
+
+  //     whatsappText.push("");
+  //     whatsappText.push("DAY WISE BRIEF ITINERARY");
+  //     whatsappText.push(whatsappItinerary.trim());
+
+  //   }
+  //   if (
+  //     currentOption === Object.keys(quoteOptions).length - 1 &&
+  //     whatsappNotes
+  //   ) {
+  //     whatsappText.push("");
+  //     whatsappText.push(whatsappNotes.trim());
+  //   }
+
+  //   window.latestWhatsappText = whatsappText.join("\n");
   previewBox.innerHTML = previewHtml;
-  if (quoteOptions[currentOption]) {
-
-    quoteOptions[currentOption].data.previewHtml = previewHtml;
-
+  if (quoteOptions[previewOptionIndex]) {
+    quoteOptions[previewOptionIndex].data.previewHtml = previewHtml;
   }
 
   /* Save same HTML globally */
@@ -2519,8 +2632,19 @@ function buildPreviewFinal(data = null, showHeader = true) {
     totalExtraPerson += Number(seg.childWithBedCharges || 0);
     totalChildNoBed += Number(seg.childWithoutBedCharges || 0);
     totalLandExtraPerson += Number(seg.landChildWithBedRate || 0);
-    totalLandChildNoBed += Number(seg.landChildNoBedRate || 0);
   });
+
+  // =========================================================
+  // CHILD NO BED — SAME SOURCE AS BUILD PREVIEW
+  // Existing calculation untouched.
+  // Final Preview must use the same cnbTotal.
+  // =========================================================
+
+  const landChildDataForFinal =
+    calculateLandChildCost();
+
+  totalLandChildNoBed =
+    Number(landChildDataForFinal?.cnbTotal || 0);
 
   const childWithBed = Number(childWithBedEl?.value || 0);
   const childWithoutBed = Number(childWithoutBedEl?.value || 0);
@@ -2739,34 +2863,34 @@ function buildPreviewFinal(data = null, showHeader = true) {
 
     const groupedDays = {};
 
-landServices.forEach(service => {
+    landServices.forEach(service => {
 
-  if (!groupedDays[service.day]) {
-    groupedDays[service.day] = [];
-  }
+      if (!groupedDays[service.day]) {
+        groupedDays[service.day] = [];
+      }
 
-  let serviceText = service.service;
+      let serviceText = service.service;
 
-  // DISPLAY ONLY — transfer ke end mein vehicle seater
-  const serviceName =
-    String(service.service || "").toLowerCase();
+      // DISPLAY ONLY — transfer ke end mein vehicle seater
+      const serviceName =
+        String(service.service || "").toLowerCase();
 
-  const isTransfer =
-    serviceName.includes("transfer");
+      const isTransfer =
+        serviceName.includes("transfer");
 
-  if (isTransfer) {
+      if (isTransfer) {
 
-    const seater = getVehicleSeater(totalPax);
+        const seater = getVehicleSeater(totalPax);
 
-    if (seater) {
-      serviceText += ` (${seater})`;
-    }
+        if (seater) {
+          serviceText += ` (${seater})`;
+        }
 
-  }
+      }
 
-  groupedDays[service.day].push(serviceText);
+      groupedDays[service.day].push(serviceText);
 
-});
+    });
 
     const firstDate =
       data?.segments?.[0]?.checkIn ||
@@ -3217,89 +3341,340 @@ function formatDate(dateStr) {
 }
 function openPreviewModal() {
 
+  // =========================================================
+  // SAVE CURRENT OPTION BEFORE BUILDING FINAL PREVIEW
+  // =========================================================
   saveCurrentOption();
 
   const activeOption = currentOption;
 
   let finalHtml = "";
+
   const quoteNo = quoteNoEl?.textContent || "-";
   const country = countryEl?.value || "-";
   const travelDate = travelDateEl?.value || "-";
   const rooms = Number(roomsEl?.value || 0);
 
-  const adults = Number(adultsEl?.value || 0);
-  const childWithBed = Number(childWithBedEl?.value || 0);
-  const childWithoutBed = Number(childWithoutBedEl?.value || 0);
+  // =========================================================
+  // BUILD EACH OPTION ONE BY ONE
+  // =========================================================
+  for (let i = 0; i < quoteOptions.length; i++) {
 
-  // FINAL PREVIEW MUST USE EXACT BUILD PREVIEW PAX
-  const totalPax = Number(
+    const optionData = quoteOptions[i]?.data;
+
+    if (!optionData) continue;
+
+    // IMPORTANT:
+    // Temporarily make THIS option active.
+    currentOption = i;
+
+    // Restore this option into DOM
+    restoreQuoteData(optionData);
+
+    // Build final preview from THIS option
+    buildPreviewFinal(optionData, false);
+
+    finalHtml += window.latestPreviewHtml || "";
+
+    if (i < quoteOptions.length - 1) {
+      finalHtml += `
+        <div style="
+          margin:35px 0;
+          border-top:3px dashed #d8d8d8;
+        "></div>
+      `;
+    }
+  }
+
+  // =========================================================
+  // VERY IMPORTANT
+  // RESTORE THE OPTION WHICH WAS ACTIVE BEFORE PREVIEW
+  // =========================================================
+  currentOption = activeOption;
+
+  const activeOptionData =
+    quoteOptions[activeOption]?.data;
+
+  if (activeOptionData) {
+    restoreQuoteData(activeOptionData);
+  }
+
+  // =========================================================
+  // WHATSAPP TEXT
+  // Uses FINAL PREVIEW HTML
+  // =========================================================
+  const whatsappPreviewContainer = document.createElement("div");
+
+  whatsappPreviewContainer.innerHTML = finalHtml;
+
+  // =========================================================
+  // WHATSAPP FORMATTING
+  // Preserve Final Preview bold text as WhatsApp *bold*
+  // =========================================================
+
+  // =========================================================
+  // WHATSAPP FORMATTING
+  // Preserve only actual text as WhatsApp *bold*
+  // Ignore empty / layout-only bold elements
+  // =========================================================
+
+whatsappPreviewContainer
+  .querySelectorAll("strong, b")
+  .forEach(el => {
+
+    const text = el.textContent
+      .replace(/\s+/g, " ")
+      .trim();
+
+    // Empty / layout-only element
+    if (!text) {
+      el.remove();
+      return;
+    }
+
+    // Remove layout-only symbols
+    if (
+      text === "*" ||
+      text === "-" ||
+      text === "–"
+    ) {
+      el.remove();
+      return;
+    }
+
+    // Preserve actual bold text
+    el.replaceWith(`*${text}*`);
+
+  });
+
+  let finalPreviewWhatsappText =
+    whatsappPreviewContainer.innerText ||
+    whatsappPreviewContainer.textContent ||
+    "";
+  // =========================================================
+  // WHATSAPP SECTION HEADINGS — BOLD
+  // =========================================================
+
+  const whatsappHeadingPatterns = [
+    "ACCOMMODATION",
+    "PACKAGE COST",
+    "NOTES",
+    "SERVICES INCLUDED",
+    "PAYMENT TERM",
+    "SERVICES EXCLUDED",
+    "IMP Notes",
+    "Luggage:",
+    "Suggested Apps:",
+    "Cruise Notes:",
+    "Points to be Noted:"
+  ];
+
+  whatsappHeadingPatterns.forEach(heading => {
+
+    const escapedHeading =
+      heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const regex =
+      new RegExp(`(^|\\n)(${escapedHeading})(?=\\n|$)`, "gi");
+
+    finalPreviewWhatsappText =
+      finalPreviewWhatsappText.replace(
+        regex,
+        `$1*${heading}*`
+      );
+
+  });
+
+  // =========================================================
+  // BASIC CLEANUP
+  // =========================================================
+
+  finalPreviewWhatsappText = finalPreviewWhatsappText
+    .replace(/\r/g, "")
+    .replace(/\u00a0/g, " ")
+    .replace(/�/g, "")
+    .replace(/\\"/g, '"')
+    .replace(/\\-/g, "-")
+    .replace(/\\\./g, ".")
+    .split("\n")
+    .map(line => line.trim())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+
+  // =========================================================
+  // ACCOMMODATION — WITH DATE
+  // =========================================================
+
+  finalPreviewWhatsappText =
+    finalPreviewWhatsappText.replace(
+      /(\d+nt)\n+\(([^)\n]+)\)\n+([^\n]+)\n+-\n+([^\n]+)\n+(\([^)]+\))\n+\/\s*([^\n]+)/g,
+      "$1 ($2) $3 – $4 $5 / $6"
+    );
+
+
+  // =========================================================
+  // ACCOMMODATION — WITHOUT DATE
+  // =========================================================
+
+  finalPreviewWhatsappText =
+    finalPreviewWhatsappText.replace(
+      /(\d+nt)\n+([^\n]+)\n+-\n+([^\n]+)\n+(\([^)]+\))\n+\/\s*([^\n]+)/g,
+      "$1 $2 – $3 $4 / $5"
+    );
+
+
+  // =========================================================
+  // PACKAGE COST — COMPACT FORMAT
+  // =========================================================
+
+  finalPreviewWhatsappText =
+    finalPreviewWhatsappText
+
+      .replace(
+        /Price Per Person:\n+\$([^\n]+)\n+Per Pax/g,
+        "Price Per Person: $$1 Per Pax"
+      )
+
+      .replace(
+        /Extra Person:\n+\$([^\n]+)\n+Per Person/g,
+        "Extra Person: $$1 Per Person"
+      )
+
+      .replace(
+        /Child With Bed:\n+([^\n]+)/g,
+        "Child With Bed: $1"
+      )
+
+      .replace(
+        /Child No Bed \(([^)]+)\):\n+([^\n]+)/g,
+        "Child No Bed ($1): $2"
+      )
+
+      .replace(
+        /Compulsory Tip:\n+([^\n]+)/g,
+        "Compulsory Tip: $1"
+      )
+
+      .replace(
+        /E-Visa:\n+([^\n]+)/g,
+        "E-Visa: $1"
+      );
+
+
+  // =========================================================
+  // FINAL WHATSAPP SPACING
+  // =========================================================
+
+  finalPreviewWhatsappText =
+    finalPreviewWhatsappText
+      .split("\n")
+      .map(line => line.trim())
+      .join("\n")
+
+      // maximum 1 blank line
+      .replace(/\n{3,}/g, "\n\n")
+
+      // blank line before main sections
+      .replace(
+        /\n?(ACCOMMODATION|PACKAGE COST|NOTES|SERVICES INCLUDED|SERVICES EXCLUDED|PAYMENT TERM|IMP Notes)\n?/gi,
+        "\n\n$1\n\n"
+      )
+
+      // blank line before each option
+      .replace(
+        /\n?(OPTION\s+\d+)\n?/gi,
+        "\n\n$1\n\n"
+      )
+
+      // clean excessive blank lines again
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+
+  // =========================================================
+  // WHATSAPP HEADER
+  // EXACT SAME DATA AS FINAL PREVIEW
+  // =========================================================
+
+  const whatsappTotalPax = Number(
     window.buildPreviewTotalPax ??
     totalPaxInputEl?.value ??
     0
   );
 
-  const segmentsForHeader = getAllSegmentsData();
+  const whatsappSegments = getAllSegmentsData();
 
-  const totalNights =
-    segmentsForHeader.reduce(
+  const whatsappTotalNights =
+    whatsappSegments.reduce(
       (sum, seg) => sum + Number(seg.nights || 0),
       0
     );
 
-  finalHtml += `
-<div class="quotation-document">
-
-<div class="quotation-title">
-  <div>TRIP ID: <strong>${quoteNo}</strong></div>
-  <div>DESTINATION: <strong>${country}</strong></div>
-  <div>TRAVEL DATE: <strong>${travelDate}</strong></div>
-  <div>NO OF PAX: <strong>${String(totalPax).padStart(2, "0")} ADULTS</strong></div>
-  <div>NO OF ROOM: <strong>${String(rooms).padStart(2, "0")}</strong></div>
-  <div>NO OF NIGHT: <strong>${totalNights}N/${totalNights + 1}D</strong></div>
-</div>
+  const whatsappQuoteHeader =
+    `TRIP ID: ${quoteNo}
+DESTINATION: ${country}
+TRAVEL DATE: ${travelDate}
+NO OF PAX: ${String(whatsappTotalPax).padStart(2, "0")} ADULTS
+NO OF ROOM: ${String(rooms).padStart(2, "0")}
+NO OF NIGHT: ${whatsappTotalNights}N/${whatsappTotalNights + 1}D`;
 
 
+  // =========================================================
+  // INSERT HEADER BEFORE ACCOMMODATION
+  // =========================================================
 
-</div>
-`;
+  const accommodationIndex =
+    finalPreviewWhatsappText.search(/ACCOMMODATION/i);
 
+  if (accommodationIndex !== -1) {
 
-  for (let i = 0; i < quoteOptions.length; i++) {
+    finalPreviewWhatsappText =
+      finalPreviewWhatsappText.slice(0, accommodationIndex) +
 
-    const optionData = quoteOptions[i].data;
+      `${whatsappQuoteHeader}
 
-    if (!optionData) continue;
+` +
 
-    currentOption = i;
+      finalPreviewWhatsappText.slice(accommodationIndex);
 
-    // Only modal uses final preview
-    buildPreviewFinal(optionData, false);
+  } else {
 
-    finalHtml += window.latestPreviewHtml;
+    finalPreviewWhatsappText =
+      `${whatsappQuoteHeader}
 
-    if (i < quoteOptions.length - 1) {
-      finalHtml += `
-      <div style="
-        margin:35px 0;
-        border-top:3px dashed #d8d8d8;
-      "></div>
-      `;
-    }
+${finalPreviewWhatsappText}`;
 
   }
 
-  currentOption = activeOption;
 
-  // Restore normal preview
-  buildPreview(quoteOptions[activeOption].data);
+  // =========================================================
+  // WHATSAPP GREETING
+  // =========================================================
 
-  quoteModalTitleEl.textContent = "Quotation Preview";
-  quoteModalSubtextEl.textContent = "Review quotation before saving.";
-  quoteModalPreviewEl.innerHTML = finalHtml;
+  window.latestWhatsappText =
+    `Greetings From Travlog, Your Trusted Business...!
 
-  confirmQuoteActionBtn.style.display = "none";
+We Are Pleased to Quote You As Below..!
+
+${finalPreviewWhatsappText}`;
+
+  // =========================================================
+  // SHOW FINAL MODAL
+  // =========================================================
+  quoteModalTitleEl.textContent =
+    "Quotation Preview";
+
+  quoteModalSubtextEl.textContent =
+    "Review quotation before saving.";
+
+  quoteModalPreviewEl.innerHTML =
+    finalHtml;
+
+  confirmQuoteActionBtn.style.display =
+    "none";
+
   quoteActionModal.classList.add("active");
-
 }
 
 /* =========================================================
@@ -3615,16 +3990,31 @@ function handleWhatsappClick() {
     return;
   }
 
-  const phone = prompt("Enter WhatsApp Number with Country Code(Example: 918128367107)");
+  const phone = prompt(
+    "Enter WhatsApp Number with Country Code(Example: 918128367107)"
+  );
 
   if (!phone) return;
 
+  // =========================================================
+  // IMPORTANT:
+  // Generate FINAL PREVIEW first.
+  // WhatsApp will use the exact same Final Preview content.
+  // =========================================================
+
+  openPreviewModal();
+
   const text = buildWhatsappMessage();
 
-  const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  if (!text || !text.trim()) {
+    alert("WhatsApp message could not be generated.");
+    return;
+  }
+
+  const url =
+    `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 
   window.location.href = url;
-
 }
 
 async function handleEmailClick() {
@@ -3709,34 +4099,17 @@ function getPreviewEmailText() {
 /* =========================================================
    MESSAGE BUILDERS
 ========================================================= */
+
 function buildWhatsappMessage() {
 
-  let finalMessage = "";
+  // Final Preview is the SINGLE source for WhatsApp.
+  // WhatsApp must never rebuild its own calculations.
 
-  const activeOption = currentOption;
-
-  for (let i = 0; i < quoteOptions.length; i++) {
-
-    currentOption = i;
-
-    if (!quoteOptions[i].data) continue;
-
-    restoreQuoteData(quoteOptions[i].data);
-
-    buildPreview();
-
-    finalMessage += window.latestWhatsappText;
-
-    if (i < quoteOptions.length - 1) {
-      finalMessage += "\n\n--------------------------------\n\n";
-    }
+  if (window.latestWhatsappText) {
+    return window.latestWhatsappText;
   }
 
-  currentOption = activeOption;
-  restoreQuoteData(quoteOptions[activeOption].data);
-  buildPreview();
-
-  return finalMessage;
+  return "";
 
 }
 
