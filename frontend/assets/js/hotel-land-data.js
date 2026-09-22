@@ -525,6 +525,7 @@ function buildLandTree(data) {
 // ==========================================
 
 function showHotelDetails(hotel) {
+    currentSelectedHotel = hotel;
 
     // Header
     document.getElementById("hotelTitle").innerText =
@@ -534,7 +535,20 @@ function showHotelDetails(hotel) {
         `${hotel.city} • ${hotel.region}`;
     document.getElementById("roomTableHead").innerHTML = `
     <tr>
-        <th>Room Type</th>
+        <th>
+            <div class="roomTypeHeader">
+                <span>Room Type</span>
+
+                <button
+                    type="button"
+                    class="addRoomTypeBtn"
+                    id="addRoomTypeBtn">
+                    <i class="fa-solid fa-plus"></i>
+                    Add Room Type
+                </button>
+            </div>
+        </th>
+
         <th>Meal</th>
         <th>2D1N</th>
         <th>3D2N</th>
@@ -543,6 +557,9 @@ function showHotelDetails(hotel) {
         <th>Action</th>
     </tr>
 `;
+    document
+        .getElementById("addRoomTypeBtn")
+        .addEventListener("click", openAddRoomTypeModal);
 
     // Summary Card
 
@@ -553,11 +570,6 @@ function showHotelDetails(hotel) {
             <div class="summaryItem">
                 <label>Destination</label>
                 <span>${hotel.destination}</span>
-            </div>
-
-            <div class="summaryItem">
-                <label>Destination</label>
-<span>${hotel.destination}</span>
             </div>
 
             <div class="summaryItem">
@@ -712,7 +724,7 @@ async function deleteHotelRoom(id) {
         alert("Room deleted successfully");
 
         // Existing MongoDB data dobara fetch hoga
-        await loadHotels();
+        await refreshCurrentHotelDetails();
 
     } catch (error) {
 
@@ -1589,7 +1601,7 @@ async function saveEditedRoom(id) {
             ?.remove();
 
         // MongoDB se latest data dobara fetch
-        await loadHotels();
+        await refreshCurrentHotelDetails();
 
     } catch (error) {
 
@@ -2275,4 +2287,481 @@ if (saveMarginBtn) {
 
     });
 
+}
+// ==========================================
+// ADD ROOM TYPE TO EXISTING HOTEL
+// ==========================================
+
+function openAddRoomTypeModal() {
+
+    if (!currentSelectedHotel) {
+
+        alert("Please select a hotel first.");
+
+        return;
+    }
+
+    // Prevent duplicate modal
+    document
+        .querySelector(".addRoomModalOverlay")
+        ?.remove();
+
+    const hotel = currentSelectedHotel;
+
+    const modal = document.createElement("div");
+
+    modal.className = "addRoomModalOverlay";
+
+    modal.innerHTML = `
+
+        <div class="addRoomModal">
+
+            <div class="addRoomModalHeader">
+
+                <div>
+                    <h2>Add Room Type</h2>
+
+                    <p>
+                        ${hotel.hotelName}
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="addRoomCloseBtn"
+                    onclick="this.closest('.addRoomModalOverlay').remove()">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <div class="addRoomForm">
+
+                <div class="roomFormGroup">
+
+                    <label>Room Type</label>
+
+                    <input
+                        id="newRoomType"
+                        type="text"
+                        placeholder="e.g. Superior"
+                        autocomplete="off">
+
+                </div>
+
+
+                <div class="roomFormGroup">
+
+                    <label>Meal Plan</label>
+
+                    <input
+                        id="newRoomMealPlan"
+                        type="text"
+                        value="CP"
+                        placeholder="e.g. CP">
+
+                </div>
+
+
+                <div class="roomFormGroup">
+
+                    <label>2D1N Rate</label>
+
+                    <input
+                        id="newRoomRate2D1N"
+                        type="number"
+                        min="0"
+                        value="0">
+
+                </div>
+
+
+                <div class="roomFormGroup">
+
+                    <label>3D2N Rate</label>
+
+                    <input
+                        id="newRoomRate3D2N"
+                        type="number"
+                        min="0"
+                        value="0">
+
+                </div>
+
+
+                <div class="roomFormGroup">
+
+                    <label>Extra Bed</label>
+
+                    <input
+                        id="newRoomExtraBed"
+                        type="number"
+                        min="0"
+                        value="0">
+
+                </div>
+
+
+                <div class="roomFormGroup">
+
+                    <label>Child No Bed</label>
+
+                    <input
+                        id="newRoomChildNoBed"
+                        type="number"
+                        min="0"
+                        value="0">
+
+                </div>
+
+            </div>
+
+
+            <div class="addRoomModalFooter">
+
+                <button
+                    type="button"
+                    class="cancelRoomBtn"
+                    onclick="this.closest('.addRoomModalOverlay').remove()">
+
+                    Cancel
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="saveRoomBtn"
+                    id="saveNewRoomBtn">
+
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Save Room
+
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
+    document.body.appendChild(modal);
+
+
+    // Focus room type
+    document
+        .getElementById("newRoomType")
+        .focus();
+
+
+    document
+        .getElementById("saveNewRoomBtn")
+        .addEventListener(
+            "click",
+            saveNewRoomType
+        );
+
+
+    // Close when clicking outside
+    modal.addEventListener("click", (e) => {
+
+        if (e.target === modal) {
+
+            modal.remove();
+
+        }
+
+    });
+
+}
+
+
+// ==========================================
+// SAVE NEW ROOM TYPE
+// ==========================================
+
+async function saveNewRoomType() {
+
+    if (!currentSelectedHotel) {
+
+        alert("Hotel not selected.");
+
+        return;
+    }
+
+
+    const hotel = currentSelectedHotel;
+
+
+    const roomType =
+        document
+            .getElementById("newRoomType")
+            ?.value
+            .trim();
+
+
+    const mealPlan =
+        document
+            .getElementById("newRoomMealPlan")
+            ?.value
+            .trim() || "CP";
+
+
+    const rate2D1N =
+        Number(
+            document
+                .getElementById("newRoomRate2D1N")
+                ?.value
+        ) || 0;
+
+
+    const rate3D2N =
+        Number(
+            document
+                .getElementById("newRoomRate3D2N")
+                ?.value
+        ) || 0;
+
+
+    const extraBed =
+        Number(
+            document
+                .getElementById("newRoomExtraBed")
+                ?.value
+        ) || 0;
+
+
+    const childNoBed =
+        Number(
+            document
+                .getElementById("newRoomChildNoBed")
+                ?.value
+        ) || 0;
+
+
+    // =========================================
+    // VALIDATION
+    // =========================================
+
+    if (!roomType) {
+
+        alert("Please enter room type.");
+
+        document
+            .getElementById("newRoomType")
+            .focus();
+
+        return;
+    }
+
+
+    const saveBtn =
+        document.getElementById("saveNewRoomBtn");
+
+
+    saveBtn.disabled = true;
+
+    saveBtn.innerHTML = `
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        Saving...
+    `;
+
+
+    try {
+
+        // IMPORTANT:
+        // Existing hotel information is automatically
+        // copied from currently selected hotel.
+
+        const roomData = {
+
+            hotelName: hotel.hotelName,
+
+            destination: hotel.destination,
+
+            region: hotel.region,
+
+            city: hotel.city,
+
+            category: hotel.category,
+
+            currency: hotel.currency,
+
+            pricingUnit: hotel.pricingUnit,
+
+            note: hotel.note || "",
+
+            roomType: roomType,
+
+            mealPlan: mealPlan,
+
+            rate2D1N: rate2D1N,
+
+            rate3D2N: rate3D2N,
+
+            extraBed: extraBed,
+
+            childNoBed: childNoBed
+
+        };
+
+
+        console.log(
+            "ADDING ROOM TO EXISTING HOTEL:",
+            roomData
+        );
+
+
+        const response =
+            await fetch(
+                CONFIG.API_BASE + "/hotels",
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body:
+                        JSON.stringify(roomData)
+
+                }
+            );
+
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "ADD ROOM RESULT:",
+            result
+        );
+
+
+        if (
+            !response.ok ||
+            !result.success
+        ) {
+
+            alert(
+                result.message ||
+                "Failed to add room."
+            );
+
+            return;
+        }
+
+
+        alert(
+            "Room type added successfully."
+        );
+
+
+        // Close modal
+        document
+            .querySelector(".addRoomModalOverlay")
+            ?.remove();
+
+
+        // =========================================
+        // RELOAD HOTELS
+        // =========================================
+
+        await refreshCurrentHotelDetails();
+
+
+
+    } catch (error) {
+
+        console.error(
+            "ADD ROOM ERROR:",
+            error
+        );
+
+        alert(
+            "Unable to add room. Please check server."
+        );
+
+
+    } finally {
+
+        const btn =
+            document.getElementById(
+                "saveNewRoomBtn"
+            );
+
+        if (btn) {
+
+            btn.disabled = false;
+
+            btn.innerHTML = `
+                <i class="fa-solid fa-floppy-disk"></i>
+                Save Room
+            `;
+
+        }
+
+    }
+
+}
+async function refreshCurrentHotelDetails() {
+
+    if (!currentSelectedHotel) return;
+
+    try {
+        const res = await fetch(
+            CONFIG.API_BASE + "/hotels?destination=Vietnam"
+        );
+
+        const result = await res.json();
+
+        if (!result.success) return;
+
+        const latestHotels = result.hotels || [];
+
+        const hotelName = currentSelectedHotel.hotelName;
+        const city = currentSelectedHotel.city;
+        const region =
+            currentSelectedHotel.region ||
+            currentSelectedHotel.destination ||
+            "Vietnam";
+
+        const latestRooms = latestHotels.filter(hotel =>
+            hotel.hotelName === hotelName &&
+            hotel.city === city &&
+            (hotel.region || hotel.destination || "Vietnam") === region
+        );
+
+        if (!hotelData[region]) {
+            hotelData[region] = {};
+        }
+
+        if (!hotelData[region][city]) {
+            hotelData[region][city] = [];
+        }
+
+        hotelData[region][city] =
+            hotelData[region][city].filter(
+                hotel => hotel.hotelName !== hotelName
+            );
+
+        hotelData[region][city].push(...latestRooms);
+
+        if (latestRooms.length > 0) {
+            currentSelectedHotel = latestRooms[0];
+        }
+
+        showHotelDetails(currentSelectedHotel);
+
+    } catch (error) {
+        console.error("Refresh current hotel error:", error);
+    }
 }

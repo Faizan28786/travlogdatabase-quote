@@ -974,3 +974,685 @@ RESPONSIVE
 #marginBtn {
     min-width: 76px;
 }
+
+/* ================================
+   ADD HOTEL DROPDOWN STYLE
+================================ */
+
+#hotelRegionInput,
+#hotelCityInput,
+#hotelRoomTypeInput,
+#hotelMealPlanInput {
+    width: 100%;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background-color: #fff;
+    color: #1f2937;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+#hotelRegionInput:focus,
+#hotelCityInput:focus,
+#hotelRoomTypeInput:focus,
+#hotelMealPlanInput:focus {
+    border-color: #3156b8;
+    box-shadow: 0 0 0 2px rgba(49, 86, 184, 0.08);
+}
+
+#hotelCityInput:disabled {
+    background-color: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   ADD HOTEL MODAL — CLEAN COMPACT FORM
+   Works with the current HTML structure
+   ========================================================= */
+
+#hotelModal .modalBox {
+    width: min(760px, 92vw);
+    max-width: 760px;
+    border-radius: 16px;
+}
+
+/* Compact 2-column layout */
+#hotelModal .formGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 18px;
+}
+
+/* Each field */
+#hotelModal .formGroup {
+    width: 100%;
+    min-width: 0;
+}
+
+/* Labels */
+#hotelModal .formGroup label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+}
+
+/* Inputs + Select + Textarea */
+#hotelModal .formGroup input,
+#hotelModal .formGroup select,
+#hotelModal .formGroup textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #d7dee8;
+    border-radius: 8px;
+    background: #fff;
+    color: #1e293b;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+/* Normal inputs */
+#hotelModal .formGroup input,
+#hotelModal .formGroup select {
+    height: 38px;
+    padding: 0 11px;
+}
+
+/* Textarea */
+#hotelModal .formGroup textarea {
+    min-height: 70px;
+    padding: 10px 11px;
+    resize: vertical;
+}
+
+/* Focus */
+#hotelModal .formGroup input:focus,
+#hotelModal .formGroup select:focus,
+#hotelModal .formGroup textarea:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.10);
+}
+
+/* Readonly fields */
+#hotelModal .formGroup input[readonly] {
+    background: #f8fafc;
+    color: #475569;
+    cursor: default;
+}
+
+/* Full width Note */
+#hotelModal .formGroup.fullWidth {
+    grid-column: 1 / -1;
+}
+
+/* Modal body spacing */
+#hotelModal .modalBody {
+    padding: 20px 24px;
+}
+
+/* Header */
+#hotelModal .modalHeader {
+    padding: 16px 22px;
+}
+
+/* Footer */
+#hotelModal .modalFooter {
+    padding: 14px 22px;
+}
+
+/* =========================================================
+   DROPDOWN ARROW / SELECT
+   ========================================================= */
+
+#hotelModal select {
+    appearance: auto;
+    cursor: pointer;
+}
+
+/* Disabled City dropdown */
+#hotelModal select:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   SMALLER / CLEANER BUTTONS
+   ========================================================= */
+
+#hotelModal .modalFooter button {
+    min-height: 38px;
+    padding: 0 16px;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+    #hotelModal .modalBox {
+        width: 94vw;
+    }
+
+    #hotelModal .formGrid {
+        grid-template-columns: 1fr;
+        gap: 13px;
+    }
+
+    #hotelModal .formGroup.fullWidth {
+        grid-column: auto;
+    }
+
+    #hotelModal .modalBody {
+        padding: 18px;
+    }
+
+}
+
+/* =========================================
+   EDIT HOTEL / ROOM MODAL
+========================================= */
+
+.editModalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    z-index: 9999;
+
+    padding: 20px;
+}
+
+
+/* MAIN MODAL */
+
+.editModal {
+    width: 100%;
+    max-width: 620px;
+    max-height: 90vh;
+
+    background: #ffffff;
+
+    border-radius: 16px;
+
+    overflow: hidden;
+
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+
+    font-family: "Poppins", sans-serif;
+
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.editModalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 18px 22px;
+
+    border-bottom: 1px solid #e5e7eb;
+
+    background: #ffffff;
+}
+
+.editModalHeader h2 {
+    margin: 0;
+
+    font-size: 21px;
+    font-weight: 700;
+
+    color: #111827;
+}
+
+.editCloseBtn {
+    width: 34px;
+    height: 34px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #f3f4f6;
+
+    color: #374151;
+
+    font-size: 17px;
+
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: 0.2s;
+}
+
+.editCloseBtn:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+
+/* =========================================
+   FORM AREA
+========================================= */
+
+.editForm {
+    padding: 20px 22px;
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 14px 16px;
+
+    overflow-y: auto;
+}
+
+
+/* =========================================
+   FORM GROUP
+========================================= */
+
+.editForm .formGroup {
+    display: flex;
+    flex-direction: column;
+
+    gap: 6px;
+}
+
+.editForm .formGroup.full {
+    grid-column: 1 / -1;
+}
+
+.editForm label {
+    font-size: 13px;
+
+    font-weight: 600;
+
+    color: #374151;
+}
+
+
+/* INPUTS */
+
+.editForm input,
+.editForm textarea,
+.editForm select {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 10px 12px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    color: #111827;
+
+    font-family: "Poppins", sans-serif;
+
+    font-size: 13px;
+
+    outline: none;
+
+    transition: 0.2s;
+}
+
+.editForm input {
+    height: 40px;
+}
+
+.editForm textarea {
+    min-height: 75px;
+
+    resize: vertical;
+}
+
+
+/* INPUT FOCUS */
+
+.editForm input:focus,
+.editForm textarea:focus,
+.editForm select:focus {
+    border-color: #2563eb;
+
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+
+/* =========================================
+   FOOTER
+========================================= */
+
+.editModalFooter {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    padding: 14px 22px;
+
+    border-top: 1px solid #e5e7eb;
+
+    background: #fafafa;
+}
+
+
+/* CANCEL */
+
+.cancelEditBtn {
+    border: 1px solid #d1d5db;
+
+    background: #ffffff;
+
+    color: #374151;
+
+    padding: 9px 16px;
+
+    border-radius: 8px;
+
+    font-family: "Poppins", sans-serif;
+
+    font-size: 13px;
+
+    font-weight: 500;
+
+    cursor: pointer;
+}
+
+.cancelEditBtn:hover {
+    background: #f3f4f6;
+}
+
+
+/* SAVE */
+
+.saveEditBtn {
+    border: none;
+
+    background: #2563eb;
+
+    color: white;
+
+    padding: 9px 16px;
+
+    border-radius: 8px;
+
+    font-family: "Poppins", sans-serif;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.saveEditBtn:hover {
+    background: #1d4ed8;
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 600px) {
+
+    .editModal {
+        max-width: 95%;
+    }
+
+    .editForm {
+        grid-template-columns: 1fr;
+
+        padding: 16px;
+    }
+
+    .editForm .formGroup.full {
+        grid-column: auto;
+    }
+
+    .editModalHeader {
+        padding: 15px 16px;
+    }
+
+    .editModalFooter {
+        padding: 12px 16px;
+    }
+}
+/* ==========================================
+   ADD ROOM TYPE BUTTON
+========================================== */
+
+.roomTypeHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.addRoomTypeBtn {
+    border: none;
+    background: #ffffff;
+    color: #244db0;
+    padding: 7px 12px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: 0.2s ease;
+}
+
+.addRoomTypeBtn:hover {
+    background: #eef3ff;
+    transform: translateY(-1px);
+}
+
+
+/* ==========================================
+   ADD ROOM MODAL
+========================================== */
+
+.addRoomModalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.58);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    padding: 20px;
+}
+
+.addRoomModal {
+    width: min(650px, 95vw);
+    background: #ffffff;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25);
+}
+
+.addRoomModalHeader {
+    padding: 22px 24px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-bottom: 1px solid #e5eaf3;
+}
+
+.addRoomModalHeader h2 {
+    margin: 0;
+    font-size: 22px;
+    color: #132d63;
+}
+
+.addRoomModalHeader p {
+    margin: 5px 0 0;
+    color: #71809a;
+    font-size: 13px;
+}
+
+.addRoomCloseBtn {
+    width: 34px;
+    height: 34px;
+    border: none;
+    background: #f1f4f9;
+    color: #52627b;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.addRoomCloseBtn:hover {
+    background: #e8edf5;
+}
+
+
+/* ==========================================
+   FORM
+========================================== */
+
+.addRoomForm {
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.roomFormGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.roomFormGroup label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #243858;
+}
+
+.roomFormGroup input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 44px;
+    padding: 0 13px;
+    border: 1px solid #d8e0ec;
+    border-radius: 9px;
+    outline: none;
+    font-size: 14px;
+    color: #1d3155;
+    background: #fbfcfe;
+}
+
+.roomFormGroup input:focus {
+    border-color: #3158b8;
+    box-shadow: 0 0 0 3px rgba(49, 88, 184, 0.10);
+    background: #ffffff;
+}
+
+
+/* ==========================================
+   FOOTER
+========================================== */
+
+.addRoomModalFooter {
+    padding: 18px 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid #e5eaf3;
+}
+
+.cancelRoomBtn,
+.saveRoomBtn {
+    height: 42px;
+    padding: 0 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.cancelRoomBtn {
+    background: #ffffff;
+    color: #52627b;
+    border: 1px solid #d5ddea;
+}
+
+.saveRoomBtn {
+    border: none;
+    background: #16b879;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.saveRoomBtn:hover {
+    background: #119d68;
+}
+
+.saveRoomBtn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media (max-width: 650px) {
+
+    .addRoomForm {
+        grid-template-columns: 1fr;
+    }
+
+    .addRoomModalHeader {
+        padding: 18px;
+    }
+
+    .addRoomForm {
+        padding: 18px;
+    }
+
+    .addRoomModalFooter {
+        padding: 16px 18px;
+    }
+
+}

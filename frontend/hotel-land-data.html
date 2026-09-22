@@ -123,14 +123,6 @@
 
                     </button>
 
-                    <button id="btnAddRoom" class="greenBtn">
-
-                        <i class="fa-solid fa-bed"></i>
-
-                        Room
-
-                    </button>
-
                     <button id="btnRestoreHotel" class="restoreBtn">
                         <i class="fa-solid fa-rotate-left"></i>
                         Restore
@@ -253,17 +245,29 @@
 
                     <div class="formGroup">
                         <label>Region</label>
-                        <input id="hotelRegionInput" type="text" placeholder="North Vietnam">
+                        <select id="hotelRegionInput">
+                            <option value="">Select Region</option>
+                            <option value="North Vietnam">North Vietnam</option>
+                            <option value="Central Vietnam">Central Vietnam</option>
+                            <option value="South Vietnam">South Vietnam</option>
+                        </select>
                     </div>
 
                     <div class="formGroup">
                         <label>City</label>
-                        <input id="hotelCityInput" type="text" placeholder="Hanoi">
+                        <select id="hotelCityInput" disabled>
+                            <option value="">Select Region First</option>
+                        </select>
                     </div>
 
                     <div class="formGroup">
-                        <label>Category</label>
-                        <input id="hotelCategoryInput" type="text" placeholder="5 Star">
+                        <label>Room Type</label>
+                        <select id="hotelRoomTypeInput">
+                            <option value="">Select Category</option>
+                            <option value="3 Star">3 Star</option>
+                            <option value="4 Star">4 Star</option>
+                            <option value="5 Star">5 Star</option>
+                        </select>
                     </div>
 
                     <div class="formGroup">
@@ -277,7 +281,7 @@
 
                     <div class="formGroup">
                         <label>Meal Plan</label>
-                        <input id="hotelMealPlanInput" type="text" value="CP" placeholder="CP / MAP / AP">
+                        <input id="hotelMealPlanInput" type="text" value="CP" readonly>
                     </div>
 
                     <div class="formGroup">
@@ -296,7 +300,7 @@
                     </div>
                     <div class="formGroup">
                         <label>Pricing Unit</label>
-                        <input id="hotelPricingUnitInput" type="text" placeholder="Per Room / Night">
+                        <input id="hotelPricingUnitInput" type="text" value="Per Room / Night" readonly>
                     </div>
 
                     <div class="formGroup fullWidth">
@@ -384,6 +388,63 @@
 
     <script src="assets/js/config.js"></script>
     <script src="assets/js/hotel-land-data.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const regionSelect = document.getElementById("hotelRegionInput");
+            const citySelect = document.getElementById("hotelCityInput");
+
+            const citiesByRegion = {
+                "North Vietnam": [
+                    "Hanoi",
+                    "Ha Long",
+                    "Ninh Binh",
+                    "Sapa"
+                ],
+
+                "Central Vietnam": [
+                    "Da Nang",
+                    "Hoi An",
+                    "Hue",
+                    "Quang Binh"
+                ],
+
+                "South Vietnam": [
+                    "Ho Chi Minh City",
+                    "Mekong Delta",
+                    "Phu Quoc"
+                ]
+            };
+
+            regionSelect.addEventListener("change", function () {
+
+                const selectedRegion = this.value;
+
+                citySelect.innerHTML =
+                    '<option value="">Select City</option>';
+
+                if (!selectedRegion || !citiesByRegion[selectedRegion]) {
+                    citySelect.disabled = true;
+                    return;
+                }
+
+                citiesByRegion[selectedRegion].forEach(function (city) {
+
+                    const option = document.createElement("option");
+
+                    option.value = city;
+                    option.textContent = city;
+
+                    citySelect.appendChild(option);
+
+                });
+
+                citySelect.disabled = false;
+
+            });
+
+        });
+    </script>
 
 
 </body>

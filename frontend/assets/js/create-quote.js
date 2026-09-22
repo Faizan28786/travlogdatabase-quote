@@ -2119,7 +2119,7 @@ async function buildPreview() {
     </span>
 
     <span class="package-value">
-        ${groupedDays[day].join(" + ")}
+        ${groupedDays[day].map(service => `- ${service}`).join("<br>")}
     </span>
 
 </div>
@@ -2924,7 +2924,7 @@ function buildPreviewFinal(data = null, showHeader = true) {
     </span>
 
     <span class="package-value">
-        ${groupedDays[day].join(" + ")}
+        ${groupedDays[day].map(service => `- ${service}`).join("<br>")}
     </span>
 
 </div>
@@ -3372,7 +3372,7 @@ function openPreviewModal() {
     restoreQuoteData(optionData);
 
     // Build final preview from THIS option
-    buildPreviewFinal(optionData, false);
+    buildPreviewFinal(optionData, true);
 
     finalHtml += window.latestPreviewHtml || "";
 
@@ -3418,34 +3418,34 @@ function openPreviewModal() {
   // Ignore empty / layout-only bold elements
   // =========================================================
 
-whatsappPreviewContainer
-  .querySelectorAll("strong, b")
-  .forEach(el => {
+  whatsappPreviewContainer
+    .querySelectorAll("strong, b")
+    .forEach(el => {
 
-    const text = el.textContent
-      .replace(/\s+/g, " ")
-      .trim();
+      const text = el.textContent
+        .replace(/\s+/g, " ")
+        .trim();
 
-    // Empty / layout-only element
-    if (!text) {
-      el.remove();
-      return;
-    }
+      // Empty / layout-only element
+      if (!text) {
+        el.remove();
+        return;
+      }
 
-    // Remove layout-only symbols
-    if (
-      text === "*" ||
-      text === "-" ||
-      text === "–"
-    ) {
-      el.remove();
-      return;
-    }
+      // Remove layout-only symbols
+      if (
+        text === "*" ||
+        text === "-" ||
+        text === "–"
+      ) {
+        el.remove();
+        return;
+      }
 
-    // Preserve actual bold text
-    el.replaceWith(`*${text}*`);
+      // Preserve actual bold text
+      el.replaceWith(`*${text}*`);
 
-  });
+    });
 
   let finalPreviewWhatsappText =
     whatsappPreviewContainer.innerText ||
