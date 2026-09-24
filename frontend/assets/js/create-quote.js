@@ -636,51 +636,139 @@ async function loadCountryData(country) {
 ========================================================= */
 async function loadHotelsFromDB(country) {
   try {
-    let res = await fetch(`${HOTEL_API}?destination=${encodeURIComponent(country)}`);
+    const selectedCountry = String(country || "")
+      .trim()
+      .toLowerCase();
+
+    // -----------------------------------------
+    // Load hotels
+    // -----------------------------------------
+    let res = await fetch(
+      `${HOTEL_API}?destination=${encodeURIComponent(country)}`
+    );
+
     let data = await res.json();
 
-    if (!res.ok || !Array.isArray(data) || data.length === 0) {
+    // If filtered API fails, load all hotels
+    if (!res.ok || !data ||
+      (!Array.isArray(data) && !Array.isArray(data.hotels))) {
+
       res = await fetch(HOTEL_API);
       data = await res.json();
     }
 
+    // -----------------------------------------
+    // Extract hotel array safely
+    // -----------------------------------------
     let hotels = [];
+
     if (Array.isArray(data)) {
       hotels = data;
-    } else if (data && Array.isArray(data.hotels)) {
+    }
+    else if (data && Array.isArray(data.hotels)) {
       hotels = data.hotels;
     }
+    else if (data && Array.isArray(data.data)) {
+      hotels = data.data;
+    }
 
-    const selectedCountry = String(country || "").trim().toLowerCase();
-
+    // -----------------------------------------
+    // Normalize hotel data
+    // -----------------------------------------
     allHotels = hotels.map(h => ({
       ...h,
+
       _id: h._id || h.id || "",
-      destination: String(h.destination || "").trim(),
-      city: String(h.city || "").trim(),
-      hotelName: String(h.hotelName || "").trim(),
-      category: String(h.category || "").trim(),
-      roomType: String(h.roomType || "").trim(),
-      mealPlan: String(h.mealPlan || "CP").trim(),
-      displayName: String(h.displayName || h.hotelName || "").trim()
+
+      destination: String(
+        h.destination ||
+        h.country ||
+        h.destinationCountry ||
+        ""
+      ).trim(),
+
+      city: String(
+        h.city ||
+        h.cityName ||
+        ""
+      ).trim(),
+
+      hotelName: String(
+        h.hotelName ||
+        h.name ||
+        ""
+      ).trim(),
+
+      category: String(
+        h.category ||
+        h.roomCategory ||
+        ""
+      ).trim(),
+
+      roomType: String(
+        h.roomType || ""
+      ).trim(),
+
+      mealPlan: String(
+        h.mealPlan || "CP"
+      ).trim(),
+
+      displayName: String(
+        h.displayName ||
+        h.hotelName ||
+        h.name ||
+        ""
+      ).trim()
     }));
 
+    // -----------------------------------------
+    // Country matching
+    // -----------------------------------------
     currentCountryHotels = allHotels.filter(h => {
-      const dest = String(h.destination || "").trim().toLowerCase();
+
+      const dest = String(h.destination || "")
+        .trim()
+        .toLowerCase();
+
       return dest === selectedCountry;
     });
 
-    if (!currentCountryHotels.length && allHotels.length) {
-      console.warn("No destination-matched hotels found. Falling back to all hotels.");
-      currentCountryHotels = [...allHotels];
-    }
-
+    console.log("=================================");
+    console.log("SELECTED COUNTRY:", country);
+    console.log("SELECTED COUNTRY NORMALIZED:", selectedCountry);
     console.log("ALL HOTELS:", allHotels);
     console.log("CURRENT COUNTRY HOTELS:", currentCountryHotels);
+
+    // -----------------------------------------
+    // Debug: show destinations actually
+    // coming from database
+    // -----------------------------------------
+    const destinations = [
+      ...new Set(
+        allHotels
+          .map(h => h.destination)
+          .filter(Boolean)
+      )
+    ];
+
+    console.log("DATABASE DESTINATIONS:", destinations);
+
+    // -----------------------------------------
+    // Populate city dropdowns
+    // -----------------------------------------
+    document
+      .querySelectorAll(".city-select")
+      .forEach(select => {
+        populateSegmentCities(select);
+      });
+
   } catch (err) {
-    console.log("LOAD HOTELS ERROR:", err);
+
+    console.error("LOAD HOTELS ERROR:", err);
+
     allHotels = [];
     currentCountryHotels = [];
+
   }
 }
 
@@ -998,8 +1086,8 @@ function populateSegmentCities(citySelect) {
 
   if (cities.includes(prev)) {
     citySelect.value = prev;
-  } else if (cities.length) {
-    citySelect.value = cities[0];
+  } else {
+    citySelect.value = "";
   }
 }
 

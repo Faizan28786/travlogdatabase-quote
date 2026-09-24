@@ -33,55 +33,135 @@ async function loadHotels() {
 
     try {
 
-        const res = await fetch(CONFIG.API_BASE + "/hotels?destination=Vietnam");
+        // =========================================
+        // LOAD VIETNAM HOTELS
+        // =========================================
 
-        const result = await res.json();
+        const vietnamRes = await fetch(
+            CONFIG.API_BASE + "/hotels?destination=Vietnam"
+        );
 
-        console.log(result);
-        console.log(result.data);
+        const vietnamResult = await vietnamRes.json();
 
-        if (!result.success) {
+        // =========================================
+        // LOAD INDIA HOTELS
+        // =========================================
 
-            tree.innerHTML = "No Hotel Found";
-            return;
+        const indiaRes = await fetch(
+            CONFIG.API_BASE + "/hotels?destination=India"
+        );
 
-        }
+        const indiaResult = await indiaRes.json();
 
-        // Backend se array aayega
-        const hotels = result.hotels;
-        const landRes = await fetch(CONFIG.API_BASE + "/land-services");
+        console.log("VIETNAM HOTELS:", vietnamResult);
+        console.log("INDIA HOTELS:", indiaResult);
+
+        // =========================================
+        // GET ARRAYS
+        // =========================================
+
+        const vietnamHotels =
+            vietnamResult.hotels ||
+            vietnamResult.data ||
+            [];
+
+        const indiaHotels =
+            indiaResult.hotels ||
+            indiaResult.data ||
+            [];
+
+        // =========================================
+        // LOAD LAND DATA
+        // =========================================
+
+        const landRes = await fetch(
+            CONFIG.API_BASE + "/land-services"
+        );
+
         const landResult = await landRes.json();
 
         if (landResult.success) {
             landData = landResult.data;
         }
 
-        // Tree format banate hain (Region -> City -> Hotels)
-        hotelData = {};
+        // =========================================
+        // BUILD VIETNAM DATA
+        // SAME STRUCTURE AS BEFORE
+        // =========================================
 
-        hotels.forEach(hotel => {
+        const vietnamData = {};
 
-            const region = hotel.region || hotel.destination || "Vietnam";
+        vietnamHotels.forEach(hotel => {
 
-            if (!hotelData[region]) {
-                hotelData[region] = {};
+            const region =
+                hotel.region ||
+                hotel.destination ||
+                "Vietnam";
+
+            if (!vietnamData[region]) {
+                vietnamData[region] = {};
             }
 
-            if (!hotelData[region][hotel.city]) {
-                hotelData[region][hotel.city] = [];
+            if (!vietnamData[region][hotel.city]) {
+                vietnamData[region][hotel.city] = [];
             }
 
-            hotelData[region][hotel.city].push(hotel);
+            vietnamData[region][hotel.city].push(hotel);
 
         });
 
-        console.log(hotelData);
+        // =========================================
+        // BUILD INDIA DATA
+        //
+        // India:
+        // State -> City -> Hotels
+        // =========================================
 
-        buildHotelTree(hotelData);
+        const indiaData = {};
 
-    } catch (err) {
+        indiaHotels.forEach(hotel => {
 
-        console.log(err);
+            const state =
+                hotel.region ||
+                "Other";
+
+            if (!indiaData[state]) {
+                indiaData[state] = {};
+            }
+
+            if (!indiaData[state][hotel.city]) {
+                indiaData[state][hotel.city] = [];
+            }
+
+            indiaData[state][hotel.city].push(hotel);
+
+        });
+
+console.log("VIETNAM DATA:", vietnamData);
+console.log("INDIA DATA:", indiaData);
+
+// =========================================
+// COMBINE DATA FOR HOTEL DETAILS
+// =========================================
+
+hotelData = {
+    ...vietnamData,
+    ...indiaData
+};
+
+console.log("FINAL HOTEL DATA:", hotelData);
+
+// =========================================
+// BUILD FINAL TREE
+// =========================================
+
+buildHotelTree(vietnamData, indiaData);
+
+    }
+
+    catch (err) {
+
+        console.error("LOAD HOTEL ERROR:", err);
 
         tree.innerHTML = "Unable to load hotels.";
 
@@ -89,155 +169,487 @@ async function loadHotels() {
 
 }
 
-function buildHotelTree(hotels) {
+function buildHotelTree(vietnamHotels, indiaHotels) {
 
     const tree = document.getElementById("hotelTree");
+
     tree.innerHTML = "";
 
-    Object.keys(hotels).forEach(region => {
 
-        const regionCard = document.createElement("div");
-        regionCard.className = "treeRegion";
+    // =====================================================
+    // HELPER FUNCTION
+    // CREATE CATEGORY / STAR / HOTEL TREE
+    // =====================================================
 
-        const regionHeader = document.createElement("div");
-        regionHeader.className = "regionHeader accordion";
-        regionHeader.innerHTML = `
-            <i class="fa-solid fa-chevron-right arrow"></i>
-            ${region}
-        `;
+    function buildCityTree(cityBody, hotels) {
 
-        const regionBody = document.createElement("div");
-        regionBody.className = "treeBody";
+        // =========================================
+        // CATEGORY
+        // =========================================
 
-        regionHeader.onclick = () => {
-            regionBody.classList.toggle("open");
-            regionHeader.querySelector(".arrow").classList.toggle("rotate");
-        };
+        const categories = {};
 
-        regionCard.appendChild(regionHeader);
-        regionCard.appendChild(regionBody);
+        hotels.forEach(hotel => {
 
-        // ================= CITY ====================
+            const cat =
+                hotel.category ||
+                "Others";
 
-        Object.keys(hotels[region]).forEach(city => {
+            if (!categories[cat]) {
+                categories[cat] = [];
+            }
 
-            const cityCard = document.createElement("div");
+            categories[cat].push(hotel);
 
-            const cityHeader = document.createElement("div");
-            cityHeader.className = "cityHeader accordion";
-            cityHeader.innerHTML = `
-                <i class="fa-solid fa-chevron-right arrow"></i>
-                ${city}
-            `;
+        });
 
-            const cityBody = document.createElement("div");
-            cityBody.className = "treeBody";
 
-            cityHeader.onclick = () => {
-                cityBody.classList.toggle("open");
-                cityHeader.querySelector(".arrow").classList.toggle("rotate");
-            };
+        // =========================================
+        // SAME CATEGORY ORDER AS EXISTING VIETNAM
+        // =========================================
 
-            cityCard.appendChild(cityHeader);
-            cityCard.appendChild(cityBody);
+        Object.keys(categories)
+            .sort()
+            .forEach(category => {
 
-            // ================= CATEGORY =================
+                const catCard =
+                    document.createElement("div");
 
-            const categories = {};
+                const catHeader =
+                    document.createElement("div");
 
-            hotels[region][city].forEach(hotel => {
+                catHeader.className =
+                    "categoryHeader accordion";
 
-                const cat = hotel.category || "Others";
-
-                if (!categories[cat]) {
-                    categories[cat] = [];
-                }
-
-                categories[cat].push(hotel);
-
-            });
-
-            Object.keys(categories).sort().forEach(category => {
-
-                const catCard = document.createElement("div");
-
-                const catHeader = document.createElement("div");
-                catHeader.className = "categoryHeader accordion";
 
                 let stars = "";
 
-                if (category.includes("5")) stars = "★★★★★";
-                else if (category.includes("4")) stars = "★★★★";
-                else if (category.includes("3")) stars = "★★★";
-                else if (category.includes("2")) stars = "★★";
-                else stars = "★";
+                if (category.includes("5")) {
+                    stars = "★★★★★";
+                }
+
+                else if (category.includes("4")) {
+                    stars = "★★★★";
+                }
+
+                else if (category.includes("3")) {
+                    stars = "★★★";
+                }
+
+                else if (category.includes("2")) {
+                    stars = "★★";
+                }
+
+                else {
+                    stars = "★";
+                }
+
 
                 catHeader.innerHTML = `
                     <i class="fa-solid fa-chevron-right arrow"></i>
                     ${stars} (${category})
                 `;
 
-                const catBody = document.createElement("div");
-                catBody.className = "treeBody";
+
+                const catBody =
+                    document.createElement("div");
+
+                catBody.className =
+                    "treeBody";
+
 
                 catHeader.onclick = () => {
+
                     catBody.classList.toggle("open");
-                    catHeader.querySelector(".arrow").classList.toggle("rotate");
+
+                    catHeader
+                        .querySelector(".arrow")
+                        .classList.toggle("rotate");
+
                 };
+
 
                 catCard.appendChild(catHeader);
                 catCard.appendChild(catBody);
 
-                // ================= UNIQUE HOTELS =================
+
+                // =========================================
+                // UNIQUE HOTELS
+                // =========================================
 
                 const uniqueHotels = {};
+
 
                 categories[category].forEach(hotel => {
 
                     if (!uniqueHotels[hotel.hotelName]) {
-                        uniqueHotels[hotel.hotelName] = hotel;
+
+                        uniqueHotels[hotel.hotelName] =
+                            hotel;
+
                     }
 
                 });
 
-                Object.values(uniqueHotels).forEach(hotel => {
 
-                    const hotelItem = document.createElement("div");
+                Object.values(uniqueHotels)
+                    .forEach(hotel => {
 
-                    hotelItem.className = "hotelItem";
+                        const hotelItem =
+                            document.createElement("div");
 
-                    hotelItem.innerHTML = `
-                        <i class="fa-solid fa-hotel"></i>
-                        <span>${hotel.hotelName}</span>
-                    `;
+                        hotelItem.className =
+                            "hotelItem";
 
-                    hotelItem.onclick = () => {
 
-                        document
-                            .querySelectorAll(".hotelItem")
-                            .forEach(x => x.classList.remove("active"));
+                        hotelItem.innerHTML = `
+                            <i class="fa-solid fa-hotel"></i>
+                            <span>${hotel.hotelName}</span>
+                        `;
 
-                        hotelItem.classList.add("active");
 
-                        showHotelDetails(hotel);
+                        hotelItem.onclick = () => {
 
-                    };
+                            document
+                                .querySelectorAll(".hotelItem")
+                                .forEach(x =>
+                                    x.classList.remove("active")
+                                );
 
-                    catBody.appendChild(hotelItem);
+                            hotelItem.classList.add("active");
 
-                });
+                            showHotelDetails(hotel);
+
+                        };
+
+
+                        catBody.appendChild(hotelItem);
+
+                    });
+
 
                 cityBody.appendChild(catCard);
 
             });
 
+    }
+
+
+    // =====================================================
+    // HELPER FUNCTION
+    // CREATE REGION -> CITY -> CATEGORY
+    // =====================================================
+
+    function createRegion(region, cities) {
+
+        const regionCard =
+            document.createElement("div");
+
+        regionCard.className =
+            "treeRegion";
+
+
+        const regionHeader =
+            document.createElement("div");
+
+        regionHeader.className =
+            "regionHeader accordion";
+
+
+        regionHeader.innerHTML = `
+            <i class="fa-solid fa-chevron-right arrow"></i>
+            ${region}
+        `;
+
+
+        const regionBody =
+            document.createElement("div");
+
+        regionBody.className =
+            "treeBody";
+
+
+        regionHeader.onclick = () => {
+
+            regionBody.classList.toggle("open");
+
+            regionHeader
+                .querySelector(".arrow")
+                .classList.toggle("rotate");
+
+        };
+
+
+        regionCard.appendChild(regionHeader);
+        regionCard.appendChild(regionBody);
+
+
+        // =========================================
+        // CITY
+        // =========================================
+
+        Object.keys(cities).forEach(city => {
+
+            const cityCard =
+                document.createElement("div");
+
+
+            const cityHeader =
+                document.createElement("div");
+
+            cityHeader.className =
+                "cityHeader accordion";
+
+
+            cityHeader.innerHTML = `
+                <i class="fa-solid fa-chevron-right arrow"></i>
+                ${city}
+            `;
+
+
+            const cityBody =
+                document.createElement("div");
+
+            cityBody.className =
+                "treeBody";
+
+
+            cityHeader.onclick = () => {
+
+                cityBody.classList.toggle("open");
+
+                cityHeader
+                    .querySelector(".arrow")
+                    .classList.toggle("rotate");
+
+            };
+
+
+            cityCard.appendChild(cityHeader);
+            cityCard.appendChild(cityBody);
+
+
+            // =========================================
+            // CITY -> CATEGORY -> HOTEL
+            // =========================================
+
+            buildCityTree(
+                cityBody,
+                cities[city]
+            );
+
+
             regionBody.appendChild(cityCard);
 
         });
 
+
+        return regionCard;
+
+    }
+
+
+    // =====================================================
+    // 1. VIETNAM
+    //
+    // EXACTLY EXISTING STRUCTURE
+    // =====================================================
+
+    Object.keys(vietnamHotels).forEach(region => {
+
+        const regionCard =
+            createRegion(
+                region,
+                vietnamHotels[region]
+            );
+
         tree.appendChild(regionCard);
 
     });
+
+
+    // =====================================================
+    // 2. INDIA
+    //
+    // India is ONE main accordion.
+    //
+    // India
+    //   -> Himachal Pradesh
+    //       -> Shimla
+    //           -> 3 Star
+    //           -> 4 Star
+    //           -> 5 Star
+    //
+    //   -> Uttarakhand
+    //       -> Nainital
+    //       -> Kausani
+    // =====================================================
+
+    if (
+        indiaHotels &&
+        Object.keys(indiaHotels).length > 0
+    ) {
+
+        const indiaCard =
+            document.createElement("div");
+
+        indiaCard.className =
+            "treeRegion";
+
+
+        const indiaHeader =
+            document.createElement("div");
+
+        indiaHeader.className =
+            "regionHeader accordion";
+
+
+        indiaHeader.innerHTML = `
+            <i class="fa-solid fa-chevron-right arrow"></i>
+            India
+        `;
+
+
+        const indiaBody =
+            document.createElement("div");
+
+        indiaBody.className =
+            "treeBody";
+
+
+        indiaHeader.onclick = () => {
+
+            indiaBody.classList.toggle("open");
+
+            indiaHeader
+                .querySelector(".arrow")
+                .classList.toggle("rotate");
+
+        };
+
+
+        indiaCard.appendChild(indiaHeader);
+        indiaCard.appendChild(indiaBody);
+
+
+        // =========================================
+        // INDIA STATES / REGIONS
+        // =========================================
+
+        Object.keys(indiaHotels).forEach(state => {
+
+            const stateCard =
+                document.createElement("div");
+
+
+            const stateHeader =
+                document.createElement("div");
+
+            stateHeader.className =
+                "cityHeader accordion";
+
+
+            stateHeader.innerHTML = `
+                <i class="fa-solid fa-chevron-right arrow"></i>
+                ${state}
+            `;
+
+
+            const stateBody =
+                document.createElement("div");
+
+            stateBody.className =
+                "treeBody";
+
+
+            stateHeader.onclick = () => {
+
+                stateBody.classList.toggle("open");
+
+                stateHeader
+                    .querySelector(".arrow")
+                    .classList.toggle("rotate");
+
+            };
+
+
+            stateCard.appendChild(stateHeader);
+            stateCard.appendChild(stateBody);
+
+
+            // =========================================
+            // STATE -> CITY -> CATEGORY -> HOTEL
+            // =========================================
+
+            Object.keys(indiaHotels[state])
+                .forEach(city => {
+
+                    const cityCard =
+                        document.createElement("div");
+
+
+                    const cityHeader =
+                        document.createElement("div");
+
+                    cityHeader.className =
+                        "cityHeader accordion";
+
+
+                    cityHeader.innerHTML = `
+                        <i class="fa-solid fa-chevron-right arrow"></i>
+                        ${city}
+                    `;
+
+
+                    const cityBody =
+                        document.createElement("div");
+
+                    cityBody.className =
+                        "treeBody";
+
+
+                    cityHeader.onclick = () => {
+
+                        cityBody.classList.toggle("open");
+
+                        cityHeader
+                            .querySelector(".arrow")
+                            .classList.toggle("rotate");
+
+                    };
+
+
+                    cityCard.appendChild(cityHeader);
+                    cityCard.appendChild(cityBody);
+
+
+                    // =====================================
+                    // CITY -> CATEGORY -> HOTEL
+                    // =====================================
+
+                    buildCityTree(
+                        cityBody,
+                        indiaHotels[state][city]
+                    );
+
+
+                    stateBody.appendChild(cityCard);
+
+                });
+
+
+            indiaBody.appendChild(stateCard);
+
+        });
+
+
+        // =========================================
+        // INDIA ADDED AFTER VIETNAM
+        // =========================================
+
+        tree.appendChild(indiaCard);
+
+    }
 
 }
 function buildLandTree(data) {
@@ -1043,6 +1455,259 @@ closeHotelModal.addEventListener("click", () => {
 cancelHotelBtn.addEventListener("click", () => {
     hotelModal.classList.remove("open");
 });
+
+// =========================================
+// DOMESTIC INDIA REGION → CITY DATA
+// =========================================
+
+const indiaRegionCities = {
+
+    "Himachal Pradesh": [
+        "Shimla",
+        "Manali",
+        "Dharamshala",
+        "Kasol",
+        "Kullu",
+        "Dalhousie",
+        "Amritsar",
+        "Tirthan Valley",
+        "Jibhi"
+    ],
+
+    "Uttarakhand": [
+        "Nainital",
+        "Kausani",
+        "Ranikhet",
+        "Corbett",
+        "Haridwar",
+        "Rishikesh",
+        "Auli",
+        "Joshimath",
+        "Mussoorie",
+        "Kanatal",
+        "Dehradun"
+    ],
+
+    "Rajasthan": [
+        "Jaipur",
+        "Ranthambore",
+        "Pushkar",
+        "Bikaner",
+        "Jodhpur",
+        "Jaisalmer",
+        "Udaipur",
+        "Kumbhalgarh",
+        "Chittorgarh"
+    ],
+
+    "Golden Triangle": [
+        "Delhi",
+        "Agra",
+        "Jaipur",
+        "Vrindavan",
+        "Mathura"
+    ]
+
+};
+
+
+// =========================================
+// DESTINATION → REGION → CITY
+// =========================================
+
+// =========================================
+// DESTINATION → REGION → CITY
+// =========================================
+
+const vietnamRegionCities = {
+
+    "North Vietnam": [
+        "Hanoi",
+        "Ha Long",
+        "Ninh Binh",
+        "Sapa"
+    ],
+
+    "Central Vietnam": [
+        "Da Nang",
+        "Hoi An",
+        "Hue",
+        "Quang Binh"
+    ],
+
+    "South Vietnam": [
+        "Ho Chi Minh City",
+        "Mekong Delta",
+        "Phu Quoc"
+    ]
+
+};
+
+
+function setupHotelLocationDropdowns() {
+
+    const destinationInput =
+        document.getElementById("hotelDestinationInput");
+
+    const regionInput =
+        document.getElementById("hotelRegionInput");
+
+    const cityInput =
+        document.getElementById("hotelCityInput");
+
+
+    if (!destinationInput || !regionInput || !cityInput) {
+        console.log("Hotel location inputs not found");
+        return;
+    }
+
+
+    // =========================================
+    // LOAD REGIONS
+    // =========================================
+
+    function loadRegions() {
+
+        const destination =
+            destinationInput.value.trim().toLowerCase();
+
+        regionInput.innerHTML =
+            `<option value="">Select Region</option>`;
+
+        cityInput.innerHTML =
+            `<option value="">Select City</option>`;
+
+        cityInput.disabled = true;
+
+
+        let regionData = {};
+
+
+        // INDIA
+        if (destination === "india") {
+
+            regionData = indiaRegionCities;
+
+        }
+
+
+        // VIETNAM
+        else if (destination === "vietnam") {
+
+            regionData = vietnamRegionCities;
+
+        }
+
+
+        Object.keys(regionData).forEach(region => {
+
+            const option =
+                document.createElement("option");
+
+            option.value = region;
+            option.textContent = region;
+
+            regionInput.appendChild(option);
+
+        });
+
+    }
+
+
+    // =========================================
+    // LOAD CITIES
+    // =========================================
+
+    function loadCities() {
+
+        const destination =
+            destinationInput.value.trim().toLowerCase();
+
+        const region =
+            regionInput.value;
+
+        cityInput.innerHTML =
+            `<option value="">Select City</option>`;
+
+        let cities = [];
+
+
+        // INDIA
+        if (destination === "india") {
+
+            cities =
+                indiaRegionCities[region] || [];
+
+        }
+
+
+        // VIETNAM
+        else if (destination === "vietnam") {
+
+            cities =
+                vietnamRegionCities[region] || [];
+
+        }
+
+
+        console.log(
+            "Destination:",
+            destination,
+            "Region:",
+            region,
+            "Cities:",
+            cities
+        );
+
+
+        cities.forEach(city => {
+
+            const option =
+                document.createElement("option");
+
+            option.value = city;
+            option.textContent = city;
+
+            cityInput.appendChild(option);
+
+        });
+
+
+        cityInput.disabled = cities.length === 0;
+
+    }
+
+
+    // =========================================
+    // DESTINATION CHANGE
+    // =========================================
+
+    destinationInput.addEventListener(
+        "change",
+        loadRegions
+    );
+
+
+    // =========================================
+    // REGION CHANGE
+    // =========================================
+
+    regionInput.addEventListener(
+        "change",
+        loadCities
+    );
+
+
+    // =========================================
+    // INITIAL LOAD
+    // =========================================
+
+    loadRegions();
+
+}
+
+
+setupHotelLocationDropdowns();
 // =========================================
 // SAVE NEW HOTEL
 // =========================================

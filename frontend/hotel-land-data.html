@@ -260,15 +260,15 @@
                         </select>
                     </div>
 
-                    <div class="formGroup">
-                        <label>Room Category</label>
-                        <select id="hotelRoomTypeInput">
-                            <option value="">Select Category</option>
-                            <option value="3 Star">3 Star</option>
-                            <option value="4 Star">4 Star</option>
-                            <option value="5 Star">5 Star</option>
-                        </select>
-                    </div>
+<div class="formGroup">
+    <label>Room Category</label>
+    <select id="hotelCategoryInput">
+        <option value="">Select Category</option>
+        <option value="3 Star">3 Star</option>
+        <option value="4 Star">4 Star</option>
+        <option value="5 Star">5 Star</option>
+    </select>
+</div>
 
                     <div class="formGroup">
                         <label>Currency</label>
@@ -388,63 +388,6 @@
 
     <script src="assets/js/config.js"></script>
     <script src="assets/js/hotel-land-data.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-
-            const regionSelect = document.getElementById("hotelRegionInput");
-            const citySelect = document.getElementById("hotelCityInput");
-
-            const citiesByRegion = {
-                "North Vietnam": [
-                    "Hanoi",
-                    "Ha Long",
-                    "Ninh Binh",
-                    "Sapa"
-                ],
-
-                "Central Vietnam": [
-                    "Da Nang",
-                    "Hoi An",
-                    "Hue",
-                    "Quang Binh"
-                ],
-
-                "South Vietnam": [
-                    "Ho Chi Minh City",
-                    "Mekong Delta",
-                    "Phu Quoc"
-                ]
-            };
-
-            regionSelect.addEventListener("change", function () {
-
-                const selectedRegion = this.value;
-
-                citySelect.innerHTML =
-                    '<option value="">Select City</option>';
-
-                if (!selectedRegion || !citiesByRegion[selectedRegion]) {
-                    citySelect.disabled = true;
-                    return;
-                }
-
-                citiesByRegion[selectedRegion].forEach(function (city) {
-
-                    const option = document.createElement("option");
-
-                    option.value = city;
-                    option.textContent = city;
-
-                    citySelect.appendChild(option);
-
-                });
-
-                citySelect.disabled = false;
-
-            });
-
-        });
-    </script>
 
 
 </body>
