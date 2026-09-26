@@ -67,13 +67,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ROLE PERMISSION
   if (user.role === "staff") {
+
     const staffMenu = document.getElementById("staffMenu");
     const reportMenu = document.getElementById("reportMenu");
     const settingMenu = document.getElementById("settingMenu");
 
+    const hotelLandMenu = document.getElementById("hotelLandMenu");
+
     if (staffMenu) staffMenu.style.display = "none";
     if (reportMenu) reportMenu.style.display = "none";
     if (settingMenu) settingMenu.style.display = "none";
+
+    if (hotelLandMenu) hotelLandMenu.style.display = "none";
   }
 
   // COUNTS

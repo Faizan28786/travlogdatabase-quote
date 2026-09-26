@@ -605,17 +605,58 @@ function bindTopLevelEvents() {
 /* =========================================================
    QUOTE NO
 ========================================================= */
+
+const QUOTE_START_NUMBER = 265001;
+
 function generateQuoteNo() {
-  const random = Math.floor(10000 + Math.random() * 90000);
-  if (quoteNoEl) quoteNoEl.textContent = `TLN${random}`;
+
+  const userName =
+    localStorage.getItem("username") ||
+    localStorage.getItem("userName") ||
+    sessionStorage.getItem("username") ||
+    sessionStorage.getItem("userName") ||
+    "";
+
+  let prefix = "TLM";
+
+  const name = userName.trim().toLowerCase();
+
+  if (name === "naznin") {
+    prefix = "TLM";
+  }
+  else if (name === "sejil") {
+    prefix = "TLS";
+  }
+  else if (name === "gagan") {
+    prefix = "TLG";
+  }
+
+  if (quoteNoEl) {
+    quoteNoEl.textContent =
+      `${prefix}${QUOTE_START_NUMBER}`;
+  }
 }
+
+generateQuoteNo();
 
 /* =========================================================
    LOAD MASTER DATA
 ========================================================= */
 async function loadCountryData(country) {
   try {
-    const res = await fetch(`${API_BASE}/master/${encodeURIComponent(country)}`);
+
+    // India ke liye abhi master API available nahi hai
+    // Isliye unnecessary 404 request mat karo
+    if (String(country).trim().toLowerCase() === "india") {
+      masterData = null;
+      populateVehicles();
+      return;
+    }
+
+    const res = await fetch(
+      `${API_BASE}/master/${encodeURIComponent(country)}`
+    );
+
     const data = await res.json();
 
     if (!res.ok || !data.success) {
@@ -624,10 +665,14 @@ async function loadCountryData(country) {
 
     masterData = data;
     populateVehicles();
+
   } catch (err) {
+
     console.log("LOAD COUNTRY DATA ERROR:", err);
+
     masterData = null;
     populateVehicles();
+
   }
 }
 
@@ -908,24 +953,65 @@ function createSegment(segmentData = null) {
 
   // Restore previous values if data exists
 
-  const removeBtn = segment.querySelector(".segment-remove-btn");
+const removeBtn = segment.querySelector(".segment-remove-btn");
 
-  removeBtn?.addEventListener("click", () => {
+removeBtn?.addEventListener("click", async () => {
 
-    const allSegments =
-      document.querySelectorAll(".city-segment");
+  const allSegments =
+    document.querySelectorAll(".city-segment");
 
-    if (allSegments.length <= 1) {
-      alert("At least one city segment is required.");
-      return;
-    }
+  /* ==========================================
+     OPTION 1
+     At least one segment is compulsory
+  ========================================== */
+  if (allSegments.length <= 1 && currentOption === 0) {
+    alert("At least one city segment is required.");
+    return;
+  }
 
-    segment.remove();
+  /* ==========================================
+     OPTION 2+
+     Last segment remove = remove whole option
+  ========================================== */
+  if (allSegments.length <= 1 && currentOption > 0) {
 
-    renumberSegments();
-    calculateQuote();
+    // Remove current option
+    quoteOptions.splice(currentOption, 1);
 
-  });
+    // Move to previous option
+    currentOption = Math.max(0, currentOption - 1);
+
+    // Re-number option IDs
+    quoteOptions.forEach((option, index) => {
+      option.id = index + 1;
+      option.title = `Option ${index + 1}`;
+    });
+
+    // Re-render option tabs
+    renderOptionTabs();
+
+    // Restore selected option
+    restoreQuoteData(
+      quoteOptions[currentOption].data
+    );
+
+    // Refresh preview
+    await buildPreview();
+
+    return;
+  }
+
+  /* ==========================================
+     NORMAL SEGMENT REMOVE
+  ========================================== */
+
+  segment.remove();
+
+  renumberSegments();
+  calculateQuote();
+  await buildPreview();
+
+});
 
   return segment;
 }
@@ -3460,7 +3546,7 @@ function openPreviewModal() {
     restoreQuoteData(optionData);
 
     // Build final preview from THIS option
-    buildPreviewFinal(optionData, true);
+    buildPreviewFinal(optionData, i === 0);
 
     finalHtml += window.latestPreviewHtml || "";
 

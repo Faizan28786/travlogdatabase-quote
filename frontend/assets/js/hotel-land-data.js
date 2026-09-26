@@ -137,25 +137,25 @@ async function loadHotels() {
 
         });
 
-console.log("VIETNAM DATA:", vietnamData);
-console.log("INDIA DATA:", indiaData);
+        console.log("VIETNAM DATA:", vietnamData);
+        console.log("INDIA DATA:", indiaData);
 
-// =========================================
-// COMBINE DATA FOR HOTEL DETAILS
-// =========================================
+        // =========================================
+        // COMBINE DATA FOR HOTEL DETAILS
+        // =========================================
 
-hotelData = {
-    ...vietnamData,
-    ...indiaData
-};
+        hotelData = {
+            ...vietnamData,
+            ...indiaData
+        };
 
-console.log("FINAL HOTEL DATA:", hotelData);
+        console.log("FINAL HOTEL DATA:", hotelData);
 
-// =========================================
-// BUILD FINAL TREE
-// =========================================
+        // =========================================
+        // BUILD FINAL TREE
+        // =========================================
 
-buildHotelTree(vietnamData, indiaData);
+        buildHotelTree(vietnamData, indiaData);
 
     }
 
@@ -2239,7 +2239,8 @@ async function saveEditedRoom(id) {
                 method: "PUT",
 
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
                 },
 
                 body: JSON.stringify(updatedData)
@@ -2515,6 +2516,80 @@ function openEditLandModal(service, type, pax) {
         });
 
 }
+/* =========================================================
+   RELOAD LAND TREE WITHOUT RESETTING LEFT SIDE
+========================================================= */
+async function reloadLandServicesKeepingState(selectedServiceName = "") {
+
+    const tree = document.getElementById("hotelTree");
+
+    // Save current scroll position
+    const scrollTop = tree?.scrollTop || 0;
+
+    // Save currently opened regions
+    const openRegions = [];
+
+    tree?.querySelectorAll(".treeRegion").forEach(region => {
+
+        const body = region.querySelector(".treeBody");
+        const header = region.querySelector(".regionHeader");
+
+        if (body?.classList.contains("open")) {
+            openRegions.push(
+                header?.textContent.trim()
+            );
+        }
+
+    });
+
+    // Reload latest land data
+    await loadLandServices();
+
+    // Restore opened regions
+    tree?.querySelectorAll(".treeRegion").forEach(region => {
+
+        const body = region.querySelector(".treeBody");
+        const header = region.querySelector(".regionHeader");
+        const arrow = header?.querySelector(".arrow");
+
+        const regionName = header?.textContent.trim();
+
+        if (openRegions.includes(regionName)) {
+            body?.classList.add("open");
+            arrow?.classList.add("rotate");
+        }
+
+    });
+
+    // Restore selected service
+    if (selectedServiceName) {
+
+        const items = tree?.querySelectorAll(".hotelItem");
+
+        items?.forEach(item => {
+
+            const text =
+                item.querySelector("span")?.textContent.trim();
+
+            if (text === selectedServiceName) {
+
+                items.forEach(x =>
+                    x.classList.remove("active")
+                );
+
+                item.classList.add("active");
+
+            }
+
+        });
+
+    }
+
+    // Restore scroll position
+    if (tree) {
+        tree.scrollTop = scrollTop;
+    }
+}
 async function saveEditedLandService(
     id,
     type,
@@ -2641,8 +2716,8 @@ async function saveEditedLandService(
                 ?.remove();
 
 
-            // Reload data
-            await loadLandServices();
+            // Reload data without resetting left side
+            await reloadLandServicesKeepingState(serviceName);
 
 
             alert(
@@ -2791,8 +2866,8 @@ async function saveEditedLandService(
             ?.remove();
 
 
-        // Reload existing land data
-        await loadLandServices();
+        // Reload existing land data without resetting left side
+        await reloadLandServicesKeepingState(serviceName);
 
 
         alert(

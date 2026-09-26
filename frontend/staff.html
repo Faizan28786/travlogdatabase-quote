@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TravLog - Staff</title>
+
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+    <div class="sidebar">
+
+        <div class="logo">
+
+            <div class="logo-icon">
+                <i class="fa-solid fa-earth-asia"></i>
+            </div>
+
+            <div class="logo-text">
+                <h1>TravLog</h1>
+                <span>Travel CRM</span>
+            </div>
+
+        </div>
+
+        <div class="menu-title">
+            MAIN MENU
+        </div>
+
+        <ul>
+
+            <li onclick="window.location='dashboard.html'">
+                <i class="fa-solid fa-house"></i>
+                <span>Dashboard</span>
+            </li>
+
+            <li onclick="window.location='create-quote.html'">
+                <i class="fa-solid fa-file-circle-plus"></i>
+                <span>New Quote</span>
+            </li>
+
+            <li onclick="window.location='quotes.html'">
+                <i class="fa-solid fa-file-lines"></i>
+                <span>Quotes</span>
+            </li>
+
+            <li onclick="window.location='hotel-land-data.html'">
+                <i class="fa-solid fa-hotel"></i>
+                <span>Hotels & Land Services Data</span>
+            </li>
+
+            <li onclick="window.location='destinations.html'">
+                <i class="fa-solid fa-earth-asia"></i>
+                <span>Destinations</span>
+            </li>
+
+            <li class="active">
+                <i class="fa-solid fa-users"></i>
+                <span>Staff</span>
+            </li>
+
+        </ul>
+
+        <div class="sidebar-footer">
+
+            <button id="logoutBtn">
+
+                <i class="fa-solid fa-right-from-bracket"></i>
+
+                Logout
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div class="main">
+
+        <div class="header">
+
+            <div class="header-left">
+
+                <div>
+
+                    <h2>Staff</h2>
+
+                    <p id="todayDate"></p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="content">
+
+            <div class="recentQuotes">
+
+                <h3>Staff Members</h3>
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Staff ID</th>
+
+                            <th>Name</th>
+
+                            <th>Email</th>
+
+                            <th>Status</th>
+
+                            <th>Last Login</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="staffTable">
+
+                        <tr>
+
+                            <td colspan="5">
+                                Loading staff...
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/staff.js"></script>
+
+</body>
+
+</html>

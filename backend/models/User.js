@@ -32,6 +32,11 @@ const userSchema = new mongoose.Schema(
     active: {
       type: Boolean,
       default: true
+    },
+
+    lastLogin: {
+      type: Date,
+      default: null
     }
   },
   {

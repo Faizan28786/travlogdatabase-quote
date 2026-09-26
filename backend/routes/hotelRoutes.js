@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const Hotel = require("../models/Hotel");
 
+const authMiddleware = require("../middleware/authMiddleware");
+const roleMiddleware = require("../middleware/roleMiddleware");
 /* =========================================================
    HELPERS
 ========================================================= */
@@ -712,238 +714,242 @@ router.get("/inactive", async (req, res) => {
    POST /api/hotels
 ========================================================= */
 
-router.post("/", async (req, res) => {
+router.post(
+  "/",
+  authMiddleware,
+  roleMiddleware("superadmin", "admin"),
+  async (req, res) => {
 
-  try {
-    console.log("========== ADD HOTEL REQUEST ==========");
-    console.log(req.body);
-    console.log("ROOM TYPE RECEIVED:", req.body?.roomType);
-    console.log("PRICING UNIT RECEIVED:", req.body?.pricingUnit);
-    console.log("=======================================");
+    try {
+      console.log("========== ADD HOTEL REQUEST ==========");
+      console.log(req.body);
+      console.log("ROOM TYPE RECEIVED:", req.body?.roomType);
+      console.log("PRICING UNIT RECEIVED:", req.body?.pricingUnit);
+      console.log("=======================================");
 
-    const {
+      const {
 
-      hotelName,
+        hotelName,
 
-      destination = "Vietnam",
+        destination = "Vietnam",
 
-      region = "",
+        region = "",
 
-      city = "",
+        city = "",
 
-      category = "",
+        category = "",
 
-      currency = "USD",
+        currency = "USD",
 
-      // NEW: Hotel ke andar Room Type
-      roomType = "Standard",
+        // NEW: Hotel ke andar Room Type
+        roomType = "Standard",
 
-      // NEW: Meal Plan
-      mealPlan = "CP",
+        // NEW: Meal Plan
+        mealPlan = "CP",
 
-      // NEW: Room Rate
-      rate2D1N = 0,
+        // NEW: Room Rate
+        rate2D1N = 0,
 
-      // Optional 3D2N rate
-      rate3D2N = 0,
+        // Optional 3D2N rate
+        rate3D2N = 0,
 
-      // Extra Person / Child With Bed
-      extraBed = 0,
+        // Extra Person / Child With Bed
+        extraBed = 0,
 
-      // Child No Bed
-      childNoBed = 0,
+        // Child No Bed
+        childNoBed = 0,
 
-      note = "",
+        note = "",
 
-      pricingUnit = "perRoom"
+        pricingUnit = "perRoom"
 
-    } = req.body || {};
+      } = req.body || {};
 
 
-    /* -----------------------------------------------------
-       BASIC VALIDATION
-    ----------------------------------------------------- */
+      /* -----------------------------------------------------
+         BASIC VALIDATION
+      ----------------------------------------------------- */
 
-    if (!hotelName || !String(hotelName).trim()) {
+      if (!hotelName || !String(hotelName).trim()) {
 
-      return res.status(400).json({
+        return res.status(400).json({
+
+          success: false,
+
+          message: "Hotel name is required"
+
+        });
+
+      }
+
+
+      if (!city || !String(city).trim()) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message: "City is required"
+
+        });
+
+      }
+
+
+      /* -----------------------------------------------------
+         NORMALIZE PRICING UNIT
+         
+         Old frontend may send:
+         "Per Room / Night"
+         "0"
+         ""
+         
+         Database accepts only:
+         "perRoom"
+         "perPerson"
+         ----------------------------------------------------- */
+
+      let normalizedPricingUnit = "perRoom";
+
+      if (
+        pricingUnit === "perNight" ||
+        pricingUnit === "per night" ||
+        pricingUnit === "Per Night" ||
+        pricingUnit === "per room / night" ||
+        pricingUnit === "Per Room / Night"
+      ) {
+
+        normalizedPricingUnit = "perNight";
+
+      } else {
+
+        normalizedPricingUnit = "perRoom";
+
+      }
+
+
+      /* -----------------------------------------------------
+         NORMALIZE ROOM TYPE
+         
+         Room Type ab Hotel ke saath hi save hoga.
+         Example:
+         Superior
+         Deluxe
+         Suite
+         Standard
+         ----------------------------------------------------- */
+
+      const normalizedRoomType =
+        String(roomType || "Standard").trim() || "Standard";
+
+
+      /* -----------------------------------------------------
+         CREATE HOTEL + ROOM TOGETHER
+         ----------------------------------------------------- */
+
+      const hotel =
+        await Hotel.create({
+
+          hotelName:
+            String(hotelName).trim(),
+
+          destination:
+            String(destination || "Vietnam").trim(),
+
+          region:
+            String(region || "").trim(),
+
+          city:
+            normalizeCityInput(city),
+
+          category:
+            String(category || "").trim(),
+
+          currency:
+            String(currency || "USD").trim(),
+
+          roomType:
+            normalizedRoomType,
+
+          mealPlan:
+            String(mealPlan || "CP").trim(),
+
+          rate2D1N:
+            Math.max(
+              0,
+              Number(rate2D1N) || 0
+            ),
+
+          rate3D2N:
+            Math.max(
+              0,
+              Number(rate3D2N) || 0
+            ),
+
+          extraBed:
+            Math.max(
+              0,
+              Number(extraBed) || 0
+            ),
+
+          childNoBed:
+            Math.max(
+              0,
+              Number(childNoBed) || 0
+            ),
+
+          note:
+            String(note || "").trim(),
+
+          pricingUnit:
+            normalizedPricingUnit,
+
+          isActive:
+            true
+
+        });
+
+
+      /* -----------------------------------------------------
+         SUCCESS
+         ----------------------------------------------------- */
+
+      return res.status(201).json({
+
+        success: true,
+
+        message:
+          "Hotel added successfully",
+
+        data:
+          hotel
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "POST /api/hotels error:",
+        error
+      );
+
+
+      return res.status(500).json({
 
         success: false,
 
-        message: "Hotel name is required"
+        message:
+          "Failed to add hotel",
+
+        error:
+          error.message
 
       });
 
     }
 
-
-    if (!city || !String(city).trim()) {
-
-      return res.status(400).json({
-
-        success: false,
-
-        message: "City is required"
-
-      });
-
-    }
-
-
-    /* -----------------------------------------------------
-       NORMALIZE PRICING UNIT
-       
-       Old frontend may send:
-       "Per Room / Night"
-       "0"
-       ""
-       
-       Database accepts only:
-       "perRoom"
-       "perPerson"
-       ----------------------------------------------------- */
-
-    let normalizedPricingUnit = "perRoom";
-
-    if (
-      pricingUnit === "perNight" ||
-      pricingUnit === "per night" ||
-      pricingUnit === "Per Night" ||
-      pricingUnit === "per room / night" ||
-      pricingUnit === "Per Room / Night"
-    ) {
-
-      normalizedPricingUnit = "perNight";
-
-    } else {
-
-      normalizedPricingUnit = "perRoom";
-
-    }
-
-
-    /* -----------------------------------------------------
-       NORMALIZE ROOM TYPE
-       
-       Room Type ab Hotel ke saath hi save hoga.
-       Example:
-       Superior
-       Deluxe
-       Suite
-       Standard
-       ----------------------------------------------------- */
-
-    const normalizedRoomType =
-      String(roomType || "Standard").trim() || "Standard";
-
-
-    /* -----------------------------------------------------
-       CREATE HOTEL + ROOM TOGETHER
-       ----------------------------------------------------- */
-
-    const hotel =
-      await Hotel.create({
-
-        hotelName:
-          String(hotelName).trim(),
-
-        destination:
-          String(destination || "Vietnam").trim(),
-
-        region:
-          String(region || "").trim(),
-
-        city:
-          normalizeCityInput(city),
-
-        category:
-          String(category || "").trim(),
-
-        currency:
-          String(currency || "USD").trim(),
-
-        roomType:
-          normalizedRoomType,
-
-        mealPlan:
-          String(mealPlan || "CP").trim(),
-
-        rate2D1N:
-          Math.max(
-            0,
-            Number(rate2D1N) || 0
-          ),
-
-        rate3D2N:
-          Math.max(
-            0,
-            Number(rate3D2N) || 0
-          ),
-
-        extraBed:
-          Math.max(
-            0,
-            Number(extraBed) || 0
-          ),
-
-        childNoBed:
-          Math.max(
-            0,
-            Number(childNoBed) || 0
-          ),
-
-        note:
-          String(note || "").trim(),
-
-        pricingUnit:
-          normalizedPricingUnit,
-
-        isActive:
-          true
-
-      });
-
-
-    /* -----------------------------------------------------
-       SUCCESS
-       ----------------------------------------------------- */
-
-    return res.status(201).json({
-
-      success: true,
-
-      message:
-        "Hotel added successfully",
-
-      data:
-        hotel
-
-    });
-
-
-  } catch (error) {
-
-    console.error(
-      "POST /api/hotels error:",
-      error
-    );
-
-
-    return res.status(500).json({
-
-      success: false,
-
-      message:
-        "Failed to add hotel",
-
-      error:
-        error.message
-
-    });
-
-  }
-
-});
+  });
 
 
 /* =========================================================
@@ -951,74 +957,78 @@ router.post("/", async (req, res) => {
    PUT /api/hotels/:id
 ========================================================= */
 
-router.put("/:id", async (req, res) => {
+router.put(
+  "/:id",
+  authMiddleware,
+  roleMiddleware("superadmin", "admin"),
+  async (req, res) => {
 
-  try {
+    try {
 
-    const hotel =
-      await Hotel.findByIdAndUpdate(
+      const hotel =
+        await Hotel.findByIdAndUpdate(
 
-        req.params.id,
+          req.params.id,
 
-        req.body,
+          req.body,
 
-        {
+          {
 
-          new: true,
+            new: true,
 
-          runValidators: true
+            runValidators: true
 
-        }
+          }
 
-      ).lean();
+        ).lean();
 
 
-    if (!hotel) {
+      if (!hotel) {
 
-      return res.status(404).json({
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Hotel / room not found"
+
+        });
+
+      }
+
+
+      return res.json({
+
+        success: true,
+
+        message:
+          "Hotel / room updated successfully",
+
+        hotel
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        "PUT /api/hotels/:id error:",
+        error
+      );
+
+      return res.status(500).json({
 
         success: false,
 
         message:
-          "Hotel / room not found"
+          "Failed to update hotel / room",
+
+        error: error.message
 
       });
 
     }
 
-
-    return res.json({
-
-      success: true,
-
-      message:
-        "Hotel / room updated successfully",
-
-      hotel
-
-    });
-
-  } catch (error) {
-
-    console.error(
-      "PUT /api/hotels/:id error:",
-      error
-    );
-
-    return res.status(500).json({
-
-      success: false,
-
-      message:
-        "Failed to update hotel / room",
-
-      error: error.message
-
-    });
-
-  }
-
-});
+  });
 
 
 /* =========================================================
@@ -1026,72 +1036,76 @@ router.put("/:id", async (req, res) => {
    DELETE /api/hotels/:id
 ========================================================= */
 
-router.delete("/:id", async (req, res) => {
+router.delete(
+  "/:id",
+  authMiddleware,
+  roleMiddleware("superadmin", "admin"),
+  async (req, res) => {
 
-  try {
+    try {
 
-    const hotel =
-      await Hotel.findByIdAndUpdate(
+      const hotel =
+        await Hotel.findByIdAndUpdate(
 
-        req.params.id,
+          req.params.id,
 
-        {
-          isActive: false
-        },
+          {
+            isActive: false
+          },
 
-        {
-          new: true
-        }
+          {
+            new: true
+          }
 
-      ).lean();
+        ).lean();
 
 
-    if (!hotel) {
+      if (!hotel) {
 
-      return res.status(404).json({
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Hotel / room not found"
+
+        });
+
+      }
+
+
+      return res.json({
+
+        success: true,
+
+        message:
+          "Hotel / room deleted successfully",
+
+        data: hotel
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        "DELETE /api/hotels/:id error:",
+        error
+      );
+
+      return res.status(500).json({
 
         success: false,
 
         message:
-          "Hotel / room not found"
+          "Failed to delete hotel / room",
+
+        error: error.message
 
       });
 
     }
 
-
-    return res.json({
-
-      success: true,
-
-      message:
-        "Hotel / room deleted successfully",
-
-      data: hotel
-
-    });
-
-  } catch (error) {
-
-    console.error(
-      "DELETE /api/hotels/:id error:",
-      error
-    );
-
-    return res.status(500).json({
-
-      success: false,
-
-      message:
-        "Failed to delete hotel / room",
-
-      error: error.message
-
-    });
-
-  }
-
-});
+  });
 
 
 /* =========================================================
@@ -1099,76 +1113,80 @@ router.delete("/:id", async (req, res) => {
    PATCH /api/hotels/:id/restore
 ========================================================= */
 
-router.patch("/:id/restore", async (req, res) => {
+router.patch(
+  "/:id/restore",
+  authMiddleware,
+  roleMiddleware("superadmin", "admin"),
+  async (req, res) => {
 
-  try {
+    try {
 
-    const hotel =
-      await Hotel.findByIdAndUpdate(
+      const hotel =
+        await Hotel.findByIdAndUpdate(
 
-        req.params.id,
+          req.params.id,
 
-        {
-          isActive: true
-        },
+          {
+            isActive: true
+          },
 
-        {
+          {
 
-          new: true,
+            new: true,
 
-          runValidators: true
+            runValidators: true
 
-        }
+          }
 
-      ).lean();
+        ).lean();
 
 
-    if (!hotel) {
+      if (!hotel) {
 
-      return res.status(404).json({
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Hotel / room not found"
+
+        });
+
+      }
+
+
+      return res.json({
+
+        success: true,
+
+        message:
+          "Hotel / room restored successfully",
+
+        data: hotel
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        "PATCH /restore error:",
+        error
+      );
+
+      return res.status(500).json({
 
         success: false,
 
         message:
-          "Hotel / room not found"
+          "Failed to restore hotel / room",
+
+        error: error.message
 
       });
 
     }
 
-
-    return res.json({
-
-      success: true,
-
-      message:
-        "Hotel / room restored successfully",
-
-      data: hotel
-
-    });
-
-  } catch (error) {
-
-    console.error(
-      "PATCH /restore error:",
-      error
-    );
-
-    return res.status(500).json({
-
-      success: false,
-
-      message:
-        "Failed to restore hotel / room",
-
-      error: error.message
-
-    });
-
-  }
-
-});
+  });
 
 
 module.exports = router;

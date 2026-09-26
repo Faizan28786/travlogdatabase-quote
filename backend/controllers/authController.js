@@ -94,6 +94,9 @@ exports.login = async (req, res) => {
         message: "Invalid password"
       });
     }
+    // Update last login time
+    user.lastLogin = new Date();
+    await user.save();
 
     // JWT token generate
     const token = jwt.sign(
@@ -115,7 +118,8 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        company: user.company
+        company: user.company,
+        lastLogin: user.lastLogin
       }
     });
 

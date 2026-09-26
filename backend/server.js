@@ -18,6 +18,7 @@ console.log("MONGODB_URI :", process.env.MONGODB_URI);
 console.log("================================");
 
 const authRoutes = require("./routes/authRoutes");
+const staffRoutes = require("./routes/staffRoutes");
 const hotelRoutes = require("./routes/hotelRoutes");
 const landServiceRoutes = require("./routes/landServiceRoutes");
 const quoteDataRoutes = require("./routes/quotedata");
@@ -65,6 +66,7 @@ app.get("/", (req, res) => {
 // ROUTES
 // =============================
 app.use("/api/auth", authRoutes);
+app.use("/api/staff", staffRoutes);
 app.use("/api/hotels", hotelRoutes);
 app.use("/api/land-services", landServiceRoutes);
 app.use("/api/quote-data", quoteDataRoutes);
