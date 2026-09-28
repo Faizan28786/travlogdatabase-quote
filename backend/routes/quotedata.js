@@ -102,51 +102,52 @@ router.post("/save", async (req, res) => {
 
     const normalizedSegments = Array.isArray(segments)
       ? segments.map((seg, index) => ({
-          segmentNo: Number(seg.segmentNo) || index + 1,
-          city: seg.city || "",
-          mealPlan: seg.mealPlan || "CP",
-          hotelId: seg.hotelId || "",
-          hotelName: seg.hotelName || "",
-          roomType: seg.roomType || "",
-          nights: Number(seg.nights) || 0,
-          rooms: Number(seg.rooms) || 0,
-          baseHotelCost: Number(seg.baseHotelCost) || 0,
-          childCharges: Number(seg.childCharges) || 0,
-          total: Number(seg.total) || 0,
-          rateUnavailable: Boolean(seg.rateUnavailable)
-        }))
+        segmentNo: Number(seg.segmentNo) || index + 1,
+        city: seg.city || "",
+        mealPlan: seg.mealPlan || "CP",
+        hotelId: seg.hotelId || "",
+        hotelName: seg.hotelName || "",
+        roomType: seg.roomType || "",
+        nights: Number(seg.nights) || 0,
+        rooms: Number(seg.rooms) || 0,
+        baseHotelCost: Number(seg.baseHotelCost) || 0,
+        childCharges: Number(seg.childCharges) || 0,
+        total: Number(seg.total) || 0,
+        rateUnavailable: Boolean(seg.rateUnavailable)
+      }))
       : [];
 
     const savedQuote = await Quote.findOneAndUpdate(
-      { quoteNo },
+      { quoteNo: quoteNo.trim() },
       {
-        quoteNo,
-        country: country || "",
-        travelDate: travelDate || "",
+        $set: {
+          quoteNo: quoteNo.trim(),
+          country: country || "",
+          travelDate: travelDate || "",
 
-        adults: Number(adults) || 0,
-        childWithBed: Number(childWithBed) || 0,
-        childWithoutBed: Number(childWithoutBed) || 0,
-        childWithBedAge: childWithBedAge || "",
-        childWithoutBedAge: childWithoutBedAge || "",
-        totalPax: Number(totalPax) || 0,
+          adults: Number(adults) || 0,
+          childWithBed: Number(childWithBed) || 0,
+          childWithoutBed: Number(childWithoutBed) || 0,
+          childWithBedAge: childWithBedAge || "",
+          childWithoutBedAge: childWithoutBedAge || "",
+          totalPax: Number(totalPax) || 0,
 
-        segments: normalizedSegments,
+          segments: normalizedSegments,
 
-        pickupVehicleId: pickupVehicleId || "",
-        pickupVehicleName: pickupVehicleName || "",
-        dropVehicleId: dropVehicleId || "",
-        dropVehicleName: dropVehicleName || "",
+          pickupVehicleId: pickupVehicleId || "",
+          pickupVehicleName: pickupVehicleName || "",
+          dropVehicleId: dropVehicleId || "",
+          dropVehicleName: dropVehicleName || "",
 
-        hotelCost: Number(hotelCost) || 0,
-        transferCost: Number(transferCost) || 0,
-        grandTotal: Number(grandTotal) || 0
+          hotelCost: Number(hotelCost) || 0,
+          transferCost: Number(transferCost) || 0,
+          grandTotal: Number(grandTotal) || 0
+        }
       },
       {
         new: true,
         upsert: true,
-        runValidators: true,
-        setDefaultsOnInsert: true
+        runValidators: true
       }
     );
 
@@ -155,8 +156,10 @@ router.post("/save", async (req, res) => {
       message: "Quote saved successfully",
       quote: savedQuote
     });
+
   } catch (error) {
     console.log("SAVE QUOTE ERROR:", error);
+
     return res.status(500).json({
       success: false,
       message: "Failed to save quote",

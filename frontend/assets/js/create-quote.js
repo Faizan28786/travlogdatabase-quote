@@ -602,13 +602,9 @@ function bindTopLevelEvents() {
   });
 }
 
-/* =========================================================
-   QUOTE NO
-========================================================= */
-
 const QUOTE_START_NUMBER = 265001;
 
-function generateQuoteNo() {
+function getQuotePrefix() {
 
   const userName =
     localStorage.getItem("username") ||
@@ -617,27 +613,58 @@ function generateQuoteNo() {
     sessionStorage.getItem("userName") ||
     "";
 
-  let prefix = "TLM";
-
   const name = userName.trim().toLowerCase();
 
-  if (name === "naznin") {
-    prefix = "TLM";
-  }
-  else if (name === "sejil") {
-    prefix = "TLS";
-  }
-  else if (name === "gagan") {
-    prefix = "TLG";
+  if (name === "sejil") {
+    return "TLS";
   }
 
-  if (quoteNoEl) {
-    quoteNoEl.textContent =
-      `${prefix}${QUOTE_START_NUMBER}`;
+  if (name === "gagan") {
+    return "TLG";
   }
+
+  return "TLM";
 }
 
-generateQuoteNo();
+function generateQuoteNo() {
+
+  const prefix = getQuotePrefix();
+  const storageKey = `lastQuoteNumber_${prefix}`;
+
+  let lastNumber = Number(localStorage.getItem(storageKey));
+
+  if (!Number.isFinite(lastNumber) || lastNumber < QUOTE_START_NUMBER - 1) {
+    lastNumber = QUOTE_START_NUMBER - 1;
+  }
+
+  const nextNumber = lastNumber + 1;
+
+  const quoteNo = `${prefix}${nextNumber}`;
+
+  if (quoteNoEl) {
+    quoteNoEl.textContent = quoteNo;
+  }
+
+  return quoteNo;
+}
+
+function advanceQuoteNo() {
+
+  const prefix = getQuotePrefix();
+  const storageKey = `lastQuoteNumber_${prefix}`;
+
+  const currentQuoteNo = quoteNoEl?.textContent || "";
+  const currentNumber = Number(
+    currentQuoteNo.replace(prefix, "")
+  );
+
+  if (Number.isFinite(currentNumber)) {
+    localStorage.setItem(storageKey, String(currentNumber));
+  }
+
+  generateQuoteNo();
+}
+
 
 /* =========================================================
    LOAD MASTER DATA
@@ -953,65 +980,65 @@ function createSegment(segmentData = null) {
 
   // Restore previous values if data exists
 
-const removeBtn = segment.querySelector(".segment-remove-btn");
+  const removeBtn = segment.querySelector(".segment-remove-btn");
 
-removeBtn?.addEventListener("click", async () => {
+  removeBtn?.addEventListener("click", async () => {
 
-  const allSegments =
-    document.querySelectorAll(".city-segment");
+    const allSegments =
+      document.querySelectorAll(".city-segment");
 
-  /* ==========================================
-     OPTION 1
-     At least one segment is compulsory
-  ========================================== */
-  if (allSegments.length <= 1 && currentOption === 0) {
-    alert("At least one city segment is required.");
-    return;
-  }
+    /* ==========================================
+       OPTION 1
+       At least one segment is compulsory
+    ========================================== */
+    if (allSegments.length <= 1 && currentOption === 0) {
+      alert("At least one city segment is required.");
+      return;
+    }
 
-  /* ==========================================
-     OPTION 2+
-     Last segment remove = remove whole option
-  ========================================== */
-  if (allSegments.length <= 1 && currentOption > 0) {
+    /* ==========================================
+       OPTION 2+
+       Last segment remove = remove whole option
+    ========================================== */
+    if (allSegments.length <= 1 && currentOption > 0) {
 
-    // Remove current option
-    quoteOptions.splice(currentOption, 1);
+      // Remove current option
+      quoteOptions.splice(currentOption, 1);
 
-    // Move to previous option
-    currentOption = Math.max(0, currentOption - 1);
+      // Move to previous option
+      currentOption = Math.max(0, currentOption - 1);
 
-    // Re-number option IDs
-    quoteOptions.forEach((option, index) => {
-      option.id = index + 1;
-      option.title = `Option ${index + 1}`;
-    });
+      // Re-number option IDs
+      quoteOptions.forEach((option, index) => {
+        option.id = index + 1;
+        option.title = `Option ${index + 1}`;
+      });
 
-    // Re-render option tabs
-    renderOptionTabs();
+      // Re-render option tabs
+      renderOptionTabs();
 
-    // Restore selected option
-    restoreQuoteData(
-      quoteOptions[currentOption].data
-    );
+      // Restore selected option
+      restoreQuoteData(
+        quoteOptions[currentOption].data
+      );
 
-    // Refresh preview
+      // Refresh preview
+      await buildPreview();
+
+      return;
+    }
+
+    /* ==========================================
+       NORMAL SEGMENT REMOVE
+    ========================================== */
+
+    segment.remove();
+
+    renumberSegments();
+    calculateQuote();
     await buildPreview();
 
-    return;
-  }
-
-  /* ==========================================
-     NORMAL SEGMENT REMOVE
-  ========================================== */
-
-  segment.remove();
-
-  renumberSegments();
-  calculateQuote();
-  await buildPreview();
-
-});
+  });
 
   return segment;
 }
@@ -1049,17 +1076,15 @@ function hydrateSegment(segmentEl) {
   hotelSelect?.addEventListener("change", () => {
     populateSegmentRoomTypes(segmentEl);
 
+    // Hotel change must NOT rebuild Land Package
     calculateQuote();
-    renderLandDays();
   });
 
   roomTypeSelect?.addEventListener("change", () => {
     calculateQuote();
-    renderLandDays();
   });
   mealPlanSelect?.addEventListener("change", () => {
     calculateQuote();
-    renderLandDays();
   });
 
   // First segment ke check-in change hone par dates recalculate
@@ -1067,7 +1092,6 @@ function hydrateSegment(segmentEl) {
     updateSegmentDates();
 
     calculateQuote();
-    renderLandDays();
   });
 
   // Nights change hone par checkout bhi recalculate
@@ -3906,6 +3930,9 @@ async function saveQuote() {
     }
 
     lastSavedQuote = payload;
+
+    advanceQuoteNo();
+
     alert("Quote saved successfully!");
 
     buildPreview();
@@ -4328,7 +4355,11 @@ TravLog
    HELPERS
 ========================================================= */
 function formatCurrency(value) {
-  return `$${Number(value || 0).toLocaleString("en-IN")}`;
+  const country = (countryEl?.value || "").trim().toLowerCase();
+
+  const symbol = country === "india" ? "₹" : "$";
+
+  return `${symbol}${Number(value || 0).toLocaleString("en-IN")}`;
 }
 
 document.addEventListener("click", function (e) {
@@ -4627,7 +4658,14 @@ async function populateLandServices(card, city) {
     );
 
     const servicesOfDay =
-      savedServices.filter(x => x.day === day);
+      savedServices.filter(x =>
+        x.day === day &&
+        (
+          !x.city ||
+          String(x.city).trim().toLowerCase() ===
+          String(city).trim().toLowerCase()
+        )
+      );
 
     if (!servicesOfDay.length) return;
 
@@ -4648,7 +4686,7 @@ ${service.service}
 </div>
 
 <div class="service-right">
-$${service.rate}
+${formatCurrency(service.rate)}
 </div>
 
 <button type="button" class="remove-service">
@@ -4692,25 +4730,12 @@ function renderLandDays() {
   initializeLandEvents();
 
   document.querySelectorAll(".land-city-card").forEach(card => {
-
     const city = card.querySelector(".land-city-header h4")
       .childNodes[0]
       .textContent
       .trim();
 
     populateLandServices(card, city);
-    if (window.restoredLandServices?.length) {
-
-      setTimeout(() => {
-
-        restoreLandServices(window.restoredLandServices);
-
-        window.restoredLandServices = [];
-
-      }, 300);
-
-    }
-
   });
 
 }
@@ -5020,9 +5045,7 @@ ${serviceName}
 </div>
 
 <div class="service-right">
-
-$${price}
-
+${formatCurrency(price)}
 </div>
 
 <button
@@ -5392,7 +5415,7 @@ ${service.service}
 </div>
 
 <div class="service-right">
-$${service.rate}
+${formatCurrency(price)}
 </div>
 
 <button

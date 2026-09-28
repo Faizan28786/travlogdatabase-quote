@@ -1120,7 +1120,10 @@ async function deleteHotelRoom(id) {
         const res = await fetch(
             CONFIG.API_BASE + "/hotels/" + id,
             {
-                method: "DELETE"
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                }
             }
         );
 
@@ -1831,7 +1834,8 @@ document.getElementById("saveHotelBtn").addEventListener("click", async () => {
                 method: "POST",
 
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
                 },
 
                 body: JSON.stringify({
@@ -1954,12 +1958,15 @@ async function restoreHotelRoom(id) {
 
     try {
 
-        const res = await fetch(
-            CONFIG.API_BASE + "/hotels/" + id + "/restore",
-            {
-                method: "PATCH"
-            }
-        );
+const res = await fetch(
+    CONFIG.API_BASE + "/hotels/" + id + "/restore",
+    {
+        method: "PATCH",
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
+    }
+);
 
         const result = await res.json();
 
