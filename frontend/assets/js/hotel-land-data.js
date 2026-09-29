@@ -25,11 +25,45 @@ landTab.addEventListener("click", () => {
 let hotelData = {};
 let landData = [];
 
-async function loadHotels() {
+let currentSelectedHotel = null;
+
+async function loadHotels(preserveSelection = false) {
 
     const tree = document.getElementById("hotelTree");
 
-    tree.innerHTML = "<div class='loading'>Loading Hotels...</div>";
+    // =========================================
+    // SAVE CURRENT TREE OPEN/CLOSED STATE
+    // =========================================
+
+    const expandedTreeItems = [];
+
+    tree.querySelectorAll(".accordion").forEach(header => {
+
+        const body = header.nextElementSibling;
+
+        if (body && body.classList.contains("open")) {
+
+            expandedTreeItems.push(
+                header.dataset.treeKey
+            );
+
+        }
+
+    });
+
+
+    // =========================================
+    // SAVE CURRENT HOTEL SELECTION
+    // =========================================
+
+    const previousSelection = preserveSelection && currentSelectedHotel
+        ? {
+            hotelName: currentSelectedHotel.hotelName,
+            city: currentSelectedHotel.city,
+            region: currentSelectedHotel.region || "",
+            destination: currentSelectedHotel.destination || ""
+        }
+        : null;
 
     try {
 
@@ -38,7 +72,10 @@ async function loadHotels() {
         // =========================================
 
         const vietnamRes = await fetch(
-            CONFIG.API_BASE + "/hotels?destination=Vietnam"
+            CONFIG.API_BASE + "/hotels?destination=Vietnam&_=" + Date.now(),
+            {
+                cache: "no-store"
+            }
         );
 
         const vietnamResult = await vietnamRes.json();
@@ -48,7 +85,10 @@ async function loadHotels() {
         // =========================================
 
         const indiaRes = await fetch(
-            CONFIG.API_BASE + "/hotels?destination=India"
+            CONFIG.API_BASE + "/hotels?destination=India&_=" + Date.now(),
+            {
+                cache: "no-store"
+            }
         );
 
         const indiaResult = await indiaRes.json();
@@ -157,6 +197,83 @@ async function loadHotels() {
 
         buildHotelTree(vietnamData, indiaData);
 
+        // =========================================
+        // RESTORE TREE OPEN/CLOSED STATE
+        // =========================================
+
+        document
+            .querySelectorAll("#hotelTree .accordion")
+            .forEach(header => {
+
+                const treeKey =
+                    header.dataset.treeKey;
+
+                if (
+                    treeKey &&
+                    expandedTreeItems.includes(treeKey)
+                ) {
+
+                    const body =
+                        header.nextElementSibling;
+
+                    if (body) {
+                        body.classList.add("open");
+                    }
+
+                    const arrow =
+                        header.querySelector(".arrow");
+
+                    if (arrow) {
+                        arrow.classList.add("rotate");
+                    }
+
+                }
+
+            });
+
+
+        // =========================================
+        // RESTORE PREVIOUS SELECTION
+        // =========================================
+
+        if (previousSelection) {
+
+            const hotelItems =
+                document.querySelectorAll(".hotelItem");
+
+            let matchingHotelItem = null;
+
+            hotelItems.forEach(item => {
+
+                const sameHotel =
+                    item.dataset.hotelName === previousSelection.hotelName;
+
+                const sameCity =
+                    item.dataset.city === previousSelection.city;
+
+                const sameRegion =
+                    item.dataset.region === previousSelection.region;
+
+                const sameDestination =
+                    item.dataset.destination === previousSelection.destination;
+
+                if (
+                    sameHotel &&
+                    sameCity &&
+                    sameRegion &&
+                    sameDestination
+                ) {
+                    matchingHotelItem = item;
+                }
+
+            });
+
+            // Hotel still exists
+            if (matchingHotelItem) {
+                matchingHotelItem.click();
+            }
+        }
+
     }
 
     catch (err) {
@@ -220,6 +337,8 @@ function buildHotelTree(vietnamHotels, indiaHotels) {
 
                 catHeader.className =
                     "categoryHeader accordion";
+                catHeader.dataset.treeKey =
+                    `category|${category}`;
 
 
                 let stars = "";
@@ -301,6 +420,12 @@ function buildHotelTree(vietnamHotels, indiaHotels) {
                         hotelItem.className =
                             "hotelItem";
 
+                        hotelItem.dataset.id = hotel._id;
+                        hotelItem.dataset.hotelName = hotel.hotelName;
+                        hotelItem.dataset.city = hotel.city;
+                        hotelItem.dataset.region = hotel.region || "";
+                        hotelItem.dataset.destination = hotel.destination || "";
+
 
                         hotelItem.innerHTML = `
                             <i class="fa-solid fa-hotel"></i>
@@ -354,6 +479,8 @@ function buildHotelTree(vietnamHotels, indiaHotels) {
 
         regionHeader.className =
             "regionHeader accordion";
+        regionHeader.dataset.treeKey =
+            `region|${region}`;
 
 
         regionHeader.innerHTML = `
@@ -399,6 +526,8 @@ function buildHotelTree(vietnamHotels, indiaHotels) {
 
             cityHeader.className =
                 "cityHeader accordion";
+            cityHeader.dataset.treeKey =
+                `city|${region}|${city}`;
 
 
             cityHeader.innerHTML = `
@@ -547,6 +676,8 @@ function buildHotelTree(vietnamHotels, indiaHotels) {
 
             stateHeader.className =
                 "cityHeader accordion";
+            stateHeader.dataset.treeKey =
+                `state|${state}`;
 
 
             stateHeader.innerHTML = `
@@ -593,6 +724,8 @@ function buildHotelTree(vietnamHotels, indiaHotels) {
 
                     cityHeader.className =
                         "cityHeader accordion";
+                    cityHeader.dataset.treeKey =
+                        `indiaCity|${state}|${city}`;
 
 
                     cityHeader.innerHTML = `
@@ -1115,39 +1248,424 @@ async function deleteHotelRoom(id) {
         return;
     }
 
+    // =====================================================
+    // SAVE CURRENT HOTEL BEFORE DELETE
+    // =====================================================
+
+    const selectedHotelBeforeDelete = currentSelectedHotel
+        ? {
+            hotelName: currentSelectedHotel.hotelName,
+            city: currentSelectedHotel.city,
+            region:
+                currentSelectedHotel.region ||
+                currentSelectedHotel.destination ||
+                "Vietnam",
+            destination:
+                currentSelectedHotel.destination ||
+                "Vietnam"
+        }
+        : null;
+
+
     try {
+
+        // =====================================================
+        // DELETE ROOM FROM SERVER
+        // =====================================================
 
         const res = await fetch(
             CONFIG.API_BASE + "/hotels/" + id,
             {
                 method: "DELETE",
                 headers: {
-                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                    "Authorization":
+                        `Bearer ${localStorage.getItem("token")}`
                 }
             }
         );
 
+
         const result = await res.json();
 
+        console.log("DELETE STATUS:", res.status);
         console.log("DELETE RESULT:", result);
 
+
         if (!result.success) {
-            alert(result.message || "Failed to delete room");
+
+            alert(
+                result.message ||
+                "Failed to delete room"
+            );
+
             return;
         }
 
-        alert("Room deleted successfully");
 
-        // Existing MongoDB data dobara fetch hoga
-        await refreshCurrentHotelDetails();
+        // =====================================================
+        // REMOVE ROOM FROM LOCAL HOTEL DATA
+        // =====================================================
+
+        if (selectedHotelBeforeDelete) {
+
+            const region =
+                selectedHotelBeforeDelete.region;
+
+            const city =
+                selectedHotelBeforeDelete.city;
+
+
+            if (
+                hotelData[region] &&
+                hotelData[region][city]
+            ) {
+
+                hotelData[region][city] =
+                    hotelData[region][city].filter(
+                        hotel =>
+                            String(hotel._id) !==
+                            String(id)
+                    );
+
+            }
+
+        }
+
+
+        // =====================================================
+        // FIND CURRENT HOTEL IN LEFT TREE
+        // =====================================================
+
+        let hotelItem = null;
+
+
+        if (selectedHotelBeforeDelete) {
+
+            const hotelItems =
+                document.querySelectorAll(
+                    ".hotelItem"
+                );
+
+
+            hotelItems.forEach(item => {
+
+                if (
+                    item.dataset.hotelName ===
+                        selectedHotelBeforeDelete.hotelName &&
+
+                    item.dataset.city ===
+                        selectedHotelBeforeDelete.city &&
+
+                    (
+                        item.dataset.region || ""
+                    ) ===
+                        (
+                            selectedHotelBeforeDelete.region || ""
+                        )
+                ) {
+
+                    hotelItem = item;
+
+                }
+
+            });
+
+        }
+
+
+        // =====================================================
+        // CHECK IF CURRENT HOTEL STILL HAS ROOMS
+        // =====================================================
+
+        let remainingRooms = [];
+
+
+        if (
+            selectedHotelBeforeDelete &&
+            hotelData[
+                selectedHotelBeforeDelete.region
+            ] &&
+            hotelData[
+                selectedHotelBeforeDelete.region
+            ][
+                selectedHotelBeforeDelete.city
+            ]
+        ) {
+
+            remainingRooms =
+                hotelData[
+                    selectedHotelBeforeDelete.region
+                ][
+                    selectedHotelBeforeDelete.city
+                ].filter(
+                    hotel =>
+                        hotel.hotelName ===
+                        selectedHotelBeforeDelete.hotelName
+                );
+
+        }
+
+
+        // =====================================================
+        // HOTEL STILL HAS ANOTHER ROOM
+        // =====================================================
+
+        if (remainingRooms.length > 0) {
+
+            currentSelectedHotel =
+                remainingRooms[0];
+
+            showHotelDetails(
+                currentSelectedHotel
+            );
+
+
+            // Keep hotel selected in left tree
+            if (hotelItem) {
+
+                document
+                    .querySelectorAll(".hotelItem")
+                    .forEach(item => {
+
+                        item.classList.remove(
+                            "active"
+                        );
+
+                    });
+
+
+                hotelItem.classList.add(
+                    "active"
+                );
+
+            }
+
+        }
+
+
+        // =====================================================
+        // LAST ROOM OF THIS HOTEL WAS DELETED
+        // =====================================================
+
+        else {
+
+            // -------------------------------------------------
+            // REMOVE HOTEL FROM LEFT TREE
+            // -------------------------------------------------
+
+            if (hotelItem) {
+
+                // category card
+                const categoryCard =
+                    hotelItem.parentElement
+                        ? hotelItem.parentElement.parentElement
+                        : null;
+
+
+                // city card
+                const cityBody =
+                    categoryCard &&
+                    categoryCard.parentElement
+                        ? categoryCard.parentElement
+                        : null;
+
+                const cityCard =
+                    cityBody &&
+                    cityBody.parentElement
+                        ? cityBody.parentElement
+                        : null;
+
+
+                // Save ancestors before removing anything
+                const parentCards = [];
+
+
+                let currentElement =
+                    cityCard;
+
+
+                while (currentElement) {
+
+                    if (
+                        currentElement.querySelector &&
+                        currentElement.querySelector(
+                            ".accordion"
+                        )
+                    ) {
+
+                        parentCards.push(
+                            currentElement
+                        );
+
+                    }
+
+                    currentElement =
+                        currentElement.parentElement;
+
+                }
+
+
+                // -------------------------------------------------
+                // REMOVE HOTEL
+                // -------------------------------------------------
+
+                hotelItem.remove();
+
+
+                // -------------------------------------------------
+                // REMOVE EMPTY CATEGORY / CITY / STATE / REGION
+                // -------------------------------------------------
+
+                parentCards.forEach(card => {
+
+                    if (!card.isConnected) {
+                        return;
+                    }
+
+
+                    const hasHotel =
+                        card.querySelector(
+                            ".hotelItem"
+                        );
+
+
+                    if (!hasHotel) {
+
+                        card.remove();
+
+                    }
+
+                });
+
+            }
+
+
+            // -------------------------------------------------
+            // REMOVE FROM LOCAL DATA
+            // -------------------------------------------------
+
+            if (selectedHotelBeforeDelete) {
+
+                const region =
+                    selectedHotelBeforeDelete.region;
+
+                const city =
+                    selectedHotelBeforeDelete.city;
+
+
+                if (
+                    hotelData[region] &&
+                    hotelData[region][city]
+                ) {
+
+                    delete hotelData[region][city];
+
+                }
+
+
+                if (
+                    hotelData[region] &&
+                    Object.keys(
+                        hotelData[region]
+                    ).length === 0
+                ) {
+
+                    delete hotelData[region];
+
+                }
+
+            }
+
+
+            // -------------------------------------------------
+            // CLEAR CURRENT SELECTION
+            // -------------------------------------------------
+
+            currentSelectedHotel = null;
+
+
+            const hotelTitle =
+                document.getElementById(
+                    "hotelTitle"
+                );
+
+            const hotelLocation =
+                document.getElementById(
+                    "hotelLocation"
+                );
+
+            const hotelSummary =
+                document.getElementById(
+                    "hotelSummary"
+                );
+
+            const roomTableBody =
+                document.getElementById(
+                    "roomTableBody"
+                );
+
+
+            if (hotelTitle) {
+
+                hotelTitle.innerText =
+                    "No Hotel Selected";
+
+            }
+
+
+            if (hotelLocation) {
+
+                hotelLocation.innerText =
+                    "";
+
+            }
+
+
+            if (hotelSummary) {
+
+                hotelSummary.innerHTML =
+                    "";
+
+            }
+
+
+            if (roomTableBody) {
+
+                roomTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            Select hotel to view rooms.
+                        </td>
+                    </tr>
+                `;
+
+            }
+
+        }
+
+
+        // =====================================================
+        // SUCCESS
+        // =====================================================
+
+        alert(
+            "Room deleted successfully"
+        );
+
 
     } catch (error) {
 
-        console.error("Delete room error:", error);
+        console.error(
+            "Delete room error:",
+            error
+        );
 
-        alert("Unable to delete room");
+        alert(
+            "Unable to delete room"
+        );
 
     }
+
 }
 function showLandDetails(service, type) {
 
@@ -1911,7 +2429,7 @@ document.getElementById("saveHotelBtn").addEventListener("click", async () => {
         // RELOAD HOTELS
         // =========================================
 
-        await loadHotels();
+        await loadHotels(true);
 
 
     } catch (error) {
@@ -1958,15 +2476,15 @@ async function restoreHotelRoom(id) {
 
     try {
 
-const res = await fetch(
-    CONFIG.API_BASE + "/hotels/" + id + "/restore",
-    {
-        method: "PATCH",
-        headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`
-        }
-    }
-);
+        const res = await fetch(
+            CONFIG.API_BASE + "/hotels/" + id + "/restore",
+            {
+                method: "PATCH",
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                }
+            }
+        );
 
         const result = await res.json();
 
@@ -3370,10 +3888,8 @@ async function saveNewRoomType() {
                     method: "POST",
 
                     headers: {
-
-                        "Content-Type":
-                            "application/json"
-
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${localStorage.getItem("token")}`
                     },
 
                     body:
@@ -3464,28 +3980,86 @@ async function refreshCurrentHotelDetails() {
     if (!currentSelectedHotel) return;
 
     try {
+
+        // =========================================
+        // GET CURRENT HOTEL DESTINATION
+        // =========================================
+
+        const destination =
+            currentSelectedHotel.destination ||
+            "Vietnam";
+
+
+        // =========================================
+        // FETCH CORRECT DESTINATION
+        // =========================================
+
         const res = await fetch(
-            CONFIG.API_BASE + "/hotels?destination=Vietnam"
+            CONFIG.API_BASE +
+            "/hotels?destination=" +
+            encodeURIComponent(destination)
         );
 
         const result = await res.json();
 
-        if (!result.success) return;
+        if (!result.success) {
+            console.error(
+                "REFRESH HOTEL DETAILS FAILED:",
+                result
+            );
+            return;
+        }
 
-        const latestHotels = result.hotels || [];
 
-        const hotelName = currentSelectedHotel.hotelName;
-        const city = currentSelectedHotel.city;
+        // =========================================
+        // GET LATEST HOTELS
+        // =========================================
+
+        const latestHotels =
+            result.hotels ||
+            result.data ||
+            [];
+
+
+        // =========================================
+        // CURRENT HOTEL DETAILS
+        // =========================================
+
+        const hotelName =
+            currentSelectedHotel.hotelName;
+
+        const city =
+            currentSelectedHotel.city;
+
         const region =
             currentSelectedHotel.region ||
             currentSelectedHotel.destination ||
-            "Vietnam";
+            destination;
 
-        const latestRooms = latestHotels.filter(hotel =>
-            hotel.hotelName === hotelName &&
-            hotel.city === city &&
-            (hotel.region || hotel.destination || "Vietnam") === region
-        );
+
+        // =========================================
+        // FIND ALL ROOMS OF CURRENT HOTEL
+        // =========================================
+
+        const latestRooms =
+            latestHotels.filter(hotel =>
+
+                hotel.hotelName === hotelName &&
+
+                hotel.city === city &&
+
+                (
+                    hotel.region ||
+                    hotel.destination ||
+                    destination
+                ) === region
+
+            );
+
+
+        // =========================================
+        // UPDATE LOCAL HOTEL DATA
+        // =========================================
 
         if (!hotelData[region]) {
             hotelData[region] = {};
@@ -3495,20 +4069,51 @@ async function refreshCurrentHotelDetails() {
             hotelData[region][city] = [];
         }
 
+
+        // Remove old data of this hotel
+
         hotelData[region][city] =
             hotelData[region][city].filter(
-                hotel => hotel.hotelName !== hotelName
+                hotel =>
+                    hotel.hotelName !== hotelName
             );
 
-        hotelData[region][city].push(...latestRooms);
+
+        // Add latest data
+
+        hotelData[region][city].push(
+            ...latestRooms
+        );
+
+
+        // =========================================
+        // UPDATE CURRENT SELECTED HOTEL
+        // =========================================
 
         if (latestRooms.length > 0) {
-            currentSelectedHotel = latestRooms[0];
+
+            currentSelectedHotel =
+                latestRooms[0];
+
         }
 
-        showHotelDetails(currentSelectedHotel);
+
+        // =========================================
+        // UPDATE RIGHT SIDE ONLY
+        // =========================================
+
+        showHotelDetails(
+            currentSelectedHotel
+        );
+
 
     } catch (error) {
-        console.error("Refresh current hotel error:", error);
+
+        console.error(
+            "Refresh current hotel error:",
+            error
+        );
+
     }
+
 }
