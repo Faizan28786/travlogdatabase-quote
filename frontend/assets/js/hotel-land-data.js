@@ -1351,17 +1351,17 @@ async function deleteHotelRoom(id) {
 
                 if (
                     item.dataset.hotelName ===
-                        selectedHotelBeforeDelete.hotelName &&
+                    selectedHotelBeforeDelete.hotelName &&
 
                     item.dataset.city ===
-                        selectedHotelBeforeDelete.city &&
+                    selectedHotelBeforeDelete.city &&
 
                     (
                         item.dataset.region || ""
                     ) ===
-                        (
-                            selectedHotelBeforeDelete.region || ""
-                        )
+                    (
+                        selectedHotelBeforeDelete.region || ""
+                    )
                 ) {
 
                     hotelItem = item;
@@ -1383,12 +1383,12 @@ async function deleteHotelRoom(id) {
         if (
             selectedHotelBeforeDelete &&
             hotelData[
-                selectedHotelBeforeDelete.region
+            selectedHotelBeforeDelete.region
             ] &&
             hotelData[
-                selectedHotelBeforeDelete.region
+            selectedHotelBeforeDelete.region
             ][
-                selectedHotelBeforeDelete.city
+            selectedHotelBeforeDelete.city
             ]
         ) {
 
@@ -1465,13 +1465,13 @@ async function deleteHotelRoom(id) {
                 // city card
                 const cityBody =
                     categoryCard &&
-                    categoryCard.parentElement
+                        categoryCard.parentElement
                         ? categoryCard.parentElement
                         : null;
 
                 const cityCard =
                     cityBody &&
-                    cityBody.parentElement
+                        cityBody.parentElement
                         ? cityBody.parentElement
                         : null;
 

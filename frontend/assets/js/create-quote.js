@@ -606,24 +606,75 @@ const QUOTE_START_NUMBER = 265001;
 
 function getQuotePrefix() {
 
-  const userName =
-    localStorage.getItem("username") ||
-    localStorage.getItem("userName") ||
-    sessionStorage.getItem("username") ||
-    sessionStorage.getItem("userName") ||
-    "";
+    let user = null;
 
-  const name = userName.trim().toLowerCase();
+    try {
+        const storedUser = localStorage.getItem("user");
 
-  if (name === "sejil") {
-    return "TLS";
-  }
+        if (storedUser) {
+            user = JSON.parse(storedUser);
+        }
+    } catch (error) {
+        console.error("USER DATA READ ERROR:", error);
+    }
 
-  if (name === "gagan") {
-    return "TLG";
-  }
+    // Get user information from the actual logged-in user object
+    const name = String(
+        user?.name ||
+        user?.username ||
+        user?.userName ||
+        ""
+    ).trim().toLowerCase();
 
-  return "TLM";
+    const email = String(
+        user?.email ||
+        ""
+    ).trim().toLowerCase();
+
+    console.log("QUOTE USER NAME:", name);
+    console.log("QUOTE USER EMAIL:", email);
+
+    // ============================
+    // NAZNIN → TLN
+    // ============================
+
+    if (
+        name.includes("naznin") ||
+        email === "tln@travlog.com" ||
+        email.startsWith("tln@")
+    ) {
+        return "TLN";
+    }
+
+    // ============================
+    // SEJIL → TLS
+    // ============================
+
+    if (
+        name.includes("sejil") ||
+        email === "tls@travlog.com" ||
+        email.startsWith("tls@")
+    ) {
+        return "TLS";
+    }
+
+    // ============================
+    // GAGAN → TLG
+    // ============================
+
+    if (
+        name.includes("gagan") ||
+        email === "tlg@travlog.com" ||
+        email.startsWith("tlg@")
+    ) {
+        return "TLG";
+    }
+
+    // ============================
+    // ADMIN / UNKNOWN → TLM
+    // ============================
+
+    return "TLM";
 }
 
 function generateQuoteNo() {
@@ -631,15 +682,22 @@ function generateQuoteNo() {
   const prefix = getQuotePrefix();
   const storageKey = `lastQuoteNumber_${prefix}`;
 
-  let lastNumber = Number(localStorage.getItem(storageKey));
+  let lastNumber = Number(
+    localStorage.getItem(storageKey)
+  );
 
-  if (!Number.isFinite(lastNumber) || lastNumber < QUOTE_START_NUMBER - 1) {
+  if (
+    !Number.isFinite(lastNumber) ||
+    lastNumber < QUOTE_START_NUMBER - 1
+  ) {
     lastNumber = QUOTE_START_NUMBER - 1;
   }
 
   const nextNumber = lastNumber + 1;
 
   const quoteNo = `${prefix}${nextNumber}`;
+
+  console.log("GENERATED QUOTE NO:", quoteNo);
 
   if (quoteNoEl) {
     quoteNoEl.textContent = quoteNo;
