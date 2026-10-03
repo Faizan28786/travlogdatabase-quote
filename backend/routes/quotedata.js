@@ -219,6 +219,48 @@ router.get("/:quoteNo", async (req, res) => {
 });
 
 /* =========================================================
+   CONFIRM QUOTE
+   PATCH /api/quote-data/confirm/:id
+========================================================= */
+router.patch("/confirm/:id", async (req, res) => {
+  try {
+    const quoteId = req.params.id;
+
+    const updatedQuote = await Quote.findByIdAndUpdate(
+      quoteId,
+      {
+        confirmed: true
+      },
+      {
+        new: true
+      }
+    );
+
+    if (!updatedQuote) {
+      return res.status(404).json({
+        success: false,
+        message: "Quote not found"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Quote confirmed successfully",
+      quote: updatedQuote
+    });
+
+  } catch (error) {
+    console.log("CONFIRM QUOTE ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to confirm quote",
+      error: error.message
+    });
+  }
+});
+
+/* =========================================================
    DELETE QUOTE
    DELETE /api/quote-data/delete-quote/:id
 ========================================================= */

@@ -3997,7 +3997,8 @@ async function saveQuote() {
 
       hotelCost: currentHotelCost,
       transferCost: currentTransferCost,
-      grandTotal: currentGrandTotal
+      grandTotal: currentGrandTotal,
+      previewHtml: window.latestPreviewHtml || ""
     };
 
     const res = await fetch(`${API_BASE}/save`, {

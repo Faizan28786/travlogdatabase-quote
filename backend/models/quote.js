@@ -109,7 +109,12 @@ const quoteSchema = new mongoose.Schema(
     grandTotal: {
       type: Number,
       default: 0
+    },
+    confirmed: {
+      type: Boolean,
+      default: false
     }
+
   },
   {
     timestamps: true
