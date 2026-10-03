@@ -2020,6 +2020,31 @@ const indiaRegionCities = {
         "Kumbhalgarh",
         "Chittorgarh"
     ],
+    "Uttar Pradesh": [
+    "Agra",
+    "Lucknow",
+    "Varanasi",
+    "Ayodhya",
+    "Mathura",
+    "Vrindavan",
+    "Prayagraj",
+    "Fatehpur Sikri",
+    "Gorakhpur",
+    "Kanpur",
+    "Meerut",
+    "Noida",
+    "Ghaziabad",
+    "Bareilly",
+    "Jhansi",
+    "Chitrakoot",
+    "Sarnath",
+    "Kushinagar",
+    "Vindhyachal",
+    "Barsana",
+    "Govardhan",
+    "Aligarh",
+    "Moradabad"
+],
 
     "Golden Triangle": [
         "Delhi",
