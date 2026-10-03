@@ -606,75 +606,75 @@ const QUOTE_START_NUMBER = 265001;
 
 function getQuotePrefix() {
 
-    let user = null;
+  let user = null;
 
-    try {
-        const storedUser = localStorage.getItem("user");
+  try {
+    const storedUser = localStorage.getItem("user");
 
-        if (storedUser) {
-            user = JSON.parse(storedUser);
-        }
-    } catch (error) {
-        console.error("USER DATA READ ERROR:", error);
+    if (storedUser) {
+      user = JSON.parse(storedUser);
     }
+  } catch (error) {
+    console.error("USER DATA READ ERROR:", error);
+  }
 
-    // Get user information from the actual logged-in user object
-    const name = String(
-        user?.name ||
-        user?.username ||
-        user?.userName ||
-        ""
-    ).trim().toLowerCase();
+  // Get user information from the actual logged-in user object
+  const name = String(
+    user?.name ||
+    user?.username ||
+    user?.userName ||
+    ""
+  ).trim().toLowerCase();
 
-    const email = String(
-        user?.email ||
-        ""
-    ).trim().toLowerCase();
+  const email = String(
+    user?.email ||
+    ""
+  ).trim().toLowerCase();
 
-    console.log("QUOTE USER NAME:", name);
-    console.log("QUOTE USER EMAIL:", email);
+  console.log("QUOTE USER NAME:", name);
+  console.log("QUOTE USER EMAIL:", email);
 
-    // ============================
-    // NAZNIN → TLN
-    // ============================
+  // ============================
+  // NAZNIN → TLN
+  // ============================
 
-    if (
-        name.includes("naznin") ||
-        email === "tln@travlog.com" ||
-        email.startsWith("tln@")
-    ) {
-        return "TLN";
-    }
+  if (
+    name.includes("naznin") ||
+    email === "tln@travlog.com" ||
+    email.startsWith("tln@")
+  ) {
+    return "TLN";
+  }
 
-    // ============================
-    // SEJIL → TLS
-    // ============================
+  // ============================
+  // SEJIL → TLS
+  // ============================
 
-    if (
-        name.includes("sejil") ||
-        email === "tls@travlog.com" ||
-        email.startsWith("tls@")
-    ) {
-        return "TLS";
-    }
+  if (
+    name.includes("sejil") ||
+    email === "tls@travlog.com" ||
+    email.startsWith("tls@")
+  ) {
+    return "TLS";
+  }
 
-    // ============================
-    // GAGAN → TLG
-    // ============================
+  // ============================
+  // GAGAN → TLG
+  // ============================
 
-    if (
-        name.includes("gagan") ||
-        email === "tlg@travlog.com" ||
-        email.startsWith("tlg@")
-    ) {
-        return "TLG";
-    }
+  if (
+    name.includes("gagan") ||
+    email === "tlg@travlog.com" ||
+    email.startsWith("tlg@")
+  ) {
+    return "TLG";
+  }
 
-    // ============================
-    // ADMIN / UNKNOWN → TLM
-    // ============================
+  // ============================
+  // ADMIN / UNKNOWN → TLM
+  // ============================
 
-    return "TLM";
+  return "TLM";
 }
 
 function generateQuoteNo() {
@@ -2449,15 +2449,22 @@ async function buildPreview() {
 
 <div class="quotation-package">
 
-    <div class="package-row">
-        <span>Price Per Person:</span>
+<div class="package-row">
+    <span>
+        ${String(country || "").trim().toLowerCase() === "india"
+      ? "Price Per Room:"
+      : "Price Per Person:"}
+    </span>
 
-        <span class="package-value">
-            <strong>
-                ${formatCurrency(finalPricePerPerson)} Per Pax
-            </strong>
-        </span>
-    </div>
+    <span class="package-value">
+        <strong>
+            ${formatCurrency(finalPricePerPerson)}
+            ${String(country || "").trim().toLowerCase() === "india"
+      ? "Per Room"
+      : "Per Pax"}
+        </strong>
+    </span>
+</div>
 
 <div class="package-row">
     <span>Extra Person:</span>
@@ -2575,21 +2582,25 @@ ${childWithBed > 0
     </span>
 </div>
 
-    <div class="package-row">
-        <span>Compulsory Tip:</span>
+${String(country || "").trim().toLowerCase() === "vietnam" ? `
 
-        <span class="package-value">
-            <strong>USD 3 Per Person / Day</strong>
-        </span>
-    </div>
+<div class="package-row">
+    <span>Compulsory Tip:</span>
 
-    <div class="package-row">
-        <span>E-Visa:</span>
+    <span class="package-value">
+        <strong>USD 3 Per Person / Day</strong>
+    </span>
+</div>
 
-        <span class="package-value">
-            <strong>₹ 2,900 Per Person(05-06 working days)</strong>
-        </span>
-    </div>
+<div class="package-row">
+    <span>E-Visa:</span>
+
+    <span class="package-value">
+        <strong>₹ 2,900 Per Person (05-06 working days)</strong>
+    </span>
+</div>
+
+` : ""}
 
 </div>
 ${itineraryHtml}
@@ -3394,9 +3405,19 @@ ${quotationAccommodation}
 <div class="quotation-package">
 
 <div class="package-row">
-<span>Price Per Person:</span>
+<span>
+  ${String(country || "").trim().toLowerCase() === "india"
+      ? "Price Per Room:"
+      : "Price Per Person:"}
+</span>
+
 <span class="package-value">
-<strong>${formatCurrency(totalPerPerson + totalLandAdult + universalMargin)} Per Pax</strong>
+<strong>
+  ${formatCurrency(totalPerPerson + totalLandAdult + universalMargin)}
+  ${String(country || "").trim().toLowerCase() === "india"
+      ? "Per Room"
+      : "Per Pax"}
+</strong>
 </span>
 </div>
 
@@ -3500,19 +3521,25 @@ ${quotationAccommodation}
   </span>
 </div>
 
+${String(country || "").trim().toLowerCase() === "vietnam" ? `
+
 <div class="package-row">
-<span>Compulsory Tip:</span>
-<span class="package-value">
-<strong>USD 3 Per Person / Day</strong>
-</span>
+    <span>Compulsory Tip:</span>
+
+    <span class="package-value">
+        <strong>USD 3 Per Person / Day</strong>
+    </span>
 </div>
 
 <div class="package-row">
-<span>E-Visa:</span>
-<span class="package-value">
-<strong>₹2,900 Per Person</strong>
-</span>
+    <span>E-Visa:</span>
+
+    <span class="package-value">
+        <strong>₹2,900 Per Person</strong>
+    </span>
 </div>
+
+` : ""}
 
 </div>
 
@@ -3789,8 +3816,8 @@ function openPreviewModal() {
     finalPreviewWhatsappText
 
       .replace(
-        /Price Per Person:\n+\$([^\n]+)\n+Per Pax/g,
-        "Price Per Person: $$1 Per Pax"
+        /Price Per (Person|Room):\n+\$([^\n]+)\n+Per (Pax|Room)/g,
+        "Price Per $1: $$2 Per $3"
       )
 
       .replace(
