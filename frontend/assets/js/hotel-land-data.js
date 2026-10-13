@@ -2089,9 +2089,7 @@ const vietnamRegionCities = {
 
 };
 
-
 function setupHotelLocationDropdowns() {
-
     const destinationInput =
         document.getElementById("hotelDestinationInput");
 
@@ -2101,157 +2099,197 @@ function setupHotelLocationDropdowns() {
     const cityInput =
         document.getElementById("hotelCityInput");
 
-
     if (!destinationInput || !regionInput || !cityInput) {
         console.log("Hotel location inputs not found");
         return;
     }
 
+    // Add City button: HTML file change karne ki zaroorat nahi
+    let addCityBtn = document.getElementById("addHotelCityBtn");
 
-    // =========================================
-    // LOAD REGIONS
-    // =========================================
+    if (!addCityBtn) {
+        addCityBtn = document.createElement("button");
+        addCityBtn.id = "addHotelCityBtn";
+        addCityBtn.type = "button";
+        addCityBtn.className = "blueBtn";
+        addCityBtn.innerHTML =
+            '<i class="fa-solid fa-plus"></i> Add City';
 
-    function loadRegions() {
+        addCityBtn.style.marginTop = "8px";
+        addCityBtn.style.width = "100%";
 
+        cityInput.parentElement.appendChild(addCityBtn);
+    }
+
+    async function loadRegions() {
         const destination =
             destinationInput.value.trim().toLowerCase();
 
         regionInput.innerHTML =
-            `<option value="">Select Region</option>`;
+            '<option value="">Select Region</option>';
 
         cityInput.innerHTML =
-            `<option value="">Select City</option>`;
+            '<option value="">Select City</option>';
 
         cityInput.disabled = true;
-
+        addCityBtn.disabled = true;
 
         let regionData = {};
 
-
-        // INDIA
         if (destination === "india") {
-
             regionData = indiaRegionCities;
-
-        }
-
-
-        // VIETNAM
-        else if (destination === "vietnam") {
-
+        } else if (destination === "vietnam") {
             regionData = vietnamRegionCities;
-
         }
-
 
         Object.keys(regionData).forEach(region => {
-
-            const option =
-                document.createElement("option");
-
+            const option = document.createElement("option");
             option.value = region;
             option.textContent = region;
-
             regionInput.appendChild(option);
-
         });
-
     }
 
-
-    // =========================================
-    // LOAD CITIES
-    // =========================================
-
-    function loadCities() {
-
+    async function loadCities(selectedCity = "") {
         const destination =
-            destinationInput.value.trim().toLowerCase();
+            destinationInput.value.trim();
 
-        const region =
-            regionInput.value;
+        const region = regionInput.value;
 
         cityInput.innerHTML =
-            `<option value="">Select City</option>`;
+            '<option value="">Select City</option>';
+
+        cityInput.disabled = true;
+        addCityBtn.disabled = !destination || !region;
+
+        if (!destination || !region) {
+            return;
+        }
 
         let cities = [];
 
-
-        // INDIA
-        if (destination === "india") {
-
-            cities =
-                indiaRegionCities[region] || [];
-
+        // Existing hardcoded cities preserve karo
+        if (destination.toLowerCase() === "india") {
+            cities = [...(indiaRegionCities[region] || [])];
+        } else if (destination.toLowerCase() === "vietnam") {
+            cities = [...(vietnamRegionCities[region] || [])];
         }
 
+        try {
+            const response = await fetch(
+                CONFIG.API_BASE +
+                "/hotels/cities?destination=" +
+                encodeURIComponent(destination) +
+                "&region=" +
+                encodeURIComponent(region) +
+                "&_=" + Date.now(),
+                { cache: "no-store" }
+            );
 
-        // VIETNAM
-        else if (destination === "vietnam") {
+            const result = await response.json();
 
-            cities =
-                vietnamRegionCities[region] || [];
-
+            if (response.ok && result.success) {
+                cities = [
+                    ...new Set([
+                        ...cities,
+                        ...(result.cities || [])
+                    ])
+                ];
+            } else {
+                console.error("Unable to load saved cities:", result);
+            }
+        } catch (error) {
+            console.error("Load cities error:", error);
         }
 
-
-        console.log(
-            "Destination:",
-            destination,
-            "Region:",
-            region,
-            "Cities:",
-            cities
-        );
-
+        cities.sort((a, b) => a.localeCompare(b));
 
         cities.forEach(city => {
-
-            const option =
-                document.createElement("option");
-
+            const option = document.createElement("option");
             option.value = city;
             option.textContent = city;
-
             cityInput.appendChild(option);
-
         });
 
+        if (selectedCity && cities.includes(selectedCity)) {
+            cityInput.value = selectedCity;
+        }
 
-        cityInput.disabled = cities.length === 0;
+        cityInput.disabled = false;
+        addCityBtn.disabled = false;
 
+        console.log("Loaded cities:", destination, region, cities);
     }
 
+    destinationInput.addEventListener("change", loadRegions);
 
-    // =========================================
-    // DESTINATION CHANGE
-    // =========================================
+    regionInput.addEventListener("change", () => {
+        loadCities();
+    });
 
-    destinationInput.addEventListener(
-        "change",
-        loadRegions
-    );
+    addCityBtn.addEventListener("click", async () => {
+        const destination = destinationInput.value.trim();
+        const region = regionInput.value;
 
+        if (!destination || !region) {
+            alert("Please select destination and region first.");
+            return;
+        }
 
-    // =========================================
-    // REGION CHANGE
-    // =========================================
+        const city = prompt(
+            `Enter new city for ${region}:`
+        );
 
-    regionInput.addEventListener(
-        "change",
-        loadCities
-    );
+        if (city === null || !city.trim()) {
+            return;
+        }
 
+        const normalizedCity = city.trim();
 
-    // =========================================
-    // INITIAL LOAD
-    // =========================================
+        addCityBtn.disabled = true;
+        addCityBtn.textContent = "Saving City...";
+
+        try {
+            const response = await fetch(
+                CONFIG.API_BASE + "/hotels/cities",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization":
+                            `Bearer ${localStorage.getItem("token")}`
+                    },
+                    body: JSON.stringify({
+                        destination,
+                        region,
+                        city: normalizedCity
+                    })
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                alert(result.message || "Failed to save city.");
+                return;
+            }
+
+            await loadCities(result.city || normalizedCity);
+
+            alert("City added successfully.");
+
+        } catch (error) {
+            console.error("Add city error:", error);
+            alert("Unable to save city. Please check the server.");
+        } finally {
+            addCityBtn.disabled = false;
+            addCityBtn.innerHTML =
+                '<i class="fa-solid fa-plus"></i> Add City';
+        }
+    });
 
     loadRegions();
-
 }
-
 
 setupHotelLocationDropdowns();
 // =========================================

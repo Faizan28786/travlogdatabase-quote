@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Hotel = require("../models/Hotel");
+const HotelCity = require("../models/HotelCity");
 
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
@@ -110,16 +111,33 @@ router.get("/", async (req, res) => {
 ========================================================= */
 
 router.get("/cities", async (req, res) => {
-
   try {
+    const destination = req.query.destination || "Vietnam";
+    const region = req.query.region || "";
 
-    const destination =
-      req.query.destination || "Vietnam";
-
-    const cities = await Hotel.distinct("city", {
+    const hotelFilter = {
       destination,
       ...getActiveFilter()
-    });
+    };
+
+    if (region) {
+      hotelFilter.region = region;
+    }
+
+    const hotelCities = await Hotel.distinct(
+      "city",
+      hotelFilter
+    );
+
+    const savedCities = await HotelCity.find({
+      destination,
+      ...(region ? { region } : {}),
+      isActive: true
+    }).distinct("city");
+
+    const cities = [
+      ...new Set([...hotelCities, ...savedCities])
+    ];
 
     const cityOrder = [
       "Hanoi",
@@ -132,15 +150,10 @@ router.get("/cities", async (req, res) => {
     ];
 
     const orderedCities = [
-
-      ...cityOrder.filter(
-        city => cities.includes(city)
-      ),
-
+      ...cityOrder.filter(city => cities.includes(city)),
       ...cities
         .filter(city => !cityOrder.includes(city))
         .sort((a, b) => a.localeCompare(b))
-
     ];
 
     return res.json({
@@ -149,7 +162,6 @@ router.get("/cities", async (req, res) => {
     });
 
   } catch (error) {
-
     console.error("GET /cities error:", error);
 
     return res.status(500).json({
@@ -157,11 +169,157 @@ router.get("/cities", async (req, res) => {
       message: "Failed to fetch cities",
       error: error.message
     });
-
   }
-
 });
 
+
+router.post(
+  "/cities",
+  authMiddleware,
+  roleMiddleware("superadmin", "admin"),
+  async (req, res) => {
+    try {
+      const destination = String(req.body.destination || "").trim();
+      const region = String(req.body.region || "").trim();
+      const city = String(req.body.city || "").trim();
+
+      if (!destination || !region || !city) {
+        return res.status(400).json({
+          success: false,
+          message: "Destination, region and city are required."
+        });
+      }
+
+      const existingCity = await HotelCity.findOne({
+        destination: new RegExp("^" + destination.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$", "i"),
+        region: new RegExp("^" + region.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$", "i"),
+        city: new RegExp("^" + city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$", "i")
+      });
+
+      if (existingCity) {
+        return res.status(409).json({
+          success: false,
+          message: "This city already exists in the selected region."
+        });
+      }
+
+      const savedCity = await HotelCity.create({
+        destination,
+        region,
+        city,
+        isActive: true
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "City added successfully.",
+        city: savedCity.city
+      });
+    } catch (error) {
+      if (error.code === 11000) {
+        return res.status(409).json({
+          success: false,
+          message: "This city already exists in the selected region."
+        });
+      }
+
+      console.error("POST /cities error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to save city.",
+        error: error.message
+      });
+    }
+  }
+);
+
+
+/* =========================================================
+   ADD CITY
+   POST /api/hotels/cities
+========================================================= */
+
+router.post(
+  "/cities",
+  authMiddleware,
+  roleMiddleware("superadmin", "admin"),
+  async (req, res) => {
+    try {
+      const {
+        destination,
+        region,
+        city
+      } = req.body || {};
+
+      if (
+        !destination?.trim() ||
+        !region?.trim() ||
+        !city?.trim()
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Destination, region and city are required"
+        });
+      }
+
+      const normalizedDestination = destination.trim();
+      const normalizedRegion = region.trim();
+      const normalizedCity = normalizeCityInput(city.trim());
+
+      const existingCity = await HotelCity.findOne({
+        destination: {
+          $regex: `^${normalizedDestination.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+          $options: "i"
+        },
+        region: {
+          $regex: `^${normalizedRegion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+          $options: "i"
+        },
+        city: {
+          $regex: `^${normalizedCity.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+          $options: "i"
+        }
+      });
+
+      if (existingCity) {
+        return res.status(409).json({
+          success: false,
+          message: "This city already exists in the selected region"
+        });
+      }
+
+      const savedCity = await HotelCity.create({
+        destination: normalizedDestination,
+        region: normalizedRegion,
+        city: normalizedCity,
+        isActive: true
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "City added successfully",
+        city: savedCity.city
+      });
+
+    } catch (error) {
+      if (error.code === 11000) {
+        return res.status(409).json({
+          success: false,
+          message: "This city already exists in the selected region"
+        });
+      }
+
+      console.error("POST /api/hotels/cities error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to add city",
+        error: error.message
+      });
+    }
+  }
+);
 
 /* =========================================================
    3. GET HOTELS BY CITY
