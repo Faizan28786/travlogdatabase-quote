@@ -2089,86 +2089,58 @@ const vietnamRegionCities = {
 
 };
 
+
 function setupHotelLocationDropdowns() {
-    const destinationInput =
-        document.getElementById("hotelDestinationInput");
-
-    const regionInput =
-        document.getElementById("hotelRegionInput");
-
-    const cityInput =
-        document.getElementById("hotelCityInput");
+    const destinationInput = document.getElementById("hotelDestinationInput");
+    const regionInput = document.getElementById("hotelRegionInput");
+    const cityInput = document.getElementById("hotelCityInput");
 
     if (!destinationInput || !regionInput || !cityInput) {
         console.log("Hotel location inputs not found");
         return;
     }
 
-    // Add City button: HTML file change karne ki zaroorat nahi
-    let addCityBtn = document.getElementById("addHotelCityBtn");
+    function createButton(id, text, parent) {
+        let button = document.getElementById(id);
 
-    if (!addCityBtn) {
-        addCityBtn = document.createElement("button");
-        addCityBtn.id = "addHotelCityBtn";
-        addCityBtn.type = "button";
-        addCityBtn.className = "blueBtn";
-        addCityBtn.innerHTML =
-            '<i class="fa-solid fa-plus"></i> Add City';
-
-        addCityBtn.style.marginTop = "8px";
-        addCityBtn.style.width = "100%";
-
-        cityInput.parentElement.appendChild(addCityBtn);
-    }
-
-    async function loadRegions() {
-        const destination =
-            destinationInput.value.trim().toLowerCase();
-
-        regionInput.innerHTML =
-            '<option value="">Select Region</option>';
-
-        cityInput.innerHTML =
-            '<option value="">Select City</option>';
-
-        cityInput.disabled = true;
-        addCityBtn.disabled = true;
-
-        let regionData = {};
-
-        if (destination === "india") {
-            regionData = indiaRegionCities;
-        } else if (destination === "vietnam") {
-            regionData = vietnamRegionCities;
+        if (!button) {
+            button = document.createElement("button");
+            button.id = id;
+            button.type = "button";
+            button.className = "blueBtn";
+            button.innerHTML = text;
+            button.style.marginTop = "8px";
+            button.style.width = "100%";
+            parent.appendChild(button);
         }
 
-        Object.keys(regionData).forEach(region => {
-            const option = document.createElement("option");
-            option.value = region;
-            option.textContent = region;
-            regionInput.appendChild(option);
-        });
+        return button;
     }
 
-    async function loadCities(selectedCity = "") {
-        const destination =
-            destinationInput.value.trim();
+    const addRegionBtn = createButton(
+        "addHotelRegionBtn",
+        '<i class="fa-solid fa-plus"></i> Add Region',
+        regionInput.parentElement
+    );
 
+    const addCityBtn = createButton(
+        "addHotelCityBtn",
+        '<i class="fa-solid fa-plus"></i> Add City',
+        cityInput.parentElement
+    );
+
+    async function loadCities(selectedCity = "") {
+        const destination = destinationInput.value.trim();
         const region = regionInput.value;
 
-        cityInput.innerHTML =
-            '<option value="">Select City</option>';
-
+        cityInput.innerHTML = '<option value="">Select City</option>';
         cityInput.disabled = true;
         addCityBtn.disabled = !destination || !region;
 
-        if (!destination || !region) {
-            return;
-        }
+        if (!destination || !region) return;
 
         let cities = [];
 
-        // Existing hardcoded cities preserve karo
         if (destination.toLowerCase() === "india") {
             cities = [...(indiaRegionCities[region] || [])];
         } else if (destination.toLowerCase() === "vietnam") {
@@ -2189,12 +2161,7 @@ function setupHotelLocationDropdowns() {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                cities = [
-                    ...new Set([
-                        ...cities,
-                        ...(result.cities || [])
-                    ])
-                ];
+                cities = [...new Set([...cities, ...(result.cities || [])])];
             } else {
                 console.error("Unable to load saved cities:", result);
             }
@@ -2217,14 +2184,125 @@ function setupHotelLocationDropdowns() {
 
         cityInput.disabled = false;
         addCityBtn.disabled = false;
-
-        console.log("Loaded cities:", destination, region, cities);
     }
 
-    destinationInput.addEventListener("change", loadRegions);
+    async function loadRegions(selectedRegion = "") {
+        const destination = destinationInput.value.trim();
+
+        regionInput.innerHTML = '<option value="">Select Region</option>';
+        cityInput.innerHTML = '<option value="">Select City</option>';
+        cityInput.disabled = true;
+
+        addRegionBtn.disabled = !destination;
+        addCityBtn.disabled = true;
+
+        if (!destination) return;
+
+        let regions = [];
+
+        if (destination.toLowerCase() === "india") {
+            regions = Object.keys(indiaRegionCities);
+        } else if (destination.toLowerCase() === "vietnam") {
+            regions = Object.keys(vietnamRegionCities);
+        }
+
+        try {
+            const response = await fetch(
+                CONFIG.API_BASE +
+                "/hotels/regions?destination=" +
+                encodeURIComponent(destination) +
+                "&_=" + Date.now(),
+                { cache: "no-store" }
+            );
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                regions = [...new Set([...regions, ...(result.regions || [])])];
+            } else {
+                console.error("Unable to load saved regions:", result);
+            }
+        } catch (error) {
+            console.error("Load regions error:", error);
+        }
+
+        regions.sort((a, b) => a.localeCompare(b));
+
+        regions.forEach(region => {
+            const option = document.createElement("option");
+            option.value = region;
+            option.textContent = region;
+            regionInput.appendChild(option);
+        });
+
+        if (selectedRegion && regions.includes(selectedRegion)) {
+            regionInput.value = selectedRegion;
+            await loadCities();
+        }
+
+        addRegionBtn.disabled = false;
+    }
+
+    destinationInput.addEventListener("change", () => {
+        loadRegions();
+    });
 
     regionInput.addEventListener("change", () => {
         loadCities();
+    });
+
+    addRegionBtn.addEventListener("click", async () => {
+        const destination = destinationInput.value.trim();
+
+        if (!destination) {
+            alert("Please enter a destination first.");
+            return;
+        }
+
+        const region = prompt("Enter new region name:");
+
+        if (region === null || !region.trim()) return;
+
+        const normalizedRegion = region.trim();
+
+        addRegionBtn.disabled = true;
+        addRegionBtn.textContent = "Saving Region...";
+
+        try {
+            const response = await fetch(CONFIG.API_BASE + "/hotels/regions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                },
+                body: JSON.stringify({
+                    destination,
+                    region: normalizedRegion
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.status === 409) {
+                await loadRegions(normalizedRegion);
+                alert(result.message || "This region already exists.");
+                return;
+            }
+
+            if (!response.ok || !result.success) {
+                alert(result.message || "Failed to save region.");
+                return;
+            }
+
+            await loadRegions(result.region || normalizedRegion);
+            alert("Region added successfully.");
+        } catch (error) {
+            console.error("Add region error:", error);
+            alert("Unable to save region. Please check the server.");
+        } finally {
+            addRegionBtn.disabled = false;
+            addRegionBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Region';
+        }
     });
 
     addCityBtn.addEventListener("click", async () => {
@@ -2236,13 +2314,9 @@ function setupHotelLocationDropdowns() {
             return;
         }
 
-        const city = prompt(
-            `Enter new city for ${region}:`
-        );
+        const city = prompt(`Enter new city for ${region}:`);
 
-        if (city === null || !city.trim()) {
-            return;
-        }
+        if (city === null || !city.trim()) return;
 
         const normalizedCity = city.trim();
 
@@ -2250,22 +2324,18 @@ function setupHotelLocationDropdowns() {
         addCityBtn.textContent = "Saving City...";
 
         try {
-            const response = await fetch(
-                CONFIG.API_BASE + "/hotels/cities",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization":
-                            `Bearer ${localStorage.getItem("token")}`
-                    },
-                    body: JSON.stringify({
-                        destination,
-                        region,
-                        city: normalizedCity
-                    })
-                }
-            );
+            const response = await fetch(CONFIG.API_BASE + "/hotels/cities", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                },
+                body: JSON.stringify({
+                    destination,
+                    region,
+                    city: normalizedCity
+                })
+            });
 
             const result = await response.json();
 
@@ -2275,21 +2345,19 @@ function setupHotelLocationDropdowns() {
             }
 
             await loadCities(result.city || normalizedCity);
-
             alert("City added successfully.");
-
         } catch (error) {
             console.error("Add city error:", error);
             alert("Unable to save city. Please check the server.");
         } finally {
             addCityBtn.disabled = false;
-            addCityBtn.innerHTML =
-                '<i class="fa-solid fa-plus"></i> Add City';
+            addCityBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add City';
         }
     });
 
     loadRegions();
 }
+
 
 setupHotelLocationDropdowns();
 // =========================================
@@ -3479,7 +3547,7 @@ async function saveEditedLandService(
 
 }
 // ==========================================
-// UNIVERSAL MARGIN
+// DESTINATION-WISE MARGIN SETTINGS
 // ==========================================
 
 const marginBtn = document.getElementById("marginBtn");
@@ -3487,134 +3555,197 @@ const marginModal = document.getElementById("marginModal");
 const closeMarginModal = document.getElementById("closeMarginModal");
 const cancelMarginBtn = document.getElementById("cancelMarginBtn");
 const saveMarginBtn = document.getElementById("saveMarginBtn");
+
+const marginDestinationSelect = document.getElementById("marginDestinationSelect");
+const marginCurrencyInput = document.getElementById("marginCurrencyInput");
 const universalMarginInput = document.getElementById("universalMarginInput");
+const marginCurrencySymbol = document.getElementById("marginCurrencySymbol");
 
+let destinationMargins = [];
+let currentMarginSettings = null;
 
-// OPEN MARGIN MODAL
+const marginCurrencySymbols = {
+    INR: "₹",
+    USD: "$",
+    EUR: "€",
+    GBP: "£",
+    VND: "₫",
+    THB: "฿",
+    SGD: "S$",
+    MYR: "RM",
+    IDR: "Rp",
+    AED: "د.إ",
+    AUD: "A$",
+    CAD: "C$"
+};
+
+function updateMarginFields() {
+    const selectedDestination = marginDestinationSelect.value;
+
+    const destinationMargin = destinationMargins.find(
+        item => item.destination.toLowerCase() === selectedDestination.toLowerCase()
+    );
+
+    if (!destinationMargin) {
+        marginCurrencyInput.value = "";
+        marginCurrencySymbol.textContent = "";
+        universalMarginInput.value = "";
+        return;
+    }
+
+    marginCurrencyInput.value = destinationMargin.currency;
+
+    marginCurrencySymbol.textContent =
+        marginCurrencySymbols[destinationMargin.currency] ||
+        destinationMargin.currency + " ";
+
+    universalMarginInput.value = Number(destinationMargin.marginPerPerson || 0);
+}
+
+async function loadDestinationMarginSettings() {
+    const response = await fetch(CONFIG.API_BASE + "/settings");
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+        throw new Error(result.message || "Unable to load margin settings.");
+    }
+
+    currentMarginSettings = result.settings;
+    destinationMargins = Array.isArray(result.settings?.destinationMargins)
+        ? result.settings.destinationMargins.filter(item => item.isActive !== false)
+        : [];
+
+    marginDestinationSelect.innerHTML = "";
+
+    if (destinationMargins.length === 0) {
+        marginDestinationSelect.innerHTML =
+            '<option value="">No destinations configured</option>';
+
+        marginCurrencyInput.value = "";
+        marginCurrencySymbol.textContent = "";
+        universalMarginInput.value = "";
+
+        return;
+    }
+
+    destinationMargins.forEach(item => {
+        const option = document.createElement("option");
+        option.value = item.destination;
+        option.textContent = item.destination;
+        marginDestinationSelect.appendChild(option);
+    });
+
+    const previousDestination = marginDestinationSelect.value;
+
+    if (previousDestination) {
+        marginDestinationSelect.value = previousDestination;
+    }
+
+    updateMarginFields();
+}
+
+if (marginDestinationSelect) {
+    marginDestinationSelect.addEventListener("change", updateMarginFields);
+}
+
 if (marginBtn) {
-
     marginBtn.addEventListener("click", async () => {
-
         try {
-
-            const res = await fetch(
-                CONFIG.API_BASE + "/settings"
-            );
-
-            const result = await res.json();
-
-            console.log("SETTINGS:", result);
-
-            if (!result.success) {
-                alert("Unable to load margin.");
-                return;
-            }
-
-            universalMarginInput.value =
-                Number(result.settings?.universalMargin || 0);
-
-            window.universalMargin =
-                Number(result.settings?.universalMargin || 0);
-
+            await loadDestinationMarginSettings();
             marginModal.style.display = "flex";
-
         } catch (error) {
-
-            console.error("LOAD MARGIN ERROR:", error);
-
-            alert("Unable to load margin.");
-
+            console.error("LOAD MARGIN SETTINGS ERROR:", error);
+            alert(error.message || "Unable to load margin settings.");
         }
-
     });
-
 }
 
+function closeDestinationMarginModal() {
+    marginModal.style.display = "none";
+}
 
-// CLOSE MARGIN MODAL
 if (closeMarginModal) {
-
-    closeMarginModal.addEventListener("click", () => {
-
-        marginModal.style.display = "none";
-
-    });
-
+    closeMarginModal.addEventListener("click", closeDestinationMarginModal);
 }
-
 
 if (cancelMarginBtn) {
-
-    cancelMarginBtn.addEventListener("click", () => {
-
-        marginModal.style.display = "none";
-
-    });
-
+    cancelMarginBtn.addEventListener("click", closeDestinationMarginModal);
 }
 
-
-// SAVE MARGIN
 if (saveMarginBtn) {
-
     saveMarginBtn.addEventListener("click", async () => {
+        const selectedDestination = marginDestinationSelect.value;
+        const margin = Number(universalMarginInput.value);
 
-        const margin =
-            Number(universalMarginInput.value) || 0;
-
-        if (margin < 0) {
-
-            alert("Margin cannot be negative.");
+        if (!selectedDestination) {
+            alert("Please select a destination.");
             return;
-
         }
 
-        try {
+        if (universalMarginInput.value.trim() === "" || !Number.isFinite(margin) || margin < 0) {
+            alert("Please enter a valid non-negative margin.");
+            return;
+        }
 
-            const res = await fetch(
-                CONFIG.API_BASE + "/settings",
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        universalMargin: margin
-                    })
-                }
-            );
+        const selectedConfig = destinationMargins.find(
+            item => item.destination.toLowerCase() === selectedDestination.toLowerCase()
+        );
 
-            const result = await res.json();
+        if (!selectedConfig) {
+            alert("Selected destination was not found.");
+            return;
+        }
 
-            console.log("SAVED SETTINGS:", result);
-
-            if (!result.success) {
-
-                alert("Unable to save margin.");
-                return;
-
+        const updatedMargins = (currentMarginSettings.destinationMargins || []).map(item => {
+            if (item.destination.toLowerCase() === selectedDestination.toLowerCase()) {
+                return {
+                    ...item,
+                    marginPerPerson: margin
+                };
             }
 
-            universalMarginInput.value =
-                Number(result.settings?.universalMargin || 0);
+            return item;
+        });
 
-            window.universalMargin =
-                Number(result.settings?.universalMargin || 0);
+        try {
+            saveMarginBtn.disabled = true;
+
+            const response = await fetch(CONFIG.API_BASE + "/settings", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    universalMargin: currentMarginSettings.universalMargin,
+                    destinationMargins: updatedMargins
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Unable to save margin.");
+            }
+
+            currentMarginSettings = result.settings;
+            destinationMargins = Array.isArray(result.settings?.destinationMargins)
+                ? result.settings.destinationMargins.filter(item => item.isActive !== false)
+                : [];
+
+            updateMarginFields();
+
+            window.destinationMargins = destinationMargins;
 
             marginModal.style.display = "none";
 
-            alert("Universal margin saved successfully.");
-
+            alert("Margin saved successfully for " + selectedDestination + ".");
         } catch (error) {
-
-            console.error("SAVE MARGIN ERROR:", error);
-
-            alert("Unable to save margin.");
-
+            console.error("SAVE MARGIN SETTINGS ERROR:", error);
+            alert(error.message || "Unable to save margin.");
+        } finally {
+            saveMarginBtn.disabled = false;
         }
-
     });
-
 }
 // ==========================================
 // ADD ROOM TYPE TO EXISTING HOTEL

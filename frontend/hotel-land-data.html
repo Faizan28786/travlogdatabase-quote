@@ -328,62 +328,49 @@
         </div>
 
     </div>
-    <!-- =========================
-     UNIVERSAL MARGIN MODAL
-========================= -->
-
+    <!-- DESTINATION MARGIN MODAL -->
     <div id="marginModal" class="modalOverlay" style="display:none;">
-
         <div class="modalBox">
-
             <div class="modalHeader">
-
-                <h2>Universal Margin</h2>
-
+                <h2>Margin Settings</h2>
                 <button type="button" id="closeMarginModal" class="modalClose">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
-
             </div>
 
             <div class="modalBody">
-
                 <div class="formGroup">
-
-                    <label for="universalMarginInput">
-                        Margin Per Person
-                    </label>
-
-                    <div style="display:flex; align-items:center; gap:8px;">
-
-                        <span style="font-size:18px;">
-                            $
-                        </span>
-
-                        <input id="universalMarginInput" type="number" min="0" step="0.01" value="15"
-                            placeholder="Enter margin">
-
-                    </div>
-
+                    <label for="marginDestinationSelect">Destination</label>
+                    <select id="marginDestinationSelect">
+                        <option value="">Loading destinations...</option>
+                    </select>
                 </div>
 
+                <div class="formGroup" style="margin-top:16px;">
+                    <label for="marginCurrencyInput">Currency</label>
+                    <input id="marginCurrencyInput" type="text" value="" readonly>
+                </div>
+
+                <div class="formGroup" style="margin-top:16px;">
+                    <label for="universalMarginInput">Margin Per Person</label>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span id="marginCurrencySymbol" style="font-size:18px;">$</span>
+                        <input id="universalMarginInput" type="number" min="0" step="0.01" value="0"
+                            placeholder="Enter margin">
+                    </div>
+                </div>
             </div>
 
             <div class="modalFooter">
-
                 <button type="button" id="cancelMarginBtn" class="cancelBtn">
                     Cancel
                 </button>
-
                 <button type="button" id="saveMarginBtn" class="blueBtn">
                     <i class="fa-solid fa-floppy-disk"></i>
                     Save Margin
                 </button>
-
             </div>
-
         </div>
-
     </div>
 
     <script src="assets/js/config.js"></script>

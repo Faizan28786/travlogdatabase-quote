@@ -1109,6 +1109,7 @@ function hydrateSegment(segmentEl) {
   const hotelSelect = segmentEl.querySelector(".segment-hotel");
   const roomTypeSelect = segmentEl.querySelector(".segment-room-type");
   const mealPlanSelect = segmentEl.querySelector(".segment-meal-plan");
+  let mealPlanWarningShown = false;
   const nightsInput = segmentEl.querySelector(".segment-nights");
   const checkInInput = segmentEl.querySelector(".segment-checkin");
   const checkOutInput = segmentEl.querySelector(".segment-checkout");
@@ -1141,9 +1142,51 @@ function hydrateSegment(segmentEl) {
   roomTypeSelect?.addEventListener("change", () => {
     calculateQuote();
   });
+
   mealPlanSelect?.addEventListener("change", () => {
+    const selectedCountry = String(countryEl?.value || "")
+      .trim()
+      .toLowerCase();
+
+    if (selectedCountry === "india") {
+      const city = (citySelect?.value || "").trim().toLowerCase();
+      const hotelName = (hotelSelect?.value || "").trim().toLowerCase();
+      const roomType = (roomTypeSelect?.value || "").trim().toLowerCase();
+      const mealPlan = (mealPlanSelect?.value || "").trim().toLowerCase();
+
+      const exactRateExists = currentCountryHotels.some(h =>
+        String(h.city || "").trim().toLowerCase() === city &&
+        String(h.hotelName || "").trim().toLowerCase() === hotelName &&
+        String(h.roomType || "").trim().toLowerCase() === roomType &&
+        String(h.mealPlan || "").trim().toLowerCase() === mealPlan &&
+        getPerNightRate(h) !== null
+      );
+
+      const anotherMealRateExists = currentCountryHotels.some(h =>
+        String(h.city || "").trim().toLowerCase() === city &&
+        String(h.hotelName || "").trim().toLowerCase() === hotelName &&
+        String(h.roomType || "").trim().toLowerCase() === roomType &&
+        String(h.mealPlan || "").trim().toLowerCase() !== mealPlan &&
+        getPerNightRate(h) !== null
+      );
+
+      if (!exactRateExists && anotherMealRateExists && !mealPlanWarningShown) {
+        mealPlanWarningShown = true;
+
+        alert(
+          `There is no rate for ${mealPlanSelect.value.trim().toUpperCase()}. Please select another meal plan.`
+        );
+      }
+
+      if (exactRateExists) {
+        mealPlanWarningShown = false;
+      }
+    }
+
     calculateQuote();
   });
+
+
 
   // First segment ke check-in change hone par dates recalculate
   checkInInput?.addEventListener("change", () => {
@@ -1456,46 +1499,44 @@ function getHotelExtraBedRate(hotel) {
 /* =========================================================
    GET MATCHED HOTEL ROW
 ========================================================= */
+
 function getSelectedHotelRow(segmentEl) {
-  const city = (segmentEl.querySelector(".segment-city")?.value || "").trim().toLowerCase();
-  const hotelName = (segmentEl.querySelector(".segment-hotel")?.value || "").trim().toLowerCase();
-  const roomType = (segmentEl.querySelector(".segment-room-type")?.value || "").trim().toLowerCase();
-  const mealPlan = (segmentEl.querySelector(".segment-meal-plan")?.value || "CP").trim().toLowerCase();
+  const city = (
+    segmentEl.querySelector(".segment-city")?.value || ""
+  ).trim().toLowerCase();
 
-  if (!hotelName) return null;
+  const hotelName = (
+    segmentEl.querySelector(".segment-hotel")?.value || ""
+  ).trim().toLowerCase();
 
-  // 1) exact city + hotel + room + meal
-  let row = currentCountryHotels.find(h =>
+  const roomType = (
+    segmentEl.querySelector(".segment-room-type")?.value || ""
+  ).trim().toLowerCase();
+
+  const mealPlan = (
+    segmentEl.querySelector(".segment-meal-plan")?.value || "CP"
+  ).trim().toLowerCase();
+
+  if (!hotelName || !roomType || !mealPlan) return null;
+
+  const row = currentCountryHotels.find(h =>
     String(h.city || "").trim().toLowerCase() === city &&
     String(h.hotelName || "").trim().toLowerCase() === hotelName &&
     String(h.roomType || "").trim().toLowerCase() === roomType &&
-    String(h.mealPlan || "CP").trim().toLowerCase() === mealPlan
-  );
-  if (row) return row;
-
-  // 2) city + hotel + room
-  row = currentCountryHotels.find(h =>
-    String(h.city || "").trim().toLowerCase() === city &&
-    String(h.hotelName || "").trim().toLowerCase() === hotelName &&
-    String(h.roomType || "").trim().toLowerCase() === roomType
-  );
-  if (row) return row;
-
-  // 3) city + hotel
-  row = currentCountryHotels.find(h =>
-    String(h.city || "").trim().toLowerCase() === city &&
-    String(h.hotelName || "").trim().toLowerCase() === hotelName
+    String(h.mealPlan || "").trim().toLowerCase() === mealPlan
   );
 
-  console.log({
+  console.log("HOTEL RATE MATCH:", {
     city,
     hotelName,
     roomType,
     mealPlan,
-    selectedHotel: row
+    matchedRow: row
   });
+
   return row || null;
 }
+
 
 /* =========================================================
    SEGMENT COST
@@ -1535,9 +1576,16 @@ function calculateSegmentCost(segmentEl) {
 
     } else {
 
+
       // Room Cost
-      baseHotelCost =
-        (perNight * nights * rooms) / 2;
+      const selectedCountry = String(countryEl?.value || "")
+        .trim()
+        .toLowerCase();
+
+      baseHotelCost = selectedCountry === "india"
+        ? perNight * nights * rooms
+        : (perNight * nights * rooms) / 2;
+
 
     }
 
@@ -2019,38 +2067,65 @@ async function buildPreview() {
     "Select Drop Vehicle";
 
   const segments = getAllSegmentsData();
+
   // ==========================================
-  // UNIVERSAL MARGIN
+  // DESTINATION-WISE MARGIN
   // ==========================================
 
   let universalMargin = 0;
+  let marginCurrency = "";
+  let marginType = "perPerson";
+  let marginPerUnit = 0;
 
-  try {
-
-    const settingsRes = await fetch(
-      CONFIG.API_BASE + "/settings"
-    );
-
-    const settingsResult = await settingsRes.json();
-
-    if (settingsResult.success) {
-
-      universalMargin =
-        Number(settingsResult.settings?.universalMargin || 0);
-
-    }
-
-  } catch (error) {
-
-    console.error("BUILD PREVIEW MARGIN ERROR:", error);
-
-  }
   const totalNights = segments.reduce(
     (sum, seg) => sum + Number(seg.nights || 0),
     0
   );
 
+  try {
+    const settingsRes = await fetch(CONFIG.API_BASE + "/settings");
+    const settingsResult = await settingsRes.json();
+
+    if (settingsRes.ok && settingsResult.success) {
+      const settings = settingsResult.settings || {};
+
+      const selectedDestination = String(country || "").trim();
+
+      const destinationMargin = (
+        settings.destinationMargins || []
+      ).find(item =>
+        String(item.destination || "").trim().toLowerCase() ===
+        selectedDestination.toLowerCase() &&
+        item.isActive !== false
+      );
+
+      if (destinationMargin) {
+        marginCurrency = destinationMargin.currency || "";
+        marginType = destinationMargin.marginType || "perPerson";
+        marginPerUnit = Number(destinationMargin.marginPerPerson || 0);
+
+        universalMargin =
+          marginType === "perNight"
+            ? marginPerUnit * totalNights
+            : marginPerUnit;
+      }
+
+      console.log("Selected destination:", selectedDestination);
+      console.log("Margin config:", destinationMargin);
+      console.log("Total nights:", totalNights);
+      console.log("Applied margin:", universalMargin);
+    }
+  } catch (error) {
+    console.error("BUILD PREVIEW DESTINATION MARGIN ERROR:", error);
+  }
+
+  window.universalMargin = universalMargin;
+  window.destinationMarginCurrency = marginCurrency;
+  window.destinationMarginType = marginType;
+  window.destinationMarginPerUnit = marginPerUnit;
+
   const totalDays = totalNights + 1;
+
 
   const hotelCategories = [...new Set(
     segments

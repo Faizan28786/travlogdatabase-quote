@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const Hotel = require("../models/Hotel");
 const HotelCity = require("../models/HotelCity");
+const HotelRegion = require("../models/HotelRegion");
+
 
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
@@ -234,6 +236,114 @@ router.post(
   }
 );
 
+router.get("/regions", async (req, res) => {
+  try {
+    const destination = String(req.query.destination || "").trim();
+
+    if (!destination) {
+      return res.status(400).json({
+        success: false,
+        message: "Destination is required."
+      });
+    }
+
+    const hotelRegions = await Hotel.distinct("region", {
+      destination,
+      ...getActiveFilter()
+    });
+
+    const savedRegions = await HotelRegion.find({
+      destination: new RegExp(
+        "^" + destination.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$",
+        "i"
+      ),
+      isActive: true
+    }).distinct("region");
+
+    const regions = [...new Set([...hotelRegions, ...savedRegions])]
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+
+    return res.json({
+      success: true,
+      regions
+    });
+  } catch (error) {
+    console.error("GET /regions error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch regions.",
+      error: error.message
+    });
+  }
+});
+
+router.post(
+  "/regions",
+  authMiddleware,
+  roleMiddleware("superadmin", "admin"),
+  async (req, res) => {
+    try {
+      const destination = String(req.body.destination || "").trim();
+      const region = String(req.body.region || "").trim();
+
+      if (!destination || !region) {
+        return res.status(400).json({
+          success: false,
+          message: "Destination and region are required."
+        });
+      }
+
+      const escapedDestination = destination.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const escapedRegion = region.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      const existingRegion = await HotelRegion.findOne({
+        destination: new RegExp("^" + escapedDestination + "$", "i"),
+        region: new RegExp("^" + escapedRegion + "$", "i")
+      });
+
+      if (existingRegion) {
+        if (existingRegion.isActive === false) {
+          existingRegion.isActive = true;
+          await existingRegion.save();
+        }
+
+        return res.status(409).json({
+          success: false,
+          message: "This region already exists for this destination."
+        });
+      }
+
+      const savedRegion = await HotelRegion.create({
+        destination,
+        region,
+        isActive: true
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "Region added successfully.",
+        region: savedRegion.region
+      });
+    } catch (error) {
+      if (error.code === 11000) {
+        return res.status(409).json({
+          success: false,
+          message: "This region already exists for this destination."
+        });
+      }
+
+      console.error("POST /regions error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to save region.",
+        error: error.message
+      });
+    }
+  }
+);
 
 /* =========================================================
    ADD CITY
