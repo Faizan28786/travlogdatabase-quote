@@ -1675,7 +1675,12 @@ function calculateSegmentCost(segmentEl) {
     city: segmentEl.querySelector(".segment-city")?.value || "",
     mealPlan: segmentEl.querySelector(".segment-meal-plan")?.value || "CP",
     hotelId: selectedHotel?._id || selectedHotel?.id || "",
-    hotelName: selectedHotel?.hotelName || "",
+    hotelName:
+      selectedHotel?.hotelName ||
+      segmentEl.querySelector(".segment-hotel")
+        ?.selectedOptions?.[0]?.textContent
+        ?.trim() ||
+      "",
     hotelCategory: selectedHotel?.category || "",
     roomType: segmentEl.querySelector(".segment-room-type")?.value || "",
     nights,
@@ -3238,43 +3243,77 @@ function buildPreviewFinal(data = null, showHeader = true) {
       data?.segments?.[0]?.checkIn ||
       document.querySelector(".segment-checkin")?.value;
 
-    Object.keys(groupedDays).forEach(day => {
 
-      let currentDate = "";
+Object.keys(groupedDays).forEach(day => {
 
-      if (firstDate) {
+    let currentDate = "";
+
+    if (firstDate) {
 
         const d = new Date(firstDate);
 
         d.setDate(d.getDate() + (Number(day) - 1));
 
-        const dd = String(d.getDate()).padStart(2, "0");
-        const mm = String(d.getMonth() + 1).padStart(2, "0");
-        const yyyy = d.getFullYear();
+        const weekday = d.toLocaleDateString("en-GB", {
+            weekday: "short"
+        });
 
-        currentDate = `${dd}-${mm}-${yyyy}`;
+        const month = d.toLocaleDateString("en-GB", {
+            month: "short"
+        });
 
-      }
+        const dateNumber = d.getDate();
 
-      itineraryHtml += `
-      
+        currentDate = `${weekday}, ${dateNumber} ${month}`;
 
-<div class="package-row">
+    }
 
-    <span>
-        <strong>DAY ${day} (${currentDate}):</strong>
-    </span>
+    const dayNumber = Number(day);
 
-    <span class="package-value">
-        ${groupedDays[day].map(service => `- ${service}`).join("<br>")}
-    </span>
+    const suffix =
+        dayNumber % 100 >= 11 && dayNumber % 100 <= 13
+            ? "th"
+            : dayNumber % 10 === 1
+                ? "st"
+                : dayNumber % 10 === 2
+                    ? "nd"
+                    : dayNumber % 10 === 3
+                        ? "rd"
+                        : "th";
+
+    itineraryHtml += `
+
+<div style="margin: 12px 0 4px;">
+
+    <div style="
+        font-weight: bold;
+        margin-bottom: 6px;
+    ">
+        ${dayNumber}${suffix} Day (${currentDate})
+    </div>
+
+    <ul style="
+        margin: 0;
+        padding-left: 30px;
+        list-style-type: disc;
+    ">
+        ${groupedDays[day].map(service => `
+            <li style="margin-bottom: 6px;">
+                ${service}
+            </li>
+        `).join("")}
+    </ul>
 
 </div>
 
 `;
-      whatsappItinerary += `DAY ${day} (${currentDate}) : ${groupedDays[day].join(" + ")}\n`;
 
-    });
+    // WhatsApp formatting unchanged
+    whatsappItinerary +=
+        `DAY ${day} (${currentDate}) : ${groupedDays[day].join(" + ")}\n`;
+
+});
+
 
     itineraryHtml += `
 
