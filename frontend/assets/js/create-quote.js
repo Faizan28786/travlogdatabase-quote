@@ -4827,35 +4827,35 @@ async function populateLandServices(card, city) {
     );
 
 
-sortedServices.forEach(service => {
+    sortedServices.forEach(service => {
 
-  const option = document.createElement("option");
+      const option = document.createElement("option");
 
-  const serviceName = String(service.name || "");
-  const normalizedCity = String(city || "")
-    .trim()
-    .toLowerCase();
+      const serviceName = String(service.name || "");
+      const normalizedCity = String(city || "")
+        .trim()
+        .toLowerCase();
 
-  const isLongLabelCity =
-    normalizedCity === "phu quoc" ||
-    normalizedCity === "sapa";
+      const isLongLabelCity =
+        normalizedCity === "phu quoc" ||
+        normalizedCity === "sapa";
 
-  option.value = service.name;
+      option.value = service.name;
 
-  // Shorten only the visible dropdown label.
-  // Preserve the original service name and pricing data.
-  option.textContent =
-    isLongLabelCity && serviceName.length > 60
-      ? serviceName.slice(0, 57) + "..."
-      : serviceName;
+      // Shorten only the visible dropdown label.
+      // Preserve the original service name and pricing data.
+      option.textContent =
+        isLongLabelCity && serviceName.length > 60
+          ? serviceName.slice(0, 57) + "..."
+          : serviceName;
 
-  option.title = serviceName;
-  option.dataset.category = service.category || "";
-  option.dataset.service = JSON.stringify(service);
+      option.title = serviceName;
+      option.dataset.category = service.category || "";
+      option.dataset.service = JSON.stringify(service);
 
-  select.appendChild(option);
+      select.appendChild(option);
 
-});
+    });
 
 
   });
@@ -5242,10 +5242,26 @@ function initializeLandEvents() {
       }
       list.style.maxHeight = "41px";
 
-      const serviceName =
-        serviceSelect.options[
-          serviceSelect.selectedIndex
-        ].text;
+
+const selectedOption =
+  serviceSelect.options[serviceSelect.selectedIndex];
+
+let serviceName = selectedOption.text;
+
+try {
+  const serviceData = JSON.parse(
+    selectedOption.dataset.service || "{}"
+  );
+
+  serviceName = String(
+    serviceData.name ||
+    selectedOption.title ||
+    selectedOption.text
+  );
+} catch (error) {
+  serviceName = selectedOption.title || selectedOption.text;
+}
+
 
       const price =
         parseFloat(rateBox.value) || 0;
