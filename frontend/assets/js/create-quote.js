@@ -3244,44 +3244,44 @@ function buildPreviewFinal(data = null, showHeader = true) {
       document.querySelector(".segment-checkin")?.value;
 
 
-Object.keys(groupedDays).forEach(day => {
+    Object.keys(groupedDays).forEach(day => {
 
-    let currentDate = "";
+      let currentDate = "";
 
-    if (firstDate) {
+      if (firstDate) {
 
         const d = new Date(firstDate);
 
         d.setDate(d.getDate() + (Number(day) - 1));
 
         const weekday = d.toLocaleDateString("en-GB", {
-            weekday: "short"
+          weekday: "short"
         });
 
         const month = d.toLocaleDateString("en-GB", {
-            month: "short"
+          month: "short"
         });
 
         const dateNumber = d.getDate();
 
         currentDate = `${weekday}, ${dateNumber} ${month}`;
 
-    }
+      }
 
-    const dayNumber = Number(day);
+      const dayNumber = Number(day);
 
-    const suffix =
+      const suffix =
         dayNumber % 100 >= 11 && dayNumber % 100 <= 13
-            ? "th"
-            : dayNumber % 10 === 1
-                ? "st"
-                : dayNumber % 10 === 2
-                    ? "nd"
-                    : dayNumber % 10 === 3
-                        ? "rd"
-                        : "th";
+          ? "th"
+          : dayNumber % 10 === 1
+            ? "st"
+            : dayNumber % 10 === 2
+              ? "nd"
+              : dayNumber % 10 === 3
+                ? "rd"
+                : "th";
 
-    itineraryHtml += `
+      itineraryHtml += `
 
 <div style="margin: 12px 0 4px;">
 
@@ -3308,11 +3308,11 @@ Object.keys(groupedDays).forEach(day => {
 
 `;
 
-    // WhatsApp formatting unchanged
-    whatsappItinerary +=
+      // WhatsApp formatting unchanged
+      whatsappItinerary +=
         `DAY ${day} (${currentDate}) : ${groupedDays[day].join(" + ")}\n`;
 
-});
+    });
 
 
     itineraryHtml += `
@@ -4826,19 +4826,37 @@ async function populateLandServices(card, city) {
       )
     );
 
-    sortedServices.forEach(service => {
 
-      const option = document.createElement("option");
+sortedServices.forEach(service => {
 
-      option.value = service.name;
-      option.textContent = service.name;
+  const option = document.createElement("option");
 
-      option.dataset.category = service.category || "";
-      option.dataset.service = JSON.stringify(service);
+  const serviceName = String(service.name || "");
+  const normalizedCity = String(city || "")
+    .trim()
+    .toLowerCase();
 
-      select.appendChild(option);
+  const isLongLabelCity =
+    normalizedCity === "phu quoc" ||
+    normalizedCity === "sapa";
 
-    });
+  option.value = service.name;
+
+  // Shorten only the visible dropdown label.
+  // Preserve the original service name and pricing data.
+  option.textContent =
+    isLongLabelCity && serviceName.length > 60
+      ? serviceName.slice(0, 57) + "..."
+      : serviceName;
+
+  option.title = serviceName;
+  option.dataset.category = service.category || "";
+  option.dataset.service = JSON.stringify(service);
+
+  select.appendChild(option);
+
+});
+
 
   });
   // =========================
